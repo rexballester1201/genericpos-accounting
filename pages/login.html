@@ -1,0 +1,39 @@
+<div class="auth-wrap" data-module="auth-pages" data-view="login">
+  <div class="auth-card stack-lg">
+    <div class="alert alert-warn" data-setup-note hidden>
+      <span data-icon="info"></span>
+      <div>This ledger has not been set up yet. <a href="setup">Set it up</a> to create the first administrator.</div>
+    </div>
+
+    <div class="card card-pad">
+      <h1>Sign in</h1>
+      <p class="muted" data-welcome>Welcome back.</p>
+
+      <form class="stack" novalidate>
+        <div class="alert alert-err" data-banner hidden></div>
+
+        <div class="field">
+          <label class="label" for="li-id">Email, username or mobile number</label>
+          <input class="input" id="li-id" name="identifier" autocomplete="username" autocapitalize="off" spellcheck="false" required />
+          <div class="error" data-error-for="identifier"></div>
+        </div>
+
+        <div class="field">
+          <div class="row between">
+            <label class="label" for="li-pw">Password</label>
+            <a class="small" href="forgot-password">Forgot your password?</a>
+          </div>
+          <div class="pw-field">
+            <input class="input" id="li-pw" name="password" type="password" autocomplete="current-password" required />
+            <button class="icon-btn pw-toggle" type="button" data-pw-toggle aria-label="Show password"><span data-icon="eye" data-icon-size="18"></span></button>
+          </div>
+          <div class="error" data-error-for="password"></div>
+        </div>
+
+        <button class="btn btn-lg btn-block" type="submit">Sign in</button>
+      </form>
+    </div>
+
+    <p class="center small muted">No account yet? Ask your administrator to add you under Users.</p>
+  </div>
+</div>

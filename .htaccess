@@ -1,0 +1,145 @@
+# =============================================================================
+# GenericPOS Accounting — Apache configuration
+# =============================================================================
+#
+# NOTE: NO SECRETS IN THIS FILE. It sits in the web root: one misconfiguration
+# that stops Apache processing .htaccess and it is served as plain text. And
+# SetEnv is invisible to PHP-CLI, so a secret set here is empty in every cron
+# job. Secrets live in application/config/secrets.php.
+#
+# NOTE: THE PROJECT ROOT IS THE DOCROOT. Everything below that denies a path or
+# an extension exists because the source code, the schema and the build
+# tooling sit next to the files the site serves.
+
+RewriteEngine On
+
+# -----------------------------------------------------------------------------
+# Environment: "development" on a local machine (errors displayed, the
+# log-only mail transport permitted). Everywhere else CI_ENV is unset and
+# index.php runs in production mode.
+#
+# NOTE: this trusts the Host header. On a server that answers requests for ANY
+# host name, a request sent with "Host: localhost" would switch development
+# mode on — serve production from a virtual host bound to its real name only.
+# -----------------------------------------------------------------------------
+SetEnvIf Host "^(localhost|127\.0\.0\.1)(:[0-9]+)?$" CI_ENV=development
+
+# -----------------------------------------------------------------------------
+# Force HTTPS — via X-Forwarded-Proto as well as %{HTTPS}, because behind a
+# proxy (Cloudflare) the origin leg may be plain while the visitor is secure.
+# Localhost is exempt (no certificate there), and so is the ACME challenge
+# (Let's Encrypt validates directly, not through the proxy).
+# -----------------------------------------------------------------------------
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?$ [NC]
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https [NC]
+RewriteCond %{REQUEST_URI} !/\.well-known/acme-challenge/
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# Some CGI/FPM setups drop the Authorization header before PHP sees it.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# -----------------------------------------------------------------------------
+# Deny sensitive directories — MUST COME BEFORE THE FRONT CONTROLLER.
+# The front controller skips real files (!-f), so without these rules Apache
+# would serve application/config/secrets.php's neighbours straight off disk.
+#   scripts/    build tooling (icon generator)
+# -----------------------------------------------------------------------------
+RewriteRule ^(application|system|capacitor|tests|docs|scripts)(/|$) - [F,L]
+
+Options -Indexes
+
+# -----------------------------------------------------------------------------
+# A missing script, stylesheet, image or font is a plain 404 — never the app
+# shell. Answered with the shell (200, text/html) a missing module is refused
+# by the browser without saying why, and the app sits on its loading spinner;
+# a 404 names the file in the console.
+# -----------------------------------------------------------------------------
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule \.(js|mjs|css|map|png|jpe?g|gif|webp|svg|ico|woff2?)$ - [R=404,L]
+
+# -----------------------------------------------------------------------------
+# Front controller. NO RewriteBase: relative substitution works both at a
+# domain root and under http://localhost/dashboard/accounting/.
+# -----------------------------------------------------------------------------
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L]
+
+
+# =============================================================================
+# Caching and security headers
+# =============================================================================
+<IfModule mod_headers.c>
+
+  # Code and styles are revalidated on every load (a 304 when unchanged). The
+  # service worker is what makes repeat visits fast; a 7-day browser cache on
+  # top of it would pin people to an old build after a deploy.
+  # NOTE: this block must stay ABOVE the sw.js one — the later "Header set"
+  # wins, and sw.js needs the stricter rule.
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+
+  # sw.js must never be cached: it controls every other cached file, and a
+  # stale copy keeps people on an old build no deploy can reach.
+  <FilesMatch "^sw\.js$">
+    <IfModule mod_expires.c>
+      ExpiresActive Off
+    </IfModule>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header unset Expires
+  </FilesMatch>
+
+  # Page fragments are versioned by the service worker, not by filename.
+  <FilesMatch "\.(html)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "no-store, must-revalidate"
+  </FilesMatch>
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=()"
+
+  # HSTS stays off until HTTPS is confirmed on the apex AND every subdomain —
+  # a browser that has seen it refuses plain http for max-age, irrevocably.
+  # Start small:  Header always set Strict-Transport-Security "max-age=300"
+
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png              "access plus 7 days"
+  ExpiresByType image/jpeg             "access plus 7 days"
+  ExpiresByType image/webp             "access plus 7 days"
+  ExpiresByType image/svg+xml          "access plus 7 days"
+  ExpiresByType font/woff2             "access plus 30 days"
+</IfModule>
+
+
+# =============================================================================
+# Deny by file type
+# =============================================================================
+# NOTE: AN ALLOW-BY-OMISSION LIST. When adding a file to the project root the
+# question is not "is it sensitive" but "is its extension on this line".
+<FilesMatch "\.(sql|md|log|ini|yml|yaml|lock|txt|bak|old|orig|save|swp|swo|tmp|dist|example|sample|zip|tar|gz|tgz|rar|7z|apk|aab|keystore|jks|p12|pfx|pem|key|crt|csr|env|sh|bash|bat|cmd|ps1|conf|cnf|dump|sqlite|db|mjs)$">
+  Require all denied
+</FilesMatch>
+
+<FilesMatch "^(robots|security|humans)\.txt$">
+  Require all granted
+</FilesMatch>
+
+# The highest-value documents, denied again by name.
+<FilesMatch "^(README|HANDOVER|PLAN|SCHEMA|MIGRATE-.*|SEED.*)\.">
+  Require all denied
+</FilesMatch>
+
+# Dotfiles (.env, .git fragments, editor backups).
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>

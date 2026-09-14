@@ -1,0 +1,37 @@
+<div data-module="dashboard">
+  <div class="page-head">
+    <div>
+      <h1 data-hello>Welcome</h1>
+      <p class="sub" data-subline>&nbsp;</p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div class="stack mb-4" data-alerts></div>
+
+  <div class="kpis mb-4" data-kpis>
+    <div class="stat"><div class="stat-label">Loading…</div><div class="stat-value">—</div></div>
+  </div>
+
+  <div class="grid-2 mb-4">
+    <section class="card">
+      <div class="card-head">
+        <h3 data-trend-title>Revenue and expenses</h3>
+        <div class="chart-key"><span><i class="k-rev"></i>Revenue</span><span><i class="k-exp"></i>Expenses</span></div>
+      </div>
+      <div class="card-body">
+        <div class="trend" data-trend></div>
+        <div class="trend-labels" data-trend-labels></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Your work</h3></div>
+      <div class="list" data-work></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head"><h3>Latest postings</h3><a class="small" href="journals?status=posted">All posted entries</a></div>
+    <div class="list" data-recent></div>
+  </section>
+</div>

@@ -1,0 +1,33 @@
+<div data-module="journals">
+  <div class="page-head">
+    <div>
+      <h1 data-title>Journal entries</h1>
+      <p class="sub" data-sub>Every entry, newest first. Only posted entries reach the ledger.</p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div class="card card-flush">
+    <div class="tabs" role="tablist" aria-label="Status" data-tabs style="padding:0 var(--s3)"></div>
+    <form class="toolbar" data-filters role="search" novalidate>
+      <div class="input-icon search">
+        <span data-icon="magnifying-glass" data-icon-size="16"></span>
+        <input class="input" type="search" name="q" id="jl-q" placeholder="Number, reference, payee or description" aria-label="Search entries" autocomplete="off" />
+      </div>
+      <select class="select" name="book" id="jl-book" aria-label="Book" style="width:auto"></select>
+      <input class="input" type="date" name="from" id="jl-from" aria-label="From date" style="width:auto" />
+      <input class="input" type="date" name="to" id="jl-to" aria-label="To date" style="width:auto" />
+      <label class="check small" style="align-items:center"><input type="checkbox" name="mine" id="jl-mine" /> Mine only</label>
+    </form>
+    <div class="alert alert-neutral" data-scope hidden style="margin:var(--s3) var(--s4) 0"></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Number</th><th>Date</th><th>Description</th><th>Book</th><th>Prepared by</th><th class="num">Amount</th><th>Status</th></tr>
+        </thead>
+        <tbody data-rows><tr><td colspan="7"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+    <div data-pager hidden></div>
+  </div>
+</div>

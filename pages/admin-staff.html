@@ -1,0 +1,36 @@
+<div data-module="admin-staff">
+  <div class="page-head">
+    <div>
+      <h1>Users</h1>
+      <p class="sub">Who can sign in to the ledger, and what each person may do.</p>
+    </div>
+    <div class="row gap-2">
+      <button class="btn" type="button" data-add><span data-icon="user-plus" data-icon-size="18"></span>Add a user</button>
+    </div>
+  </div>
+
+  <div class="card card-flush">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Account</th>
+            <th>Last sign-in</th>
+          </tr>
+        </thead>
+        <tbody data-rows><tr><td colspan="5"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <section class="card mt-4">
+    <div class="card-head"><h3>What each role may do</h3></div>
+    <div class="card-body">
+      <dl class="kv" data-roles></dl>
+      <p class="small muted mt-3 mb-0">Each role can also do everything the one before it can. One person prepares an entry and another approves it; nobody approves their own unless Settings → Ledger allows it for a one-person office.</p>
+    </div>
+  </section>
+</div>

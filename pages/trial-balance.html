@@ -1,0 +1,26 @@
+<div data-module="trial-balance">
+  <div class="page-head no-print">
+    <div>
+      <h1>Trial balance</h1>
+      <p class="sub" data-sub>&nbsp;</p>
+    </div>
+    <div class="row gap-2">
+      <button class="btn btn-secondary" type="button" data-csv><span data-icon="download-simple" data-icon-size="18"></span>Download CSV</button>
+      <button class="btn" type="button" data-print><span data-icon="printer" data-icon-size="18"></span>Print</button>
+    </div>
+  </div>
+
+  <div class="card card-flush report-controls no-print">
+    <form class="toolbar" data-filters novalidate>
+      <label class="row gap-2 small" for="tb-date">As of <input class="input" type="date" id="tb-date" name="as_of" style="width:auto" /></label>
+      <div class="segmented" role="group" aria-label="Kind of trial balance" data-kinds>
+        <button type="button" data-kind="unadjusted">Unadjusted</button>
+        <button type="button" data-kind="adjusted">Adjusted</button>
+        <button type="button" data-kind="post_closing">Post-closing</button>
+      </div>
+      <label class="check small" style="align-items:center"><input type="checkbox" name="zero" id="tb-zero" /> Zero balances</label>
+    </form>
+  </div>
+  <div class="alert alert-warn mb-4 no-print" data-warn hidden></div>
+  <article class="report-sheet" data-sheet><div class="loading-block"><div class="spinner"></div></div></article>
+</div>

@@ -1,0 +1,50 @@
+# =============================================================================
+# GenericPOS — files that must never enter version control
+# =============================================================================
+
+# Secrets. Real values live only on the server; the template that documents
+# every key ships as application/config/secrets.example.php.
+application/config/secrets.php
+
+# Android signing material. A leaked keystore lets anyone ship a signed
+# "update" to every installed copy of the app — keep keystores and their
+# passwords out of the repository entirely.
+capacitor/android/keystore.properties
+*.jks
+*.keystore
+*.p12
+
+# Dependencies and build output — all regenerable.
+node_modules/
+capacitor/www/
+capacitor/android/.gradle/
+capacitor/android/build/
+capacitor/android/app/build/
+capacitor/android/app/src/main/assets/public/
+capacitor/android/local.properties
+capacitor/android/capacitor-cordova-android-plugins/build/
+updates/bundles/*.zip
+capacitor/updates/bundles/*.zip
+
+# Runtime data written by the application.
+application/logs/*
+!application/logs/index.html
+!application/logs/mail/
+application/logs/mail/*
+!application/logs/mail/index.html
+!application/logs/mail/.htaccess
+application/cache/*
+!application/cache/index.html
+uploads/*
+!uploads/index.html
+!uploads/.htaccess
+!uploads/*/
+uploads/*/*
+!uploads/*/index.html
+
+# Local tooling and OS noise.
+.claude/settings.local.json
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log

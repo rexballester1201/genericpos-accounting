@@ -1,0 +1,111 @@
+<div class="auth-wrap" data-module="setup">
+  <div class="auth-card stack-lg" style="max-width:600px">
+    <div class="card card-pad">
+      <div data-step="checking" class="loading-block"><div class="spinner"></div></div>
+
+      <div data-step="done" hidden class="center stack">
+        <span data-icon="check-circle" data-icon-size="44" class="ok-text"></span>
+        <h1 class="mb-0">This ledger is set up</h1>
+        <p class="muted">An administrator already exists. Sign in to keep the books.</p>
+        <a class="btn btn-block" href="login">Sign in</a>
+      </div>
+
+      <div data-step="disabled" hidden class="stack">
+        <span data-icon="lock-key" data-icon-size="40" class="warn-text"></span>
+        <h1 class="mb-0">Setup is locked</h1>
+        <p class="muted mb-0">Creating the first administrator needs a setup key that only someone with access to the server can read.</p>
+        <ol class="small muted" style="padding-left:1.2em;margin:0">
+          <li>Open <code>application/config/secrets.php</code> on the server.</li>
+          <li>Set <code>GP_SETUP_KEY</code> to a random value of at least 12 characters.</li>
+          <li>Reload this page and enter that value at the end of the form.</li>
+        </ol>
+        <button class="btn btn-secondary" type="button" data-recheck>I have set it — check again</button>
+      </div>
+
+      <div data-step="form" hidden>
+        <h1>Set up the books</h1>
+        <p class="muted">Name the company, choose its kind and its fiscal year, and create the first administrator. The chart of accounts and the year's twelve months are made for you.</p>
+
+        <form class="stack" novalidate>
+          <div class="alert alert-err" data-banner hidden></div>
+
+          <div class="section-title mt-2">The company</div>
+          <div class="field">
+            <label class="label" for="su-company">Company name</label>
+            <input class="input" id="su-company" name="company_name" maxlength="120" autocomplete="organization" required />
+            <div class="hint">As it appears at the top of every report.</div>
+            <div class="error" data-error-for="company_name"></div>
+          </div>
+
+          <fieldset class="field" style="border:0;padding:0;margin:0;min-width:0">
+            <legend class="label">Kind of organisation</legend>
+            <div class="stack gap-2" data-kinds></div>
+            <div class="hint">It decides the starting chart of accounts and the statements, and cannot be changed later.</div>
+            <div class="error" data-error-for="kind"></div>
+          </fieldset>
+
+          <div class="form-grid">
+            <div class="field">
+              <label class="label" for="su-month">The first fiscal year starts</label>
+              <div class="row gap-2">
+                <select class="select" id="su-month" name="fy_month" aria-label="Month"></select>
+                <input class="input" id="su-year" name="fy_year" type="number" min="2000" max="2100" aria-label="Year" style="max-width:110px" />
+              </div>
+              <div class="error" data-error-for="fy_start"></div>
+            </div>
+            <div class="field">
+              <label class="label" for="su-cc">Currency</label>
+              <div class="row gap-2">
+                <input class="input" id="su-cc" name="currency_code" maxlength="3" autocapitalize="characters" spellcheck="false" aria-label="Currency code" style="max-width:90px" />
+                <input class="input" id="su-cs" name="currency_symbol" maxlength="6" aria-label="Currency symbol" style="max-width:90px" />
+              </div>
+              <div class="hint">Code and symbol, e.g. PHP and ₱.</div>
+            </div>
+          </div>
+          <div class="hint" data-fy-hint></div>
+
+          <div class="section-title mt-4">The first administrator</div>
+          <div class="field">
+            <label class="label" for="su-name">Your name</label>
+            <input class="input" id="su-name" name="full_name" autocomplete="name" maxlength="120" required />
+            <div class="error" data-error-for="full_name"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="su-email">Email address</label>
+            <input class="input" id="su-email" name="email" type="email" autocomplete="email" autocapitalize="off" spellcheck="false" required />
+            <div class="error" data-error-for="email"></div>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label class="label" for="su-pw">Password</label>
+              <div class="pw-field">
+                <input class="input" id="su-pw" name="password" type="password" autocomplete="new-password" required />
+                <button class="icon-btn pw-toggle" type="button" data-pw-toggle aria-label="Show password"><span data-icon="eye" data-icon-size="18"></span></button>
+              </div>
+              <div class="error" data-error-for="password"></div>
+            </div>
+            <div class="field">
+              <label class="label" for="su-pw2">Confirm password</label>
+              <input class="input" id="su-pw2" name="password_confirm" type="password" autocomplete="new-password" required />
+              <div class="error" data-error-for="password_confirm"></div>
+            </div>
+          </div>
+          <div class="hint" data-pw-hint></div>
+
+          <div class="section-title mt-4">Setup key</div>
+          <div class="field">
+            <label class="label" for="su-key">Setup key</label>
+            <div class="pw-field">
+              <input class="input input-mono" id="su-key" name="setup_key" type="password" autocomplete="off" spellcheck="false" required />
+              <button class="icon-btn pw-toggle" type="button" data-pw-toggle aria-label="Show key"><span data-icon="eye" data-icon-size="18"></span></button>
+            </div>
+            <div class="hint">The value of <code>GP_SETUP_KEY</code> in <code>application/config/secrets.php</code> on the server.</div>
+            <div class="error" data-error-for="setup_key"></div>
+          </div>
+
+          <button class="btn btn-lg btn-block mt-2" type="submit">Set up the books</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

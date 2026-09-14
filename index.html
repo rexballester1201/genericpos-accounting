@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="__GP_THEME_MODE__">
+<head>
+  <meta charset="utf-8" />
+  <base href="__GP_BASE__" />
+  <script>
+    /* Runs before any relative URL below is resolved. The server has replaced
+       __GP_BASE__ with the app's mount point; opened straight off disk, the
+       placeholder is still here and the app lives at the root. */
+    (function () {
+      var d = document.documentElement, b = document.querySelector('base');
+      if (b && (b.getAttribute('href') || '').indexOf('__GP_') !== -1) b.setAttribute('href', '/');
+      if ((d.getAttribute('data-theme') || '').indexOf('__GP_') !== -1) d.setAttribute('data-theme', 'auto');
+      try {
+        var o = localStorage.getItem('acc_theme');
+        if (o === 'light' || o === 'dark') d.setAttribute('data-theme', o);
+      } catch (e) { /* storage blocked */ }
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>__GP_PAGE_TITLE__</title>
+  <meta name="description" content="__GP_DESC__" />
+  <meta name="theme-color" content="__GP_THEME_COLOR__" />
+  <!--__GP_SEO__-->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="icons/favicon.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="__GP_TITLE__" />
+  <meta name="format-detection" content="telephone=no" />
+  <!--__GP_FONT__-->
+  <link rel="stylesheet" href="css/app.css" />
+  <style>/*__GP_BRAND_CSS__*/</style>
+  <script>window.GP_BOOT = /*__GP_BOOT__*/null;</script>
+  <script>
+    /* Runtime facts every module reads. */
+    window.GP_CONFIG = { version: '2.0.0', native: false, api_base: 'api/v1', asset_base: '' };
+
+    /* When the app cannot start — a script failed to load, or boot threw —
+       say so, instead of spinning for ever. js/app.js sets __gpBooted once
+       the first page is on screen. */
+    window.__gpBootFailed = function (why) {
+      if (window.__gpBooted) return;
+      var v = document.getElementById('gp-view');
+      if (!v) return;
+      v.innerHTML = '<div class="container narrow"><div class="empty"><h3>The app could not start</h3><p data-why></p>'
+        + '<button class="btn" type="button" onclick="location.reload()">Reload</button></div></div>';
+      v.querySelector('[data-why]').textContent = (why || 'Part of it did not load.')
+        + ' Reload the page. If it keeps happening, the browser console names the file that failed.';
+    };
+    setTimeout(function () { if (!window.__gpBooted) window.__gpBootFailed('It is taking far too long to start.'); }, 20000);
+  </script>
+  <script type="module" src="js/app.js" onerror="window.__gpBootFailed()"></script>
+</head>
+<body data-chrome="boot">
+  <div id="gp-app">
+    <div id="gp-offline" class="offline-bar" role="status" hidden>You are offline. What you see may be out of date, and nothing can be saved until you are back online.</div>
+    <header id="gp-header" class="hdr" hidden></header>
+    <div id="gp-admin" class="admin" hidden>
+      <aside id="gp-admin-side" class="admin-side" aria-label="Main navigation"></aside>
+      <div class="admin-main">
+        <div id="gp-admin-top" class="admin-top"></div>
+        <div id="gp-admin-slot" class="admin-content"></div>
+      </div>
+    </div>
+    <main id="gp-view" tabindex="-1">
+      <div class="loading-block"><div class="spinner spinner-lg"></div></div>
+    </main>
+  </div>
+  <noscript>
+    <div style="padding:32px 16px;text-align:center;font-family:system-ui,sans-serif">
+      This app needs JavaScript. Please enable it in your browser and reload the page.
+    </div>
+  </noscript>
+</body>
+</html>

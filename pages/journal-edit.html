@@ -1,0 +1,86 @@
+<div data-module="journal-edit">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="journals">Journal entries</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>New entry</span></div>
+      <h1 data-title>New entry</h1>
+      <p class="sub" data-sub>Debits must equal credits. It reaches the ledger only when an accountant approves it.</p>
+    </div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <form class="stack-lg" data-form novalidate hidden>
+    <div class="alert alert-err" data-banner hidden></div>
+    <div class="alert alert-warn" data-note hidden></div>
+
+    <section class="card card-pad">
+      <div class="form-grid">
+        <div class="field">
+          <label class="label" for="je-book">Book</label>
+          <select class="select" id="je-book" name="book"></select>
+          <div class="error" data-error-for="book"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="je-date">Date</label>
+          <input class="input" type="date" id="je-date" name="entry_date" required />
+          <div class="hint" data-date-hint></div>
+          <div class="error" data-error-for="entry_date"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="je-ref">Reference <span class="opt">(optional)</span></label>
+          <input class="input" id="je-ref" name="reference" maxlength="60" placeholder="OR, cheque or invoice number" autocomplete="off" />
+          <div class="error" data-error-for="reference"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="je-party">Paid to / received from <span class="opt">(optional)</span></label>
+          <input class="input" id="je-party" name="party_name" maxlength="160" autocomplete="off" />
+          <div class="error" data-error-for="party_name"></div>
+        </div>
+        <div class="field span-2">
+          <label class="label" for="je-desc">Description</label>
+          <input class="input" id="je-desc" name="description" maxlength="500" required autocomplete="off" />
+          <div class="error" data-error-for="description"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card card-flush">
+      <div class="card-head">
+        <h3>Lines</h3>
+        <button class="btn btn-secondary btn-sm" type="button" data-add-line><span data-icon="plus" data-icon-size="16"></span>Add a line</button>
+      </div>
+      <div class="table-wrap">
+        <table class="je-lines">
+          <thead>
+            <tr>
+              <th style="min-width:260px">Account</th>
+              <th style="min-width:170px">Memo</th>
+              <th data-col-dept style="min-width:150px">Department</th>
+              <th style="min-width:190px">Customer or supplier</th>
+              <th class="amt">Debit</th>
+              <th class="amt">Credit</th>
+              <th class="row-x"><span class="sr-only">Remove</span></th>
+            </tr>
+          </thead>
+          <tbody data-lines></tbody>
+          <tfoot>
+            <tr>
+              <td data-foot-span colspan="4"><div class="row between"><span data-diff></span><span class="muted">Totals</span></div></td>
+              <td class="money" data-total-dr></td>
+              <td class="money" data-total-cr></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="error" data-error-for="lines" style="padding:0 var(--s4) var(--s3)"></div>
+    </section>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="journals" data-cancel>Cancel</a>
+      <button class="btn btn-secondary" type="submit" data-then="draft">Save draft</button>
+      <button class="btn" type="submit" data-then="submit">Save and submit</button>
+      <button class="btn" type="submit" data-then="post" hidden>Save and post</button>
+    </div>
+  </form>
+</div>

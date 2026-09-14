@@ -1,0 +1,30 @@
+<div class="auth-wrap" data-module="auth-pages" data-view="verify">
+  <div class="auth-card stack-lg">
+    <div class="card card-pad">
+      <div data-step="checking" class="loading-block"><div class="spinner"></div></div>
+
+      <div data-step="ok" hidden class="center stack">
+        <span data-icon="check-circle" data-icon-size="44" class="ok-text"></span>
+        <h1 class="mb-0">Email confirmed</h1>
+        <p class="muted" data-ok-text>Thank you — your email address is confirmed.</p>
+        <a class="btn btn-block" href="account">Go to my account</a>
+      </div>
+
+      <div data-step="failed" hidden class="center stack">
+        <span data-icon="warning" data-icon-size="44" class="warn-text"></span>
+        <h1 class="mb-0">We could not confirm your email</h1>
+        <p class="muted" data-failed-text>This confirmation link is not valid or has already been used.</p>
+        <button class="btn btn-block" type="button" data-resend hidden>Send a new link</button>
+        <a class="btn btn-secondary btn-block" href="account">Go to my account</a>
+      </div>
+
+      <div data-step="pending" hidden class="center stack">
+        <span data-icon="envelope-simple" data-icon-size="44" class="brand-text"></span>
+        <h1 class="mb-0">Confirm your email</h1>
+        <p class="muted">Open the link we sent to your email address to confirm it. A confirmed address is how you reset a forgotten password and receive notices by email.</p>
+        <button class="btn btn-block" type="button" data-resend hidden>Send the link again</button>
+        <a class="btn btn-secondary btn-block" href="login" data-signin hidden>Sign in to resend it</a>
+      </div>
+    </div>
+  </div>
+</div>

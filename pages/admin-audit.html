@@ -1,0 +1,35 @@
+<div data-module="admin-audit">
+  <div class="page-head">
+    <div>
+      <h1>Audit log</h1>
+      <p class="sub" data-sub>Every change made in the ledger, newest first. Nobody can edit or delete it.</p>
+    </div>
+  </div>
+  <div class="card card-flush">
+    <form class="toolbar" data-filters role="search" novalidate>
+      <div class="input-icon search">
+        <span data-icon="magnifying-glass" data-icon-size="16"></span>
+        <input class="input" type="search" name="q" id="au-q" placeholder="Who, what, or a detail" aria-label="Search the log" autocomplete="off" />
+      </div>
+      <select class="select" name="action" id="au-action" aria-label="Area" style="width:auto">
+        <option value="">Everything</option>
+        <option value="journal.">Journal entries</option>
+        <option value="period.">Closing and reopening months</option>
+        <option value="fiscal_year.">Fiscal years</option>
+        <option value="account.">Chart of accounts</option>
+        <option value="staff.">Users</option>
+        <option value="settings.">Settings</option>
+        <option value="mail.">Test emails</option>
+        <option value="setup.">Setup</option>
+        <option value="cli.">Server commands</option>
+      </select>
+    </form>
+    <div class="table-wrap">
+      <table class="table table-compact">
+        <thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th><th>IP address</th></tr></thead>
+        <tbody data-rows><tr><td colspan="5"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+    <div data-pager hidden></div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<div data-module="accounts">
+  <div class="page-head">
+    <div>
+      <h1>Chart of accounts</h1>
+      <p class="sub" data-sub>Balances as of today.</p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div class="card card-flush">
+    <form class="toolbar" data-filters role="search" novalidate>
+      <div class="input-icon search">
+        <span data-icon="magnifying-glass" data-icon-size="16"></span>
+        <input class="input" type="search" name="q" id="ac-q" placeholder="Code or name" aria-label="Search accounts" autocomplete="off" />
+      </div>
+      <div class="segmented" role="group" aria-label="Account type" data-types></div>
+      <label class="check small" style="align-items:center"><input type="checkbox" name="inactive" id="ac-inactive" /> Show inactive</label>
+    </form>
+    <div class="table-wrap">
+      <table class="table table-compact">
+        <thead><tr><th>Code</th><th>Account</th><th>Type</th><th>Normal side</th><th>Rules</th><th class="num">Balance</th></tr></thead>
+        <tbody data-rows><tr><td colspan="6"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <p class="small muted mt-3" data-foot></p>
+</div>

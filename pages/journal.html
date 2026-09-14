@@ -1,0 +1,34 @@
+<div data-module="journal">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="journals">Journal entries</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>Entry</span></div>
+      <h1 class="row gap-2" data-title>Journal entry</h1>
+      <p class="sub" data-sub></p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <div class="stack-lg" data-body hidden>
+    <div class="alert" data-banner hidden></div>
+
+    <section class="card card-pad"><div class="je-head" data-head></div></section>
+
+    <section class="card card-flush">
+      <div class="card-head"><h3>Lines</h3><span class="small muted" data-line-count></span></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Account</th><th>Memo</th><th>Department</th><th>Customer or supplier</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+          <tbody data-lines></tbody>
+          <tfoot data-totals></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h3>History</h3><span class="small muted">From the audit log</span></div>
+      <div class="card-body"><ul class="timeline" data-trail></ul></div>
+    </section>
+  </div>
+</div>

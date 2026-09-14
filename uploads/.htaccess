@@ -1,0 +1,41 @@
+# =============================================================================
+# uploads/ — user-supplied files. NOTHING here is ever executed.
+# =============================================================================
+# Imaging_lib already re-encodes every image through GD, which destroys any
+# payload hidden in a file calling itself a JPEG, and names the output from
+# random bytes so no user-supplied string reaches the filesystem.
+#
+# This file is the second layer. It exists because the first one is code, and
+# code gets changed: the day somebody adds a "just store the original" path, or
+# a new upload type that skips re-encoding, this directory must still refuse to
+# run whatever lands in it.
+
+# Kill every scripting handler. RemoveHandler/RemoveType cover mod_php and
+# CGI-style mappings; SetHandler covers the rest by forcing plain delivery.
+<IfModule mod_mime.c>
+  RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl .py .sh .shtml
+  RemoveType    .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl .py .sh .shtml
+</IfModule>
+
+# NOTE: php_flag only works under mod_php and is a fatal "Invalid command"
+# under PHP-FPM, which would 500 the whole directory. Guarded so it applies
+# where it helps and is skipped where it would break.
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+
+# Belt and braces: refuse to serve anything executable at all.
+<FilesMatch "\.(?i:php|phtml|php[3-8]|phps|cgi|pl|py|sh|shtml|htaccess|htm|html|svg)$">
+  Require all denied
+</FilesMatch>
+
+# Never let a browser sniff a stored file into something executable.
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Content-Disposition "inline"
+</IfModule>
+
+Options -ExecCGI -Indexes

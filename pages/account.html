@@ -1,0 +1,118 @@
+<div class="measure" data-module="account">
+  <div class="page-head">
+    <div class="acct-head">
+      <span class="avatar" data-avatar></span>
+      <div class="grow">
+        <h1 class="mb-0 truncate" data-name>My account</h1>
+        <p class="sub" data-sub></p>
+        <p class="small muted mb-0" data-role-hint></p>
+      </div>
+    </div>
+    <button class="btn btn-secondary" type="button" data-logout><span data-icon="sign-out" data-icon-size="18"></span>Sign out</button>
+  </div>
+
+  <div class="alert alert-warn mb-4" data-verify-note hidden>
+    <span data-icon="envelope-simple"></span>
+    <div class="grow">Confirm your email address. It is how you reset a forgotten password, and where notices are emailed.
+      <button class="link-btn" type="button" data-send-verify>Send confirmation link</button></div>
+  </div>
+
+  <div class="stack-lg">
+    <section class="card">
+      <div class="card-head"><h2>Profile</h2></div>
+      <form class="card-body stack" data-form="profile" novalidate>
+        <div class="alert alert-err" data-banner hidden></div>
+        <div class="form-grid">
+          <div class="field span-2">
+            <label class="label" for="ac-name">Full name</label>
+            <input class="input" id="ac-name" name="full_name" autocomplete="name" maxlength="120" />
+            <div class="error" data-error-for="full_name"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="ac-email">Email address</label>
+            <input class="input" id="ac-email" name="email" type="email" autocomplete="email" autocapitalize="off" spellcheck="false" />
+            <div class="hint" data-email-hint></div>
+            <div class="error" data-error-for="email"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="ac-phone">Mobile number</label>
+            <input class="input" id="ac-phone" name="phone" />
+            <div class="error" data-error-for="phone"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="ac-user">Username</label>
+            <div class="input-group"><span class="addon">@</span><input class="input" id="ac-user" name="username" autocapitalize="off" spellcheck="false" maxlength="32" /></div>
+            <div class="hint" data-username-hint>Letters, numbers and underscores. You can sign in with it.</div>
+            <div class="error" data-error-for="username"></div>
+          </div>
+        </div>
+        <div class="form-actions"><button class="btn" type="submit">Save changes</button></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Profile picture</h2></div>
+      <div class="card-body row gap-4">
+        <span class="avatar" style="width:72px;height:72px;font-size:24px" data-avatar-lg></span>
+        <div class="stack gap-2">
+          <div class="row gap-2">
+            <label class="btn btn-secondary">
+              <input type="file" accept="image/jpeg,image/png,image/webp" hidden data-avatar-input />
+              <span data-icon="upload-simple" data-icon-size="18"></span>Upload a picture
+            </label>
+            <button class="btn btn-ghost" type="button" data-avatar-remove hidden>Remove</button>
+          </div>
+          <div class="hint">JPG, PNG or WebP, up to 8 MB. Shown next to the entries you prepare and approve.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2 data-pw-title>Password</h2></div>
+      <form class="card-body stack" data-form="password" novalidate>
+        <div class="alert alert-err" data-banner hidden></div>
+        <p class="muted mb-0" data-no-pw-note hidden>This account has no password yet. Choose one to sign in with.</p>
+        <div class="field" data-current-row>
+          <label class="label" for="ac-cur">Current password</label>
+          <div class="pw-field">
+            <input class="input" id="ac-cur" name="current_password" type="password" autocomplete="current-password" />
+            <button class="icon-btn pw-toggle" type="button" data-pw-toggle aria-label="Show password"><span data-icon="eye" data-icon-size="18"></span></button>
+          </div>
+          <div class="error" data-error-for="current_password"></div>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label class="label" for="ac-new">New password</label>
+            <div class="pw-field">
+              <input class="input" id="ac-new" name="new_password" type="password" autocomplete="new-password" />
+              <button class="icon-btn pw-toggle" type="button" data-pw-toggle aria-label="Show password"><span data-icon="eye" data-icon-size="18"></span></button>
+            </div>
+            <div class="error" data-error-for="new_password"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="ac-new2">Confirm new password</label>
+            <input class="input" id="ac-new2" name="confirm_password" type="password" autocomplete="new-password" />
+            <div class="error" data-error-for="confirm_password"></div>
+          </div>
+        </div>
+        <div class="hint">At least <span data-pw-min>8</span> characters, including a letter and a number. Changing it signs you out on your other devices.</div>
+        <div class="form-actions"><button class="btn" type="submit" data-pw-submit>Change password</button></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Appearance</h2></div>
+      <div class="card-body row between">
+        <div>
+          <div style="font-weight:600">Theme</div>
+          <div class="small muted">Applies to this device only. Printed reports are always light.</div>
+        </div>
+        <div class="segmented" role="group" aria-label="Theme" data-theme-seg>
+          <button type="button" data-mode="auto">Automatic</button>
+          <button type="button" data-mode="light">Light</button>
+          <button type="button" data-mode="dark">Dark</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,25 @@
+<div data-module="admin-settings">
+  <div class="page-head">
+    <div>
+      <h1>Settings</h1>
+      <p class="sub">How the company, the ledger and its reports behave. Every change is recorded in the audit log.</p>
+    </div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <div class="settings-layout" data-body hidden>
+    <nav class="card settings-nav" data-nav aria-label="Settings groups"></nav>
+    <section class="card">
+      <div class="card-head row between"><h3 data-group-title></h3><span class="small muted" data-group-note></span></div>
+      <form class="card-body stack" data-form novalidate>
+        <div class="alert alert-err" data-banner hidden></div>
+        <div class="stack" data-fields></div>
+        <div class="row gap-2" style="justify-content:flex-end;border-top:1px solid var(--line);padding-top:16px">
+          <button class="btn btn-secondary" type="button" data-mail hidden><span data-icon="envelope" data-icon-size="18"></span>Send a test email</button>
+          <button class="btn" type="submit">Save changes</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
