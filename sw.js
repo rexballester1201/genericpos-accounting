@@ -29,7 +29,7 @@
  * URL, or pages/missing.html would be cached as a copy of the whole app.
  */
 
-const CACHE_VERSION = 'v2.1.0';
+const CACHE_VERSION = 'v2.2.0';
 
 /* acc- prefix: cache names are per ORIGIN, not per scope, so GenericPOS (gp-)
    on the same host shares them. Our own prefix keeps our caches, and our
@@ -46,16 +46,31 @@ const BASE  = SCOPE.pathname;                     // "/dashboard/accounting/" or
 
 const REQUIRED = ['./', 'css/app.css', 'js/app.js', 'js/api.js', 'js/idb.js', 'js/store.js', 'js/ui.js',
   'js/icons.js', 'js/router.js', 'js/chrome.js'];
-const OPTIONAL = ['js/auth-pages.js', 'js/dashboard.js', 'js/journals.js', 'js/journal.js', 'js/journal-edit.js',
-  'js/accounts.js', 'js/periods.js', 'js/trial-balance.js', 'js/notifications.js', 'js/account.js',
-  'js/phone-field.js', 'js/countries.js', 'js/setup.js', 'js/admin-staff.js', 'js/admin-settings.js', 'js/admin-audit.js',
-  'js/report-kit.js', 'js/reports.js', 'js/statement.js', 'js/general-ledger.js', 'js/books.js', 'js/analysis.js',
-  'pages/login.html', 'pages/dashboard.html', 'pages/journals.html', 'pages/journal.html', 'pages/journal-edit.html',
-  'pages/accounts.html', 'pages/periods.html', 'pages/trial-balance.html', 'pages/notifications.html', 'pages/account.html',
-  'pages/forgot-password.html', 'pages/reset-password.html', 'pages/verify-email.html', 'pages/setup.html',
-  'pages/admin-staff.html', 'pages/admin-settings.html', 'pages/admin-audit.html',
-  'pages/reports.html', 'pages/statement.html', 'pages/general-ledger.html', 'pages/books.html', 'pages/analysis.html',
-  'icons/icon-192.png', 'icons/favicon.png'];
+const OPTIONAL = [
+  'js/account.js', 'js/accounts.js', 'js/admin-audit.js', 'js/admin-settings.js', 'js/admin-staff.js', 'js/aging.js',
+  'js/analysis.js', 'js/asset-categories.js', 'js/asset-edit.js', 'js/asset.js', 'js/assets.js', 'js/attachments.js',
+  'js/auth-pages.js', 'js/bank-reconciliation.js', 'js/bank-statement.js', 'js/banking.js', 'js/books.js',
+  'js/budget-vs-actual.js', 'js/budget.js', 'js/budgets.js', 'js/contact.js', 'js/contacts.js', 'js/countries.js',
+  'js/dashboard.js', 'js/department-income.js', 'js/departments.js', 'js/depreciation.js', 'js/document-edit.js',
+  'js/document.js', 'js/documents.js', 'js/general-ledger.js', 'js/help.js', 'js/imports.js', 'js/integrity.js',
+  'js/journal-edit.js', 'js/journal.js', 'js/journals.js', 'js/lapsing-schedule.js', 'js/notifications.js',
+  'js/opening-balances.js', 'js/periods.js', 'js/phone-field.js', 'js/report-kit.js', 'js/reports.js',
+  'js/settlement-edit.js', 'js/settlement.js', 'js/settlements.js', 'js/setup.js', 'js/statement-of-account.js',
+  'js/statement.js', 'js/subsidiary-ledger.js', 'js/templates.js', 'js/trial-balance.js', 'js/voucher.js',
+  'js/worksheet.js', 'js/year-end.js', 'pages/account.html', 'pages/accounts.html', 'pages/admin-audit.html',
+  'pages/admin-settings.html', 'pages/admin-staff.html', 'pages/aging.html', 'pages/analysis.html',
+  'pages/asset-categories.html', 'pages/asset-edit.html', 'pages/asset.html', 'pages/assets.html',
+  'pages/bank-reconciliation.html', 'pages/bank-statement.html', 'pages/banking.html', 'pages/books.html',
+  'pages/budget-vs-actual.html', 'pages/budget.html', 'pages/budgets.html', 'pages/contact.html',
+  'pages/contacts.html', 'pages/dashboard.html', 'pages/department-income.html', 'pages/departments.html',
+  'pages/depreciation.html', 'pages/document-edit.html', 'pages/document.html', 'pages/documents.html',
+  'pages/forgot-password.html', 'pages/general-ledger.html', 'pages/help.html', 'pages/imports.html', 'pages/integrity.html',
+  'pages/journal-edit.html', 'pages/journal.html', 'pages/journals.html', 'pages/lapsing-schedule.html',
+  'pages/login.html', 'pages/notifications.html', 'pages/opening-balances.html', 'pages/periods.html',
+  'pages/reports.html', 'pages/reset-password.html', 'pages/settlement-edit.html', 'pages/settlement.html',
+  'pages/settlements.html', 'pages/setup.html', 'pages/statement-of-account.html', 'pages/statement.html',
+  'pages/subsidiary-ledger.html', 'pages/templates.html', 'pages/trial-balance.html', 'pages/verify-email.html',
+  'pages/voucher.html', 'pages/worksheet.html', 'pages/year-end.html', 'icons/icon-192.png', 'icons/favicon.png', 'help/guide.json'];
 
 function isShell(res) { return !!(res && res.headers && res.headers.get('X-GP-Shell')); }
 

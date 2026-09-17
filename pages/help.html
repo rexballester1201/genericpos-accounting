@@ -1,0 +1,20 @@
+<div data-module="help">
+  <div class="page-head no-print">
+    <div>
+      <h1 data-title>Help</h1>
+      <p class="sub" data-sub>The user's guide: how to do everything in this system, step by step.</p>
+    </div>
+    <div class="row gap-2">
+      <button class="btn btn-secondary" type="button" data-print hidden><span data-icon="printer" data-icon-size="18"></span>Print this chapter</button>
+    </div>
+  </div>
+
+  <div class="help-layout">
+    <aside class="help-nav no-print">
+      <label class="sr-only" for="help-search">Search the guide</label>
+      <input class="input" type="search" id="help-search" data-search placeholder="Search the guide…" autocomplete="off">
+      <nav data-chapters aria-label="Chapters"></nav>
+    </aside>
+    <article class="help-body" data-body><div class="loading-block"><div class="spinner"></div></div></article>
+  </div>
+</div>

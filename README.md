@@ -1,133 +1,162 @@
-# GenericPOS
+# GenericPOS Accounting
 
-A customizable **single-seller online shop** with a **point of sale** for the
-physical store. The shop and the till share one catalogue, one stock ledger
-and one list of customers. The API is CodeIgniter 3 (PHP) and returns JSON.
-The front end is a dependency-free single-page app that installs as a PWA,
-and the same front end builds an Android app with Capacitor.
+A double-entry accounting system for a Philippine business or co-operative:
+the journals and ledgers, receivables and payables with their subsidiary
+ledgers, bank reconciliation, fixed assets, budgets, and the financial
+statements and BIR-style books that come out of them.
+
+The API is CodeIgniter 3 (PHP 8.2) and answers JSON. The front end is a
+dependency-free single-page app — no build step — that installs as a PWA and
+works from cache when the connection drops.
+
+It grew out of the GenericPOS shop codebase (baseline commit `3ab52a9`); the
+shop, the point of sale, the USDT rail and the Android build were removed, and
+what remains of that lineage is the account system, the mailer, the rate
+limiting and the offline shell.
+
+## The one rule
+
+**Nothing reaches the ledger except through a posted, balanced journal entry.**
+An invoice, a receipt, a depreciation run and the year-end closing all write
+the same kind of entry through `Journal_model::post_system()`, each numbered
+gap-free per book per fiscal year, each dated in an open month of an open
+year, each with its audit row written in the same transaction. A posted entry
+is never edited or deleted — it is reversed, and both stay on record.
 
 ## What it does
 
-**Storefront.** Categories, and products with up to three variant options.
-Search, cart and checkout, with delivery zones and rates or store pickup, and
-coupons. Guests can check out and get a private order link. Customer accounts
-hold orders, addresses, store credit, notifications and support threads. The
-content pages are about, shipping, returns, terms and privacy.
+**The ledger.** Chart of accounts (business or CDA co-operative templates),
+fiscal years and monthly periods (open → closed ⇄ open → locked), journal
+entries with maker-checker (draft → submitted → posted, or rejected),
+reversals, saved and recurring entries, opening balances, attachments and
+printable vouchers.
 
-**Payments.**
-- Cash, store credit, cash on delivery and pay on pickup.
-- Manual transfers with a reference number (GCash, Maya, bank, card terminal).
-- **USDT (BEP-20) per order.** Each payment leases an address from a pool and
-  shows a QR code with the amount at a locked rate. The cron scanner applies
-  whatever arrives, including partial, late and over-payments; any extra
-  becomes store credit.
-- Customers can also top up their store credit with USDT.
+**Sales and purchases.** Customers and suppliers, invoices and bills with VAT
+(inclusive or exclusive, exempt and zero-rated), credit and debit notes,
+receipts and payments with creditable and expanded withholding tax,
+allocations, aging, statements of account and subsidiary ledgers.
 
-**Point of sale** (`/pos`).
-- Registers are paired to devices, and staff sign in with a PIN.
-- Shifts keep a cash drawer ledger, with X and Z reports.
-- Barcode scanning.
-- Discounts, including SC/PWD VAT exemption (the card holder's details are recorded).
-- Split tenders with change, and USDT at the till.
-- Printed receipts, and digital receipts behind a QR link.
-- Voids, refunds by line, and manager approvals.
-- Offline sales, which sync when the connection returns.
+**Banking.** Bank accounts, statements entered or imported from CSV, matching
+(one bank line to many book lines) with auto-match, charges and interest
+recorded straight from a statement line, and the reconciliation report.
 
-**Back office** (`/admin`).
-- Dashboard with work queues.
-- Products, categories and inventory (an append-only stock ledger).
-- Orders: fulfilment steps, mark as paid, cancel, and refunds.
-- Customers, including store credit adjustments.
-- Staff and roles; registers and shifts.
-- Shipping and promotions.
-- Reports with CSV export.
-- Settings: branding, currency, tax, payments, checkout, POS and features.
-- USDT: the rate, the address pool, and parked transfers.
-- Support inbox and an audit log.
+**Fixed assets.** Categories, the register, straight-line and declining-balance
+depreciation run month by month, disposals with gain or loss, and the lapsing
+schedule tied to the ledger.
 
-**PWA and Android.** The PWA has an offline shell, an install prompt,
-optional web push, search-engine tags and a sitemap. The Android app runs on
-Capacitor 7 and takes over-the-air updates.
+**Budgets and departments.** Departments on lines and budgets, a month-by-month
+budget grid per department, approval, CSV in and out, budget vs actual, and
+income by department.
 
-Money is always a whole number of minor units (centavos). The default VAT is
-the Philippine 12%, prices inclusive; the rate and treatment are configurable.
+**Reports.** Balance sheet, income statement, changes in equity and cash flows
+(indirect), with comparative and month-by-month columns, common-size
+percentages and a department filter; trial balance (unadjusted, adjusted,
+post-closing), the ten-column worksheet, the general ledger, the books of
+accounts (as entries, or columnar and paged with totals brought forward),
+twenty-one ratios with their formulas, a co-operative's PESOS-style indicators
+with editable benchmarks, and an integrity check of sixteen ties.
 
-## Requirements
+**Year-end.** The closing entry, a co-operative's net-surplus allocation to the
+statutory funds, and reopening a year.
 
-- **PHP** 8.1 or 8.2 (developed on 8.2), with mysqli, curl, openssl, mbstring,
-  bcmath and json. GD is optional. With GD, uploads are resized and
-  re-encoded. Without it, uploads keep their size and have their metadata
-  stripped.
-- **Database:** MariaDB 10.2+ or MySQL 5.7+ (utf8mb4, InnoDB).
-- **Web server:** Apache with mod_rewrite; mod_headers and mod_expires are
-  recommended. The project root is the docroot. `.htaccess` blocks
-  `application/`, `system/`, `capacitor/` and `tests/`, plus every
-  file type the web should not serve.
-- **HTTPS in production.** Service workers, web push and the POS camera
-  scanner all need it.
+**Administration.** Users and roles (viewer, bookkeeper, accountant,
+administrator), settings, CSV imports (chart, contacts, opening balances,
+entries), an append-only audit log, and a scheduled job.
 
-## Install
+Every report prints A4 with the company's letterhead and signature lines, and
+downloads as CSV.
 
-1. **Files.** Upload the project as the site's web root, or into a sub-directory.
-2. **Database.** Create an empty utf8mb4 database and import `SCHEMA.sql`.
-3. **Secrets.** Copy `application/config/secrets.example.php` to `secrets.php`.
-   Fill in at least `GP_JWT_SECRET`, `GP_ENCRYPTION_KEY`, `GP_SETUP_KEY` and
-   the database credentials. The file explains each key. An environment
-   variable with the same name overrides the file.
-4. **Address.** In `application/config/config.php`, add your host to
-   `$_gp_origins`, for example `'shop.example.com' => 'https://shop.example.com/'`.
-   Then point the fallback at it, or set `GP_BASE_URL` in the environment.
-5. **First administrator.** Open `/setup`, enter `GP_SETUP_KEY`, and create
-   the owner's account. Then clear `GP_SETUP_KEY`. From a shell you can run
-   `php index.php tools create_admin <email>` instead.
-6. **Cron.** Run `php /path/to/index.php chaincli cron` every five minutes. It
-   prints nothing unless something is wrong, so give cron a real email
-   address. Each run:
-   - closes expired USDT payment windows;
-   - cancels online orders left unpaid past `unpaid_order_cancel_hours`;
-   - scans for USDT deposits while the address pool is in use;
-   - does housekeeping.
-7. **Make it yours** in *Back office → Settings*: store name, logo, colours,
-   contact details, currency and tax, payment methods, checkout, POS and
-   receipt text. Then add categories, products, shipping zones and a register.
+## Running it
 
-Optional:
+Requirements: PHP 8.2 with `mysqli`, `mbstring`, `fileinfo` and `gd`;
+MariaDB 10.2.1+ or MySQL 8.0.16+ (the schema uses CHECK constraints); Apache
+with `mod_rewrite`; Node 18+ only to build the guide or run the tests.
 
-- **Email.** Fill in the SMTP settings in `app.php` (section M) and set
-  `GP_SMTP_PASSWORD`. Settings has a button that sends a test email.
-- **USDT.** In *Back office → USDT*, set the rate and add receiving addresses
-  you control. The chain facts live in `application/config/chains.php`; the
-  default is BSC mainnet, and `CHAIN_RPC_URL` overrides the RPC endpoint.
-  Sending USDT refunds from the back office is not switched on yet.
-- **Web push.** Put VAPID keys in `secrets.php`, then turn on
-  *Settings → Web push notifications*.
-- **Android app.** See `capacitor/` and `HANDOVER.md`.
+```bash
+# 1. the database
+mysql -u root -e "CREATE DATABASE accounting CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root accounting < SCHEMA.sql
 
-## Command line
+# 2. the secrets
+cp application/config/secrets.example.php application/config/secrets.php
+#    fill in the database user and password, a long GP_JWT_SECRET,
+#    and a GP_SETUP_KEY for the first run
 
-| Command | |
-|---|---|
-| `php index.php chaincli cron` | the scheduled job (see Install) |
-| `php index.php chaincli health` | exits 1 if the USDT scan has gone stale |
-| `php index.php chaincli status` | chain, RPC, cursor and address pool at a glance |
-| `php index.php chaincli shop` | cron's shop jobs on their own, with no chain access |
-| `php index.php tools create_admin <email>` | create an administrator, or promote an existing user |
-| `php index.php tools set_pin <email> <pin>` | set a staff member's register PIN |
-| `php index.php tools cache` | rebuild the shell's branding cache |
-| `php index.php tools seed_demo` | load a demo catalogue (development only) |
+# 3. open the site and follow the setup screen
+```
 
-## Layout
+The setup screen answers only while there is no user; after the first
+administrator exists it refuses everybody. See
+[docs/guide/02-first-time-setup.md](docs/guide/02-first-time-setup.md).
 
-    index.html, sw.js   the app shell and the service worker
-                        (bump CACHE_VERSION in sw.js on every front-end change)
-    css/app.css         the design system
-    js/                 ES modules: router, api, store, cart, pricing (mirrors Pricing_lib), POS, admin
-    pages/              one HTML fragment per screen; data-module → js/<name>.js
-    icons/              app icons (capacitor/scripts/make-icons.mjs redraws them)
-    application/        CodeIgniter: controllers/ (the API), models/, libraries/, helpers/, config/
-    SCHEMA.sql          the whole database
-    capacitor/          the Android app (see HANDOVER.md)
-    tests/api/          end-to-end API suites, for local development
+### The scheduled job
 
-More detail is in `HANDOVER.md` (running it, and what is and is not done) and
-in `PLAN.md` (the decisions and the design).
+Every fifteen minutes:
+
+```bash
+php /path/to/accounting/index.php tools cron
+```
+
+It drafts the recurring saved entries that are due and clears out old
+rate-limit rows, expired tokens, spent reset links and long-read
+notifications. The audit log is never pruned.
+
+### The command line
+
+```bash
+php index.php tools                                   what there is
+php index.php tools create_admin <email> [password]   create or promote an administrator
+php index.php tools create_user <email> <role> [password]
+php index.php tools cache                             rebuild the sign-in page's branding cache
+php index.php tools cron                              the scheduled job
+php index.php tools seed_demo                         a demo company (development only, empty database)
+php index.php tools trial_balance [date] [kind]       print a trial balance
+php index.php maildiag <address>                      check the mail settings
+```
+
+## The user's guide
+
+Sixteen chapters, step by step, in [docs/guide/](docs/guide/). They are also
+the Help screen inside the app: after changing them, rebuild the file the app
+reads.
+
+```bash
+node docs/build-guide.mjs        # docs/guide/*.md → help/guide.json
+```
+
+## The tests
+
+End-to-end suites against a throwaway database: see
+[tests/README.md](tests/README.md). They cover the ledger, the statements, the
+year-end, receivables and payables, fixed assets, attachments, imports, the
+security fixes and the static module check.
+
+## How the code is laid out
+
+```
+application/
+  controllers/      one per resource; guards, then the model, then json_response
+  models/           the rules: Journal_model is the only way into the ledger
+  libraries/        Statement_lib, Analysis_lib, Books_lib, Integrity_lib, Depreciation_lib…
+  helpers/          api_helper (guards, envelope, audit), shop_helper (money, sequences), report_helper
+  config/routes/    one route file per module, included by config/routes.php
+  core/             the JSON error handlers
+css/app.css         one stylesheet, tokens first
+js/                 one ES module per screen: mount(root, ctx)
+pages/              one HTML fragment per screen, named by its module
+docs/guide/         the user's guide (source of truth)
+tests/              the end-to-end suites
+SCHEMA.sql          the whole database, with the reasoning in its comments
+PLAN.md             what was decided and why
+```
+
+## Conventions
+
+- **Money is integer centavos** everywhere — in PHP, in the database, in JSON.
+  Rates are basis points. No floats touch money.
+- **Dates are `YYYY-MM-DD`**; timestamps are UTC and shown in the company's
+  time zone.
+- **Every API answer is `{status, data, message}`**; `message` is written for
+  the person reading it.
+- **Every write is audited** in the same transaction as the change.
+- Work the scheduled job or the command line did is recorded as **System**.
