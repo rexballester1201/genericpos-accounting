@@ -48,7 +48,7 @@ class Audit extends CI_Controller
         $items = array_map(function ($r) {
             $j = $r['detail'] !== NULL ? json_decode($r['detail'], TRUE) : NULL;
             return [
-                'id' => (int) $r['id'], 'at' => $r['occurred_at'], 'who' => $r['full_name'] ?: ($r['username'] ?: '#' . (int) $r['admin_id']),
+                'id' => (int) $r['id'], 'at' => $r['occurred_at'], 'who' => (int) $r['admin_id'] === 0 ? 'System' : ($r['full_name'] ?: ($r['username'] ?: '#' . (int) $r['admin_id'])),
                 'role' => $r['role'], 'action' => $r['action'], 'target_type' => $r['target_type'],
                 'target_id' => $r['target_id'] !== NULL ? (int) $r['target_id'] : NULL,
                 'detail' => is_array($j) ? $j : $r['detail'], 'ip' => $r['ip_address'],

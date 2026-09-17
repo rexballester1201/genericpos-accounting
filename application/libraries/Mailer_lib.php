@@ -358,7 +358,7 @@ class Mailer_lib
         $mins = max(1, (int) round($ttl_s / 60));
         $app  = trim((string) $this->CI->config->item('store_name'))
             ?: (trim((string) $this->CI->config->item('app_name')) ?: 'our store');
-        $sup  = trim((string) $this->CI->config->item('support_email'));
+        $sup  = $this->_support_address();
 
         $subject = 'Reset your ' . $app . ' password';
 
@@ -415,7 +415,7 @@ class Mailer_lib
     {
         $app = trim((string) $this->CI->config->item('store_name'))
             ?: (trim((string) $this->CI->config->item('app_name')) ?: 'our store');
-        $sup = trim((string) $this->CI->config->item('support_email'));
+        $sup = $this->_support_address();
 
         $subject = 'Your ' . $app . ' password was changed';
 
@@ -449,6 +449,62 @@ class Mailer_lib
     }
 
     /**
+     * "The email address on your account was changed" — sent to the OLD address.
+     *
+     * NOTE: A SECURITY CONTROL, like send_password_changed(): whoever moves an
+     * account to their own address can reset its password from there, so the
+     * owner hears about it at the address they still control. No link, for the
+     * same reason; the new address is masked, so the notice itself leaks nothing.
+     */
+    public function send_email_changed($to, $username, $new_email, $when_utc, $ip = NULL)
+    {
+        $app = trim((string) $this->CI->config->item('store_name'))
+            ?: (trim((string) $this->CI->config->item('app_name')) ?: 'our');
+        $sup = $this->_support_address();
+        $new = $this->_mask_email($new_email);
+        $who = ($username !== '' && $username !== NULL) ? ' (' . $username . ')' : '';
+
+        $subject = 'The email address on your ' . $app . ' account was changed';
+
+        $text = "The email address on your {$app} account{$who} was changed to {$new}.\r\n\r\n"
+              . "When: {$when_utc} UTC\r\n"
+              . ($ip ? "Request address: {$ip}\r\n" : '')
+              . "\r\nIf this was you, nothing further is needed.\r\n\r\n"
+              . 'If it was NOT you, act now: someone else has access to your account'
+              . ($sup !== '' ? ". Contact {$sup} immediately.\r\n" : ".\r\n");
+
+        $html = '<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;'
+              . 'font-size:15px;line-height:1.55;color:#2A2118;max-width:560px">'
+              . '<p>The email address on your ' . $this->_e($app) . ' account' . $this->_e($who)
+              . ' was changed to ' . $this->_e($new) . '.</p>'
+              . '<p style="color:#6B5F52">When: ' . $this->_e($when_utc) . ' UTC'
+              . ($ip ? '<br>Request address: ' . $this->_e($ip) : '') . '</p>'
+              . '<p>If this was you, nothing further is needed.</p>'
+              . '<p><strong>If it was not you, act now</strong> - someone else has access to your account.'
+              . ($sup !== '' ? ' Contact ' . $this->_e($sup) . ' immediately.' : '')
+              . '</p>'
+              . '</div>';
+
+        return $this->send($to, $subject, $text, $html);
+    }
+
+    /** Where people are told to write: support_email when it is set, otherwise the company's own address. */
+    private function _support_address()
+    {
+        return trim((string) $this->CI->config->item('support_email'))
+            ?: trim((string) $this->CI->config->item('store_email'));
+    }
+
+    /** j•••@example.com — enough for the owner to recognise, nothing for anyone else. */
+    private function _mask_email($email)
+    {
+        $email = (string) $email;
+        $at    = strrpos($email, '@');
+        if ($at === FALSE || $at < 1) return '•••';
+        return mb_substr($email, 0, 1) . '•••' . substr($email, $at);
+    }
+
+    /**
      * Confirm an email address.
      *
      * NOTE: this link only CONFIRMS an address — it grants no access and sets
@@ -460,7 +516,7 @@ class Mailer_lib
         $hours = max(1, (int) round($ttl_s / 3600));
         $app   = trim((string) $this->CI->config->item('store_name'))
             ?: (trim((string) $this->CI->config->item('app_name')) ?: 'our store');
-        $sup   = trim((string) $this->CI->config->item('support_email'));
+        $sup   = $this->_support_address();
 
         $subject = 'Confirm your ' . $app . ' email address';
 

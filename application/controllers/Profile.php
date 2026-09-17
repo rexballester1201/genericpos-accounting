@@ -64,13 +64,45 @@ class Profile extends CI_Controller
         }
         if ( ! $fields) return json_error('Nothing to update.', 400);
 
+        /* A new email address is a new way to reset the password, so moving it
+           takes the current password: a stolen access token alone must not be
+           enough to take the account over. The old address is told. A wrong
+           password here feeds the lockout, as on the password screen. */
+        $user      = $this->users->find_by_id($user_id);
+        if ( ! $user) return json_error('Account not found.', 404);
+        $old_email = mb_strtolower(trim((string) $user['email']));
+        $new_email = array_key_exists('email', $fields) ? mb_strtolower(trim((string) $fields['email'])) : $old_email;
+        if ($new_email !== $old_email && ! empty($user['password_hash'])) {
+            $scope = 'acct:' . $user_id;
+            if ($wait = $this->users->lockout_remaining($scope)) {
+                $mins = max(1, (int) ceil($wait / 60));
+                $this->output->set_header('Retry-After: ' . (int) $wait);
+                return json_error('Too many incorrect password attempts. Try again in ' . $mins . ' minute' . ($mins === 1 ? '' : 's') . '.', 429);
+            }
+            $pw = (string) ($in['current_password'] ?? '');
+            if ($pw === '') return json_invalid(['current_password' => 'Enter your current password to change your email address.']);
+            if ( ! $this->users->verify_password($user, $pw)) {
+                $this->users->record_failure($scope);
+                return json_invalid(['current_password' => 'That password is not correct.']);
+            }
+            $this->users->clear_failures($scope);
+        }
+
         $r = $this->users->update_profile($user_id, $fields, $this->input->ip_address());
         if ( ! $r['ok']) return json_invalid($r['errors']);
 
-        return json_response([
+        $moved = in_array('email', $r['changed'], TRUE);
+        if ($moved) log_admin_action($claims, 'profile.email_change', 'user', $user_id, ['from' => $old_email, 'to' => $new_email]);
+
+        json_response_then_continue([
             'user'    => $this->users->public_fields($this->users->find_by_id($user_id)),
             'changed' => $r['changed'],
         ], $r['changed'] ? 'Profile updated' : 'No changes to save');
+
+        if ($moved && $old_email !== '' && $this->config->item('password_change_notify')) {
+            $this->load->library('Mailer_lib', NULL, 'mailer');
+            $this->mailer->send_email_changed($old_email, $user['username'], $new_email, date('Y-m-d H:i:s'), $this->input->ip_address());
+        }
     }
 
     /**

@@ -518,10 +518,15 @@ if ( ! function_exists('sanitise_int'))
 
 if ( ! function_exists('log_admin_action'))
 {
+    /** Who did it when nobody signed in did: the command line, the scheduled job. */
+    defined('GP_SYSTEM_ACTOR') OR define('GP_SYSTEM_ACTOR', ['user_id' => 0, 'system' => TRUE]);
+
     /**
      * One immutable row in gp_admin_audit_log. Every staff mutation calls it.
      *
-     * @param array             $actor        claims from a *_check() guard, or ['user_id' => id]
+     * @param array             $actor        claims from a *_check() guard, or ['user_id' => id], or
+     *                                        GP_SYSTEM_ACTOR for work nobody signed in did (the
+     *                                        command line, the scheduled job) — recorded as admin_id 0
      * @param string            $action       'journal.post', 'period.close' …
      * @param string|null       $target_type
      * @param int|null          $target_id
@@ -533,7 +538,7 @@ if ( ! function_exists('log_admin_action'))
         $CI->load->database();
 
         $admin_id = isset($actor['user_id']) ? (int) $actor['user_id'] : 0;
-        if ($admin_id === 0) {
+        if ($admin_id === 0 && empty($actor['system'])) {
             log_message('error', '[audit] no user_id for action ' . $action . ' — not written.');
             return FALSE;
         }

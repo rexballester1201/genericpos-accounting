@@ -167,6 +167,16 @@ async function refreshSession() {
         return true;
       }
       if (r.status === 401 || r.status === 400) {
+        /* The server spends a refresh token once. Another tab may have used
+           this one a moment ago and stored the new session: if the stored
+           session has moved on, take it instead of signing everyone out. */
+        let stored = null;
+        try { stored = await kvGet('session'); } catch { stored = null; }
+        if (stored && stored.access_token && stored.refresh_token && stored.refresh_token !== s.refresh_token) {
+          _session = stored;
+          _loaded = true;
+          return true;
+        }
         await clearSession();
         emitLogout('expired');
       }

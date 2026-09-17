@@ -18,9 +18,10 @@ RewriteEngine On
 # log-only mail transport permitted). Everywhere else CI_ENV is unset and
 # index.php runs in production mode.
 #
-# NOTE: this trusts the Host header. On a server that answers requests for ANY
-# host name, a request sent with "Host: localhost" would switch development
-# mode on — serve production from a virtual host bound to its real name only.
+# NOTE: the Host header is the client's word. index.php therefore also needs
+# the request to come FROM this machine (127.0.0.1 or ::1) before it runs in
+# development; "Host: localhost" sent from elsewhere gets production. Still,
+# serve production from a virtual host bound to its real name only.
 # -----------------------------------------------------------------------------
 SetEnvIf Host "^(localhost|127\.0\.0\.1)(:[0-9]+)?$" CI_ENV=development
 

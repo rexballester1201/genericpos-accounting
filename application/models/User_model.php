@@ -15,6 +15,9 @@ class User_model extends CI_Model
     const TABLE          = 'gp_users';
     const TABLE_ATTEMPTS = 'gp_login_attempts';
     const TABLE_REFRESH  = 'gp_refresh_tokens';
+
+    /** A spent refresh token used again within this many seconds is a race between tabs, not a replay. */
+    const REFRESH_REUSE_GRACE_S = 60;
     const T_UNAME_HISTORY = 'gp_username_history';
 
     /** Lowest to highest; see role_rank() in api_helper. */
@@ -749,16 +752,54 @@ class User_model extends CI_Model
         return $row ? $this->find_by_id($row['user_id']) : NULL;
     }
 
-    public function revoke_refresh_token($plain)
+    /**
+     * Spend a refresh token — the one step of a refresh that must happen once.
+     *
+     * The UPDATE that marks it spent is the lock: of two requests racing with
+     * the same token only one changes the row, and only that one is given a new
+     * session. A spent token is KEPT (revoked_at set) until it expires, so a
+     * later replay is recognised: somebody kept a copy, and every session of
+     * that account ends. A second use within REFRESH_REUSE_GRACE_S of the first
+     * is two tabs racing, not a thief, and is merely refused.
+     *
+     * Tokens ended any other way (sign-out, a password change, a disabled
+     * account) are DELETED, so presenting one of those is just "expired".
+     *
+     * @return array ['user' => row|NULL, 'reuse' => bool]
+     */
+    public function consume_refresh_token($plain)
     {
-        $this->db->where('token_hash', hash('sha256', (string) $plain))
-                 ->update(self::TABLE_REFRESH, ['revoked_at' => date('Y-m-d H:i:s')]);
+        if ( ! is_string($plain) || $plain === '') return ['user' => NULL, 'reuse' => FALSE];
+
+        $now = date('Y-m-d H:i:s');
+        $row = $this->db->get_where(self::TABLE_REFRESH, ['token_hash' => hash('sha256', $plain)], 1)->row_array();
+        if ( ! $row || $row['expires_at'] <= $now) return ['user' => NULL, 'reuse' => FALSE];
+
+        if ($row['revoked_at'] === NULL) {
+            $this->db->where('id', (int) $row['id'])->where('revoked_at IS NULL', NULL, FALSE)
+                     ->update(self::TABLE_REFRESH, ['revoked_at' => $now]);
+            return $this->db->affected_rows() === 1
+                ? ['user' => $this->find_by_id($row['user_id']), 'reuse' => FALSE]
+                : ['user' => NULL, 'reuse' => FALSE];
+        }
+
+        if (strtotime($row['revoked_at'] . ' UTC') < time() - self::REFRESH_REUSE_GRACE_S) {
+            $this->revoke_all_refresh_tokens((int) $row['user_id']);
+            return ['user' => $this->find_by_id($row['user_id']), 'reuse' => TRUE];
+        }
+        return ['user' => NULL, 'reuse' => FALSE];
     }
 
+    /** Sign-out: this device's session ends. */
+    public function revoke_refresh_token($plain)
+    {
+        $this->db->where('token_hash', hash('sha256', (string) $plain))->delete(self::TABLE_REFRESH);
+    }
+
+    /** Every session of the account ends (password change, disabled account, a replayed token). */
     public function revoke_all_refresh_tokens($user_id)
     {
-        $this->db->where('user_id', (int) $user_id)->where('revoked_at IS NULL', NULL, FALSE)
-                 ->update(self::TABLE_REFRESH, ['revoked_at' => date('Y-m-d H:i:s')]);
+        $this->db->where('user_id', (int) $user_id)->delete(self::TABLE_REFRESH);
     }
 
     // =========================================================================

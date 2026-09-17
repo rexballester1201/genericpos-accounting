@@ -17,7 +17,7 @@
 
 import { api, updateUser, setSession, logout } from './api.js';
 import { assetUrl, fmtDate, setThemeOverride } from './store.js';
-import { qs, qsa, esc, formValues, formError, setErrors, clearErrors, busy, toast, confirmDialog } from './ui.js';
+import { qs, qsa, esc, formValues, formError, setErrors, clearErrors, busy, toast, confirmDialog, promptDialog } from './ui.js';
 import { mountPhoneFields, phoneValue } from './phone-field.js';
 import { ROLE_LABEL } from './chrome.js';
 
@@ -86,6 +86,22 @@ export async function mount(root, ctx) {
 
     const body = { full_name: v.full_name.trim(), email: v.email.trim(), phone: phoneValue(profileForm.elements.phone) };
     if (!profileForm.elements.username.disabled) body.username = v.username.trim();
+
+    /* Moving the account to another email address takes the current
+       password: that address could reset it. */
+    if (body.email.toLowerCase() !== String(me.email || '').toLowerCase() && me.has_password !== false) {
+      const pw = await promptDialog({
+        title: 'Confirm it is you',
+        label: 'Current password',
+        hint: 'Your old address will be told about the change.',
+        type: 'password',
+        confirmLabel: 'Change email',
+        required: true,
+        maxlength: 200,
+      });
+      if (pw === null) return;
+      body.current_password = pw;
+    }
 
     const btn = qs('button[type="submit"]', profileForm);
     busy(btn, true);

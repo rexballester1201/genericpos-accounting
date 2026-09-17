@@ -173,7 +173,18 @@ class Auth extends CI_Controller
         $token = (string) ($in['refresh_token'] ?? '');
         if ($token === '') return json_error('Missing refresh token.', 400);
 
-        $user = $this->users->user_for_refresh_token($token);
+        /* Rotation: the presented token is spent here, atomically — two
+           requests with the same token cannot both get a session. */
+        $spent = $this->users->consume_refresh_token($token);
+        $user  = $spent['user'];
+
+        if ($spent['reuse']) {
+            /* A token already spent, replayed: someone kept a copy of it. Every
+               session of the account has just ended; the owner signs in again
+               and the copy is worthless. */
+            log_admin_action(GP_SYSTEM_ACTOR, 'auth.refresh_reuse', 'user', (int) $user['id'], ['ip' => $this->input->ip_address()]);
+            return json_error('Your session was ended for safety because a sign-in token was used twice. Please sign in again.', 401);
+        }
         if ($user === NULL || $user['account_state'] !== 'active') {
             return json_error('Session expired. Please sign in again.', 401);
         }
@@ -181,9 +192,6 @@ class Auth extends CI_Controller
         /* Metered AFTER resolution, keyed on the user — metering garbage tokens
            by IP would let anyone burn a real customer's budget. */
         rate_limit((int) $user['id'], 'token_refresh');
-
-        /* Rotation: the presented token is spent. */
-        $this->users->revoke_refresh_token($token);
 
         return json_response($this->_session_payload($user, FALSE), 'Session refreshed');
     }

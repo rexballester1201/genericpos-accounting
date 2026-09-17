@@ -54,7 +54,19 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'production');
+	/* .htaccess sets CI_ENV=development for a request addressed to localhost.
+	   The Host header is only the client's word, so development mode (errors
+	   on screen, the log-only mail transport) also needs the request to come
+	   FROM this machine; a request that merely claims "Host: localhost" from
+	   elsewhere runs in production. The command line is unaffected. */
+	$gp_env = isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'production';
+	if ($gp_env === 'development' && PHP_SAPI !== 'cli'
+		&& ! in_array((string) (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : ''), array('127.0.0.1', '::1', '::ffff:127.0.0.1'), TRUE))
+	{
+		$gp_env = 'production';
+	}
+	define('ENVIRONMENT', $gp_env);
+	unset($gp_env);
 
 /*
  *---------------------------------------------------------------
@@ -348,4 +360,11 @@ switch (ENVIRONMENT)
  *
  * And away we go...
  */
+/*
+ * Last-resort error handlers that answer /api/ paths in the JSON envelope
+ * instead of an HTML page. They must exist before CodeIgniter defines its
+ * own (system/core/Common.php only defines what is not defined yet).
+ */
+require_once APPPATH.'core/Api_errors.php';
+
 require_once BASEPATH.'core/CodeIgniter.php';

@@ -113,9 +113,12 @@ $db['default'] = array(
 	| duplicate-username signup in development showed up as a JSON parse error
 	| in the browser rather than as the 422 the code carefully produces.
 	|
-	| With it FALSE, a failing query returns FALSE and leaves the reason in
-	| $this->db->error() — which is what User_model::create() inspects to tell
-	| a UNIQUE violation apart from a real fault. Errors are still logged by CI.
+	| NOTE: on PHP 8.2 mysqli THROWS on a failing query whatever this says, so
+	| the models catch Throwable around their transactions and turn it into a
+	| message; application/core/Api_errors.php catches whatever escapes and
+	| answers /api/ paths in the JSON envelope. $this->db->error() still holds
+	| the reason, which is what User_model::create() reads to tell a UNIQUE
+	| violation apart from a real fault.
 	*/
 	'db_debug' => FALSE,
 	'cache_on' => FALSE,
@@ -126,7 +129,14 @@ $db['default'] = array(
 	'swap_pre' => '',
 	'encrypt' => FALSE,
 	'compress' => FALSE,
-	'stricton' => FALSE,
+	/*
+	| TRUE: the session runs in MySQL's strict mode, so the database refuses a
+	| value that does not fit instead of quietly changing it. Without it an
+	| unknown ENUM is stored as '' and text longer than the column is cut —
+	| both of which turn a caught bug into a wrong figure nobody notices.
+	| The application validates everything itself; this is the second line.
+	*/
+	'stricton' => TRUE,
 	'failover' => array(),
 	'save_queries' => TRUE
 );

@@ -60,18 +60,10 @@ $config['app_name']    = 'GenericPOS Accounting';
 $config['app_version'] = '1.0.0';
 
 /**
- * Canonical public origin for links in outbound email, CLI and cron.
- * Empty = use base_url(), which resolves through the host allow-list in
- * config.php.
- */
-$config['app_base_url'] = '';
-
-/**
  * NOTE: NO SELF SIGN-UP. Every account is created by an administrator
  * (Settings → Users). A ledger has no public audience.
  */
 $config['feature_registration'] = FALSE;
-$config['feature_email_auth']   = TRUE;
 
 /** Safe mode: expensive endpoints degrade instead of erroring. */
 $config['safe_mode'] = FALSE;
@@ -123,7 +115,6 @@ $config['login_lockout_s']    = 900;
 $config['email_verify_expiry_s']   = 86400;
 $config['password_reset_expiry_s'] = 3600;
 $config['password_change_notify']  = TRUE;
-$config['email_verify_required']   = FALSE;
 
 /** Days between username changes. 0 disables the cooldown. */
 $config['username_change_cooldown_days'] = 30;
@@ -153,7 +144,6 @@ $config['setup_enabled'] = TRUE;
 $config['rate_limit_window_s'] = 3600;
 
 // Auth & account
-$config['rate_register']           = 5;     // per IP (registration is off; kept for the shared code)
 $config['rate_password_reset']     = 3;     // per account (silently dropped, see Auth)
 $config['rate_password_reset_ip']  = 12;    // per IP
 $config['rate_username_check']     = 60;    // per IP
@@ -334,6 +324,14 @@ $config['coop_cdf_pct']            = 3;
 $config['coop_optional_fund_pct']  = 7;
 $config['coop_isc_pct']            = 30;   // of the REMAINDER; the patronage refund takes the rest
 
+/* What the co-op measures its indicators against (Settings → Co-operative).
+   These are the usual CDA figures; a co-op sets its own. 0 hides the mark. */
+$config['coop_bench_par_max']           = 5;
+$config['coop_bench_allowance_min']     = 35;
+$config['coop_bench_share_capital_min'] = 35;
+$config['coop_bench_statutory_min']     = 10;
+$config['coop_bench_cost_max']          = 30;
+
 $config['acct_coop_reserve_fund']      = '';
 $config['acct_coop_cetf']              = '';
 $config['acct_coop_cdf']               = '';
@@ -379,6 +377,9 @@ $config['mail_allow_log_transport'] = (ENVIRONMENT === 'development');
 
 $config['mail_from_email'] = getenv('GP_MAIL_FROM') ?: 'noreply@example.com';
 $config['mail_from_name']  = '';    // empty = store_name
+
+/** Where password and email notices tell people to write. Empty = the company's own address (Settings → Company). */
+$config['support_email'] = '';
 $config['mail_reply_to']   = '';    // empty = store_email
 
 /** SMTP. The PASSWORD comes from GP_SMTP_PASSWORD in secrets.php. */
@@ -406,12 +407,6 @@ $config['notify_page_size']     = 20;
 $config['notify_approvals'] = TRUE;
 
 
-// =============================================================================
-// H — CACHE TTLs   (mirrored by hand in sw.js — change both)
-// =============================================================================
-$config['cache_ttl_static'] = 604800;   // 7 days — versioned shell assets
-$config['cache_ttl_store']  = 3600;     // 1 h  — company config
-
 
 // =============================================================================
 // R — RETENTION & CRON
@@ -429,16 +424,11 @@ $config['retain_audit_log_days']      = 3650;
 $config['retain_password_reset_days'] = 180;
 $config['retain_notification_days']   = 365;
 
-$config['cron_enabled']    = TRUE;
-$config['cron_lock_ttl_s'] = 300;
 
 
 // =============================================================================
 // U — UPLOADS
 // =============================================================================
-/** The logo and profile pictures (Imaging_lib re-encodes through GD when available). */
-$config['upload_image_max_bytes'] = 8388608;   // 8 MB
-
 /** Attachments on journals and documents: scanned receipts, invoices, contracts. */
 $config['attachment_max_bytes'] = 10485760;    // 10 MB
 $config['attachment_types']     = 'pdf,jpg,jpeg,png,webp';
