@@ -10,6 +10,13 @@
  * disbursements books, and the sales and purchase books. Credits are set in
  * from the debits, as a journal is written by hand. A page shows its own
  * total and the period's; the CSV file holds the whole period.
+ *
+ * IN COLUMNS: the cash receipts, cash disbursements, sales and purchase books
+ * as they are kept by hand — a column for each account that recurs (cash,
+ * receivables, sales, VAT…) and a sundry column (Books_lib). The whole period
+ * is laid out in printed pages of report_rows_per_page lines, each ending with
+ * its page total and the total carried forward, each after the first opening
+ * with the total brought forward.
  */
 
 import { api } from './api.js';
@@ -22,6 +29,7 @@ const BOOKS = [['', 'All books', 'Journal Entries, All Books'], ['general', 'Gen
   ['cash_receipts', 'Cash receipts book', 'Cash Receipts Book'], ['cash_disbursements', 'Cash disbursements book', 'Cash Disbursements Book'],
   ['sales', 'Sales book', 'Sales Book'], ['purchases', 'Purchase book', 'Purchase Book'], ['adjusting', 'Adjusting entries', 'Adjusting Entries'],
   ['closing', 'Closing entries', 'Closing Entries'], ['opening', 'Opening balances', 'Opening Balances']];
+const COLUMNAR = ['cash_receipts', 'cash_disbursements', 'sales', 'purchases'];
 
 export async function mount(root, ctx) {
   const q = ctx.query;
@@ -31,8 +39,10 @@ export async function mount(root, ctx) {
     from: YMD.test(q.get('from') || '') ? q.get('from') : today.slice(0, 8) + '01',
     to: YMD.test(q.get('to') || '') ? q.get('to') : today,
     per_page: ['50', '200', '500'].includes(q.get('per_page')) ? q.get('per_page') : '50',
+    layout: q.get('layout') === 'columnar' ? 'columnar' : 'journal',
     page: 1,
   };
+  const columnar = () => state.layout === 'columnar' && COLUMNAR.includes(state.book);
   const form = qs('[data-controls]', root);
   const f = form.elements;
   const sheet = qs('[data-sheet]', root);
@@ -48,7 +58,82 @@ export async function mount(root, ctx) {
   f.from.value = state.from;
   f.to.value = state.to;
   f.per_page.value = state.per_page;
+  f.layout.value = state.layout;
   f.preset.value = presetFor(list, state.from, state.to);
+  const paintControls = () => {
+    f.layout.disabled = !COLUMNAR.includes(state.book);
+    f.layout.title = f.layout.disabled ? 'Columns are for the cash receipts, cash disbursements, sales and purchase books' : '';
+    f.per_page.hidden = columnar();
+  };
+  paintControls();
+
+  /* One entry is one row, however many sundry lines it has; a page never
+     splits an entry. */
+  const renderColumnar = (d) => {
+    ctx.setTitle(d.title);
+    const cols = d.columns;
+    const per = d.rows_per_page || 40;
+    const pages = [];
+    let cur = [];
+    let used = 0;
+    d.rows.forEach((r) => {
+      const h = Math.max(1, r.sundry.length);
+      if (cur.length && used + h > per) { pages.push(cur); cur = []; used = 0; }
+      cur.push(r);
+      used += h;
+    });
+    if (cur.length || !pages.length) pages.push(cur);
+
+    const zero = () => ({ cols: Object.fromEntries(cols.map((c) => [c.key, 0])), sdr: 0, scr: 0 });
+    const add = (t, r) => { cols.forEach((c) => { t.cols[c.key] += r.cols[c.key]; }); r.sundry.forEach((s) => { t.sdr += s.debit_cents; t.scr += s.credit_cents; }); };
+    const totalRow = (label, t, cls) => '<tr class="' + cls + '"><td></td><td></td><td>' + esc(label) + '</td>'
+      + cols.map((c) => '<td class="n">' + amt(t.cols[c.key]) + '</td>').join('') + '<td></td><td class="n">' + amt(t.sdr) + '</td><td class="n">' + amt(t.scr) + '</td></tr>';
+    const head = '<thead><tr><th class="l">Date</th><th class="l">No.</th><th class="l">Particulars</th>'
+      + cols.map((c) => '<th>' + esc(c.label) + '<span class="sub">' + (c.side === 'dr' ? 'Debit' : 'Credit') + '</span></th>').join('')
+      + '<th class="l">Sundry account</th><th>Debit</th><th>Credit</th></tr></thead>';
+    const rowHtml = (r) => {
+      const n = Math.max(1, r.sundry.length);
+      let out = '';
+      for (let i = 0; i < n; i++) {
+        const s = r.sundry[i];
+        out += '<tr' + (i === 0 ? ' class="l-line"' : '') + '>'
+          + '<td class="d">' + (i ? '' : esc(fmtDay(r.date))) + '</td>'
+          + '<td class="d">' + (i ? '' : '<a class="code" href="journals/' + r.id + '">' + esc(r.journal_no) + '</a>') + '</td>'
+          + '<td>' + (i ? '' : esc(r.description) + ((r.reference || r.party) ? '<span class="sub">' + esc([r.reference, r.party].filter(Boolean).join(' · ')) + '</span>' : '')) + '</td>'
+          + cols.map((c) => '<td class="n">' + (i || !r.cols[c.key] ? '' : amt(r.cols[c.key])) + '</td>').join('')
+          + '<td>' + (s ? '<span class="code">' + esc(s.code) + '</span>' + esc(s.name) : '') + '</td>'
+          + '<td class="n">' + (s && s.debit_cents ? amt(s.debit_cents) : '') + '</td>'
+          + '<td class="n">' + (s && s.credit_cents ? amt(s.credit_cents) : '') + '</td></tr>';
+      }
+      return out;
+    };
+
+    const cum = zero();
+    const lh = d.letterhead || {};
+    const period = periodText(d.from, d.to);
+    let html = '';
+    pages.forEach((pg, i) => {
+      const bf = { cols: Object.assign({}, cum.cols), sdr: cum.sdr, scr: cum.scr };
+      const pt = zero();
+      pg.forEach((r) => { add(pt, r); add(cum, r); });
+      const last = i === pages.length - 1;
+      html += '<section class="book-page">'
+        + (i === 0 ? sheetHead(lh, d.title, [period, d.count + ' ' + (d.count === 1 ? 'entry' : 'entries')])
+          : '<div class="bp-head"><b>' + esc(lh.company || '') + '</b> · ' + esc(d.title) + ' · ' + esc(period) + '</div>')
+        + '<div class="table-wrap"><table class="stmt columnar">' + head + '<tbody>'
+        + (i > 0 ? totalRow('Brought forward', bf, 'l-total') : '')
+        + (pg.length ? pg.map(rowHtml).join('') : '<tr><td colspan="' + (6 + cols.length) + '">' + emptyState('book-open', 'Nothing posted in this book in the period', 'Choose another book or period.') + '</td></tr>')
+        + totalRow('Page total', pt, 'l-total')
+        + totalRow(last ? 'Total for the period' : 'Carried forward', cum, 'l-grand')
+        + '</tbody></table></div>'
+        + '<div class="bp-foot">Page ' + (i + 1) + ' of ' + pages.length + '</div></section>';
+    });
+    const warn = [];
+    if (d.truncated) warn.push('Showing the first ' + d.rows.length + ' of ' + d.count + ' entries. Choose a shorter period, or download the CSV for all of them.');
+    if (!d.totals.balanced) warn.push('The columns do not balance: debits ' + amt(d.totals.debit_cents) + ', credits ' + amt(d.totals.credit_cents) + '. Run the integrity check.');
+    qs('[data-sub]', root).textContent = period + ' · ' + d.count + ' ' + (d.count === 1 ? 'entry' : 'entries') + ' · ' + pages.length + ' page' + (pages.length === 1 ? '' : 's') + ' of ' + per + ' lines';
+    sheet.innerHTML = (warn.length ? '<div class="alert alert-warn no-print">' + warn.map(esc).join(' ') + '</div>' : '') + html + sheetFoot(lh);
+  };
 
   const title = () => (BOOKS.find((b) => b[0] === state.book) || BOOKS[0])[2];
 
@@ -86,9 +171,16 @@ export async function mount(root, ctx) {
   let seq = 0;
   const load = async () => {
     const my = ++seq;
-    syncQuery({ book: state.book, from: state.from, to: state.to, per_page: state.per_page === '50' ? '' : state.per_page });
+    syncQuery({ book: state.book, from: state.from, to: state.to, per_page: state.per_page === '50' ? '' : state.per_page, layout: columnar() ? 'columnar' : '' });
     sheet.classList.add('is-busy');
+    sheet.classList.toggle('is-wide', columnar());
+    const pagerEl = qs('[data-pager]', root);
     try {
+      if (columnar()) {
+        const d = await api.get('/reports/columnar-book', { book: state.book, from: state.from, to: state.to }, { signal: ctx.signal, timeout: 60000 });
+        if (my === seq) { pagerEl.hidden = true; renderColumnar(d); }
+        return;
+      }
       const d = await api.get('/reports/books', { book: state.book, from: state.from, to: state.to, page: state.page, per_page: state.per_page }, { signal: ctx.signal });
       if (my === seq) render(d);
     } catch (err) {
@@ -101,8 +193,9 @@ export async function mount(root, ctx) {
   form.addEventListener('submit', (e) => e.preventDefault());
   form.addEventListener('change', (e) => {
     const t = e.target;
-    if (t.name === 'book' || t.name === 'per_page') {
+    if (t.name === 'book' || t.name === 'per_page' || t.name === 'layout') {
       state[t.name] = t.value;
+      paintControls();
     } else if (t.name === 'preset') {
       const p = list.find((x) => x.key === t.value);
       if (!p) return;
@@ -121,8 +214,9 @@ export async function mount(root, ctx) {
     load();
   });
   qs('[data-print]', root).addEventListener('click', () => window.print());
-  qs('[data-csv]', root).addEventListener('click', (e) => exportCsv(e.currentTarget, '/reports/books', { book: state.book, from: state.from, to: state.to },
-    (state.book || 'all-books') + '-' + state.from + '-to-' + state.to + '.csv'));
+  qs('[data-csv]', root).addEventListener('click', (e) => (columnar()
+    ? exportCsv(e.currentTarget, '/reports/columnar-book', { book: state.book, from: state.from, to: state.to }, state.book + '-columnar-' + state.from + '-to-' + state.to + '.csv')
+    : exportCsv(e.currentTarget, '/reports/books', { book: state.book, from: state.from, to: state.to }, (state.book || 'all-books') + '-' + state.from + '-to-' + state.to + '.csv')));
 
   await load();
 }

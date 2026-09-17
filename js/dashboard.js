@@ -65,6 +65,14 @@ export async function mount(root, ctx) {
     alerts.push(['calendar', names + (q.periods_to_close.length === 1 ? ' has ended but is still open.' : ' have ended but are still open.'), 'periods', 'Periods']);
   }
   if (!fy) alerts.push(['warning', 'No fiscal year covers today, so nothing dated today can be posted.', 'periods', 'Fiscal years']);
+  if (canPrepare && (q.bank_statements || []).length) {
+    const un = q.bank_statements.reduce((n, s) => n + s.unmatched, 0);
+    alerts.push(['bank', plural(q.bank_statements.length, 'bank statement is', 'bank statements are') + ' not reconciled yet'
+      + (un ? ', with ' + plural(un, 'line', 'lines') + ' still unmatched.' : '.'), 'banking', 'Banking']);
+  }
+  if (canApprove && q.depreciation_due) {
+    alerts.push(['clock-counter-clockwise', 'Depreciation has not been run for ' + q.depreciation_due.name + '.', 'depreciation', 'Depreciation']);
+  }
   qs('[data-alerts]', root).innerHTML = alerts.map(([icon, text, href, label]) => '<div class="alert alert-neutral"><span data-icon="' + icon + '"></span>'
     + '<div class="grow">' + esc(text) + '</div><a class="btn btn-secondary btn-sm" href="' + href + '">' + esc(label) + '</a></div>').join('');
 
@@ -86,6 +94,11 @@ export async function mount(root, ctx) {
     work.push(['x-circle', 'Returned to you', q.my_rejected, 'journals?status=rejected&mine=1']);
   }
   if (canApprove) work.push(['check-square', 'Waiting for your approval', q.awaiting_approval, 'approvals']);
+  if (canPrepare) {
+    if (q.draft_sales) work.push(['receipt', 'Invoices and credit notes still drafts', q.draft_sales, 'invoices?status=draft']);
+    if (q.draft_purchases) work.push(['article', 'Bills and debit notes still drafts', q.draft_purchases, 'bills?status=draft']);
+    if (q.draft_settlements) work.push(['coins', 'Receipts and payments still drafts', q.draft_settlements, 'receipts?status=draft']);
+  }
   if (!work.length) {
     work.push(['scales', 'The trial balance', null, 'reports/trial-balance']);
     work.push(['list-numbers', 'The chart of accounts', null, 'accounts']);
@@ -94,6 +107,40 @@ export async function mount(root, ctx) {
   qs('[data-work]', root).innerHTML = work.map(([icon, text, n, href]) => '<a class="list-item" href="' + href + '">'
     + '<span data-icon="' + icon + '" data-icon-size="20" class="faint"></span><span class="grow">' + esc(text) + '</span>'
     + (n === null ? '<span data-icon="caret-right" data-icon-size="16" class="faint"></span>' : '<b class="num' + (n ? '' : ' faint') + '">' + n + '</b>') + '</a>').join('');
+
+  // ── how the books read: a few ratios, and the budget so far ─────────────
+  const ratios = d.ratios || [];
+  const health = qs('[data-health]', root);
+  if (ratios.length) {
+    const show = (r) => {
+      if (r.value === null || r.value === undefined) return '—';
+      if (r.unit === 'pct') return (r.value * 100).toFixed(1) + '%';
+      if (r.unit === 'days') return Math.round(r.value) + ' days';
+      if (r.unit === 'money') return money(r.value);
+      return Number(r.value).toFixed(2) + '×';
+    };
+    health.hidden = false;
+    qs('[data-ratios]', root).innerHTML = ratios.map((r) => {
+      const moved = r.value !== null && r.prior !== null && r.prior !== undefined && r.value !== r.prior;
+      const up = moved && r.value > r.prior;
+      const good = moved && (r.better === 'higher' ? up : r.better === 'lower' ? !up : null);
+      return '<div class="stat"><div class="stat-label">' + esc(r.label) + '</div>'
+        + '<div class="stat-value">' + esc(show(r)) + '</div>'
+        + '<div class="stat-sub">' + (moved
+          ? '<span class="' + (good === null ? '' : good ? 'ok-text' : 'warn-text') + '">' + (up ? '▲' : '▼') + ' from ' + esc(show({ unit: r.unit, value: r.prior })) + ' a year ago</span>'
+          : 'A year ago: ' + esc(show({ unit: r.unit, value: r.prior === undefined ? null : r.prior }))) + '</div></div>';
+    }).join('');
+  }
+  const b = d.budget;
+  if (b) {
+    const el = qs('[data-budget]', root);
+    const diff = y.net_cents - b.net_cents;
+    el.hidden = false;
+    el.innerHTML = 'Against the budget “' + esc(b.name) + '” for the year so far: revenue ' + money(y.revenue_cents) + ' against ' + money(b.revenue_cents)
+      + ', expenses ' + money(y.expense_cents) + ' against ' + money(b.expense_cents) + ', so the result is '
+      + '<b class="' + (diff >= 0 ? 'ok-text' : 'warn-text') + '">' + money(Math.abs(diff)) + (diff >= 0 ? ' better' : ' worse') + '</b> than planned. '
+      + '<a href="reports/budget-vs-actual">Budget vs actual</a>';
+  }
 
   // ── the latest postings ─────────────────────────────────────────────────
   qs('[data-recent]', root).innerHTML = d.recent.length

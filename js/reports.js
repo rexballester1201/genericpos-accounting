@@ -26,6 +26,24 @@ export function mount(root) {
       ['reports/general-ledger', 'rows', 'General ledger', 'One account\'s entries with a running balance, from the balance brought forward.'],
       ['reports/books', 'book-open', 'Books of accounts', 'The general journal, the cash receipts and disbursements books, and the sales and purchase books, entry by entry.'],
     ]],
+    ['Receivables and payables', [
+      ['reports/aging', 'hourglass', 'Aging', 'How old the open invoices and bills are, bucket by bucket, set against the control accounts.'],
+      ['reports/customer-statement', 'article', 'Statement of account', 'One customer\'s or supplier\'s charges, payments and balance over a period, ready to send.'],
+      ['reports/subsidiary-ledger', 'users', 'Subsidiary ledger', 'The receivables or payables control account, customer by customer and supplier by supplier.'],
+    ]],
+    ['Banking and fixed assets', [
+      ['reports/bank-reconciliation', 'bank', 'Bank reconciliation', 'The bank against the books: deposits in transit, outstanding cheques, and what the books do not have yet.'],
+      ['reports/lapsing-schedule', 'table', 'Lapsing schedule', 'Every asset\'s cost, depreciation and book value for the period, by category, tied to the ledger.'],
+      ['depreciation', 'clock-counter-clockwise', 'Depreciation runs', 'Each month\'s depreciation entry, and what it charged every asset.'],
+    ]],
+    ['Budgets and departments', [
+      ['reports/budget-vs-actual', 'sliders', 'Budget vs actual', 'The budget beside what actually happened, with the variance and whether it is favourable.'],
+      ['reports/department-income', 'buildings', 'Income by department', 'Each department in its own column, adding up to the company\'s ' + (coop ? 'statement of operations' : 'income statement') + '.'],
+    ]],
+    ['Checks', [
+      ['reports/worksheet', 'table', 'Worksheet', 'The ten-column worksheet: trial balance, adjustments, adjusted trial balance, and where each balance goes.'],
+      ['reports/integrity', 'shield-check', 'Integrity check', 'Whether the books still add up — balanced entries, numbers without gaps, ties to the control accounts. Accountants and administrators.'],
+    ]],
     ['Analysis', [
       ['reports/analysis', 'chart-bar', 'Financial analysis', 'Liquidity, solvency, profitability and efficiency ratios, each with its formula, beside the same date last year.'],
       ['reports/income-statement?pct=1', 'percent', 'Common-size income statement', 'Every line as a percentage of ' + (coop ? 'revenues' : 'revenue') + '.'],

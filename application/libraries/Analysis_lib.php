@@ -45,6 +45,19 @@ class Analysis_lib
         $this->S = $this->CI->statements;
     }
 
+    /**
+     * What a co-operative measures each indicator against (Settings →
+     * Co-operative). 'max' means "no more than", 'min' means "at least";
+     * a benchmark set to zero is left off the report.
+     */
+    const COOP_BENCHMARKS = [
+        'portfolio_at_risk'    => ['coop_bench_par_max', 'max'],
+        'allowance_cover'      => ['coop_bench_allowance_min', 'min'],
+        'share_capital_ratio'  => ['coop_bench_share_capital_min', 'min'],
+        'statutory_fund_ratio' => ['coop_bench_statutory_min', 'min'],
+        'cost_ratio'           => ['coop_bench_cost_max', 'max'],
+    ];
+
     public function ratios($as_of)
     {
         $coop = $this->S->is_coop();
@@ -55,14 +68,16 @@ class Analysis_lib
 
         $items = [];
         foreach ($this->_defs($coop) as $d) {
+            $value = $d['calc']($now);
             $items[] = [
-                'key'     => $d['key'],
-                'group'   => $d['group'],
-                'label'   => $d['label'],
-                'unit'    => $d['unit'],
-                'better'  => $d['better'],
-                'formula' => $d['formula'],
-                'value'   => $d['calc']($now),
+                'key'       => $d['key'],
+                'group'     => $d['group'],
+                'label'     => $d['label'],
+                'unit'      => $d['unit'],
+                'better'    => $d['better'],
+                'formula'   => $d['formula'],
+                'value'     => $value,
+                'benchmark' => $this->_benchmark($d['key'], $value),
                 'prior'   => $then ? $d['calc']($then) : NULL,
                 'inputs'  => array_map(function ($k) use ($now, $then, $labels) {
                     return ['label' => $labels[$k], 'cents' => $now['v'][$k], 'prior_cents' => $then ? $then['v'][$k] : NULL];
@@ -205,6 +220,23 @@ class Analysis_lib
     }
 
     /** The ratios, in the order PLAN.md §7 lists them. */
+    /** The mark a co-op indicator is measured against, and whether it is met. */
+    private function _benchmark($key, $value)
+    {
+        if ( ! isset(self::COOP_BENCHMARKS[$key])) return NULL;
+        list($setting, $dir) = self::COOP_BENCHMARKS[$key];
+        $pct = (float) shop_cfg($setting, 0);
+        if ($pct <= 0) return NULL;
+        $target = $pct / 100;
+        return [
+            'target' => $target,
+            'direction' => $dir,
+            'label' => ($dir === 'max' ? 'At most ' : 'At least ') . rtrim(rtrim(number_format($pct, 2), '0'), '.') . ' %',
+            'met' => $value === NULL ? NULL : ($dir === 'max' ? $value <= $target : $value >= $target),
+            'setting' => $setting,
+        ];
+    }
+
     private function _defs($coop)
     {
         $r = function ($a, $b) { return $b ? $a / $b : NULL; };

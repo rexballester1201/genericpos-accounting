@@ -271,7 +271,17 @@ class Statement_lib
         $opts = ['types' => self::PL, 'exclude_books' => ['closing']];
         if ($dept) $opts['department_id'] = (int) $dept;
         $dr = [];
-        foreach ($ranges as $r) $dr[] = $this->net($r['from'], $r['to'], $opts);
+        /* A range may carry its own department_id (a column per department);
+           'none' selects the lines no department was put on. */
+        foreach ($ranges as $r) {
+            $o = $opts;
+            if (array_key_exists('department_id', $r)) {
+                unset($o['department_id'], $o['no_department']);
+                if ($r['department_id'] === 'none') $o['no_department'] = TRUE;
+                elseif ((int) $r['department_id'] > 0) $o['department_id'] = (int) $r['department_id'];
+            }
+            $dr[] = $this->net($r['from'], $r['to'], $o);
+        }
         $cr = array_map(function ($m) { return self::_neg($m); }, $dr);
         $n  = count($ranges);
 
@@ -338,7 +348,12 @@ class Statement_lib
         foreach ($dr as $i => $m) $ties[] = -array_sum($m) === $net[$i];
 
         $cols = [];
-        foreach ($ranges as $r) $cols[] = ['from' => $r['from'], 'to' => $r['to'], 'total' => ! empty($r['total'])];
+        foreach ($ranges as $r) {
+            $col = ['from' => $r['from'], 'to' => $r['to'], 'total' => ! empty($r['total'])];
+            if (array_key_exists('department_id', $r)) $col['department_id'] = $r['department_id'];
+            if (isset($r['label'])) $col['label'] = (string) $r['label'];
+            $cols[] = $col;
+        }
 
         return [
             'title'      => $w['is'],
@@ -450,13 +465,34 @@ class Statement_lib
         if ( ! $cash) foreach ($this->acc as $id => $a) if ( ! $a['is_header'] && isset($a['tagset']['cash'])) $cash[] = $id;
         $is_cash = array_fill_keys($cash, TRUE);
 
+        /* A DISPOSAL IS ONE MOVEMENT, NOT SEVERAL. Selling an asset clears its
+           cost and its accumulated depreciation and leaves a gain or a loss in
+           net income, but the only cash that moved is what the buyer paid. So
+           the disposal's own lines are taken out of the account movements, the
+           gain or loss is taken back out of net income, and the proceeds are
+           shown where they belong: investing. The total is unchanged — the
+           lines of one entry add to zero — only where it sits. */
+        $disposal = [];
+        foreach ($this->CI->db->query(
+            "SELECT l.account_id, COALESCE(SUM(l.net_cents), 0) AS n FROM gp_ledger l
+               LEFT JOIN gp_journals o ON l.source = 'reversal' AND o.id = l.source_id
+              WHERE l.entry_date >= ? AND l.entry_date <= ? AND (l.source = 'disposal' OR o.source = 'disposal')
+              GROUP BY l.account_id", [$from, $to]
+        )->result_array() as $r) $disposal[(int) $r['account_id']] = (int) $r['n'];
+
+        $proceeds = 0;
+        foreach ($disposal as $id => $n) if (isset($is_cash[$id])) $proceeds += $n;
+
         $ni = 0;
+        $gain_loss = 0;
         $groups = ['depreciation' => [], 'operating' => [], 'investing' => [], 'financing' => []];
         foreach ($this->acc as $id => $a) {
             if ($a['is_header']) continue;
             $v = $flow[$id] ?? 0;
-            if (in_array($a['type'], self::PL, TRUE)) { $ni -= $v; continue; }
-            if (isset($is_cash[$id]) || $v === 0) continue;
+            if (in_array($a['type'], self::PL, TRUE)) { $ni -= $v; $gain_loss += $disposal[$id] ?? 0; continue; }
+            if (isset($is_cash[$id])) continue;
+            $v -= $disposal[$id] ?? 0;
+            if ($v === 0) continue;
             $class = $this->_cf_class($a);
             $key = $class === 'depreciation' ? 'all' : ((int) $levels === 0 ? $id : $this->_cf_group($id));
             $groups[$class][$key] = ($groups[$class][$key] ?? 0) - $v;
@@ -470,12 +506,20 @@ class Statement_lib
             $L[] = ['type' => 'computed', 'label' => 'Depreciation and amortization', 'indent' => 1, 'amounts' => [$d], 'strong' => FALSE];
             $op += $d;
         }
+        if ($gain_loss !== 0) {
+            $L[] = ['type' => 'computed', 'label' => 'Loss (gain) on the disposal of property and equipment', 'indent' => 1, 'amounts' => [$gain_loss], 'strong' => FALSE];
+            $op += $gain_loss;
+        }
         foreach ($groups['operating'] as $key => $v) { $L[] = $this->_cf_line($key, $v, TRUE); $op += $v; }
         $L[] = ['type' => 'total', 'label' => 'Net cash from (used in) operating activities', 'indent' => 0, 'amounts' => [$op]];
 
         $sum = ['investing' => 0, 'financing' => 0];
         foreach (['investing' => 'Cash flows from investing activities', 'financing' => 'Cash flows from financing activities'] as $k => $title) {
             $L[] = ['type' => 'heading', 'label' => $title, 'indent' => 0];
+            if ($k === 'investing' && $proceeds !== 0) {
+                $L[] = ['type' => 'computed', 'label' => 'Proceeds from the disposal of property and equipment', 'indent' => 1, 'amounts' => [$proceeds], 'strong' => FALSE];
+                $sum[$k] += $proceeds;
+            }
             foreach ($groups[$k] as $key => $v) { $L[] = $this->_cf_line($key, $v, FALSE); $sum[$k] += $v; }
             $L[] = ['type' => 'total', 'label' => 'Net cash from (used in) ' . $k . ' activities', 'indent' => 0, 'amounts' => [$sum[$k]]];
         }

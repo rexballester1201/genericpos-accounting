@@ -102,6 +102,67 @@ class Dashboard extends CI_Controller
               WHERE status = 'posted' ORDER BY approved_at DESC, id DESC LIMIT 8"
         )->result_array());
 
+        /* ── what the other parts of the office have waiting ──────────── */
+        $bank = array_map(function ($r) {
+            return ['id' => (int) $r['id'], 'bank' => $r['bank_name'] . ($r['account_last4'] ? ' ••••' . $r['account_last4'] : ''),
+                    'date' => $r['statement_date'], 'unmatched' => (int) $r['unmatched']];
+        }, $this->db->query(
+            "SELECT s.id, s.statement_date, b.bank_name, b.account_last4,
+                    (SELECT COUNT(*) FROM gp_bank_lines l WHERE l.statement_id = s.id AND l.status = 'unmatched') AS unmatched
+               FROM gp_bank_statements s JOIN gp_bank_accounts b ON b.id = s.bank_account_id
+              WHERE s.status = 'open' ORDER BY s.statement_date LIMIT 5"
+        )->result_array());
+
+        $depreciation = NULL;
+        if ((int) $this->db->where('status !=', 'disposed')->where('depreciation_start <=', $today)->count_all_results('gp_assets')) {
+            $due = $this->db->query(
+                "SELECT p.id, p.name FROM gp_periods p LEFT JOIN gp_depreciation_runs r ON r.period_id = p.id
+                  WHERE p.status = 'open' AND p.end_date < ? AND r.id IS NULL
+                    AND p.end_date >= (SELECT MIN(depreciation_start) FROM gp_assets)
+                  ORDER BY p.start_date LIMIT 1", [$today]
+            )->row_array();
+            if ($due) $depreciation = ['period_id' => (int) $due['id'], 'name' => $due['name']];
+        }
+
+        $docs = $this->db->query(
+            "SELECT (SELECT COUNT(*) FROM gp_documents WHERE status = 'draft' AND doc_type IN ('invoice', 'credit_note')) AS draft_sales,
+                    (SELECT COUNT(*) FROM gp_documents WHERE status = 'draft' AND doc_type IN ('bill', 'debit_note')) AS draft_purchases,
+                    (SELECT COUNT(*) FROM gp_settlements WHERE status = 'draft') AS draft_settlements,
+                    (SELECT COALESCE(SUM(s.amount_cents + s.withholding_cents
+                      - COALESCE((SELECT SUM(a.amount_cents) FROM gp_allocations a WHERE a.settlement_id = s.id), 0)), 0)
+                       FROM gp_settlements s WHERE s.status = 'posted') AS unapplied_cents"
+        )->row_array();
+
+        /* ── the budget for the year so far, and a few key ratios ─────── */
+        $budget = NULL;
+        if ($fy) {
+            $b = $this->db->query("SELECT id, name FROM gp_budgets WHERE fiscal_year_id = ? ORDER BY is_primary DESC, status = 'approved' DESC, id LIMIT 1",
+                [(int) $fy['id']])->row_array();
+            if ($b) {
+                $pno  = $this->one("SELECT COALESCE(MAX(period_no), 0) FROM gp_periods WHERE fiscal_year_id = ? AND start_date <= ?", [(int) $fy['id'], $today]);
+                $sums = ['income' => 0, 'expense' => 0];
+                foreach ($this->db->query(
+                    "SELECT a.type, COALESCE(SUM(l.amount_cents), 0) AS s FROM gp_budget_lines l JOIN gp_accounts a ON a.id = l.account_id
+                      WHERE l.budget_id = ? AND l.period_no <= ? AND a.type IN ('income', 'expense') GROUP BY a.type", [(int) $b['id'], $pno]
+                )->result_array() as $r) $sums[$r['type']] = (int) $r['s'];
+                $budget = ['id' => (int) $b['id'], 'name' => $b['name'], 'through_period' => $pno,
+                           'revenue_cents' => $sums['income'], 'expense_cents' => $sums['expense'], 'net_cents' => $sums['income'] - $sums['expense']];
+            }
+        }
+
+        $ratios = [];
+        try {
+            $this->load->library('Analysis_lib', NULL, 'analysis');
+            $want = ['current_ratio', 'quick_ratio', 'debt_to_equity', 'net_margin'];
+            foreach ($this->analysis->ratios($today)['ratios'] as $r) {
+                if (in_array($r['key'], $want, TRUE)) {
+                    $ratios[] = ['key' => $r['key'], 'label' => $r['label'], 'unit' => $r['unit'], 'value' => $r['value'], 'prior' => $r['prior'], 'better' => $r['better']];
+                }
+            }
+        } catch (Throwable $t) {
+            log_message('error', '[Dashboard] ratios: ' . $t->getMessage());
+        }
+
         return json_response([
             'today'       => $today,
             'fiscal_year' => $fy ? ['name' => $fy['name'], 'start_date' => $fy['start_date'], 'end_date' => $fy['end_date'], 'status' => $fy['status']] : NULL,
@@ -127,7 +188,15 @@ class Dashboard extends CI_Controller
                 'my_drafts'         => $count("status = 'draft' AND created_by = ?", [$uid]),
                 'periods_to_close'  => array_map(function ($p) { return ['id' => (int) $p['id'], 'name' => $p['name'], 'end_date' => $p['end_date']]; },
                     $this->db->query("SELECT id, name, end_date FROM gp_periods WHERE status = 'open' AND end_date < ? ORDER BY start_date", [$today])->result_array()),
+                'bank_statements'   => $bank,
+                'depreciation_due'  => $depreciation,
+                'draft_sales'       => (int) $docs['draft_sales'],
+                'draft_purchases'   => (int) $docs['draft_purchases'],
+                'draft_settlements' => (int) $docs['draft_settlements'],
+                'unapplied_cents'   => (int) $docs['unapplied_cents'],
             ],
+            'budget' => $budget,
+            'ratios' => $ratios,
             'recent' => $recent,
         ], 'Dashboard');
     }

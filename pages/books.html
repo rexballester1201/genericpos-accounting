@@ -12,6 +12,10 @@
   <div class="card card-flush report-controls no-print">
     <form class="toolbar" data-controls novalidate>
       <select class="select" name="book" id="bk-book" aria-label="Book" style="width:auto"></select>
+      <select class="select" name="layout" id="bk-layout" aria-label="Layout" style="width:auto">
+        <option value="journal">As journal entries</option>
+        <option value="columnar">In columns, paged</option>
+      </select>
       <select class="select" name="preset" id="bk-preset" aria-label="Period" style="width:auto"></select>
       <input class="input" type="date" name="from" id="bk-from" aria-label="From" style="width:auto" />
       <span class="faint">to</span>

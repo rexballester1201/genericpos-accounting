@@ -76,8 +76,14 @@ export async function mount(root, ctx) {
         + (diff > 0 ? '▲' : '▼') + '</span> from ') + esc(fmt(r.prior, r.unit)) + ' a year earlier</div>';
     }
     const read = has ? (READ[r.key] ? READ[r.key](r.value) : '') : 'The figure it divides by is zero.';
+    const b = r.benchmark;
+    const bench = b
+      ? '<div class="r-bench">' + (b.met === null ? '<span class="badge">' + esc(b.label) + '</span>'
+        : '<span class="badge ' + (b.met ? 'badge-ok' : 'badge-warn') + '">' + (b.met ? 'Meets ' : 'Below ') + esc(b.label.toLowerCase()) + '</span>') + '</div>'
+      : '';
     return '<div class="ratio"><div class="r-name">' + esc(r.label) + '</div>'
       + '<div class="r-value' + (has ? '' : ' is-none') + '">' + esc(fmt(r.value, r.unit)) + '</div>'
+      + bench
       + prior
       + '<div class="r-read">' + esc(read) + '</div>'
       + '<div class="r-formula">' + esc(r.formula) + '</div>'

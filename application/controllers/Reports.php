@@ -30,7 +30,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Reports extends CI_Controller
 {
     const KIND_LABELS = ['unadjusted' => 'Unadjusted', 'adjusted' => 'Adjusted', 'post_closing' => 'Post-closing'];
-    const ROLE_TITLES = ['bookkeeper' => 'Bookkeeper', 'accountant' => 'Accountant', 'admin' => 'Administrator'];
 
     public function __construct()
     {
@@ -75,13 +74,13 @@ class Reports extends CI_Controller
         $zero   = (bool) $this->input->get('zero');
 
         $s = $S->balance_sheet($dates, $levels, $zero);
-        if ($this->_csv_wanted($claims)) {
+        if (report_csv_wanted($claims)) {
             return $this->_statement_csv('balance-sheet-' . $as_of . '.csv', $s, 'As of ' . $as_of,
                 array_map(function ($c) { return 'As of ' . $c['as_of']; }, $s['columns']));
         }
         return json_response($s + [
             'params'     => ['as_of' => $as_of, 'compare' => $compare, 'levels' => $levels, 'zero' => $zero],
-            'letterhead' => $this->_letterhead($claims),
+            'letterhead' => report_letterhead($claims),
         ], $s['title']);
     }
 
@@ -117,7 +116,7 @@ class Reports extends CI_Controller
         $zero   = (bool) $this->input->get('zero');
 
         $s = $S->income_statement($ranges, $levels, $zero, $dept);
-        if ($this->_csv_wanted($claims)) {
+        if (report_csv_wanted($claims)) {
             $period = 'For ' . $from . ' to ' . $to;
             if ($dept) foreach ($departments as $d) if ($d['id'] === $dept) $period .= ' · department ' . $d['code'] . ' ' . $d['name'];
             return $this->_statement_csv('income-statement-' . $from . '-to-' . $to . '.csv', $s, $period,
@@ -126,7 +125,7 @@ class Reports extends CI_Controller
         return json_response($s + [
             'params'      => ['from' => $from, 'to' => $to, 'compare' => $compare, 'department' => $dept ?: NULL, 'levels' => $levels, 'zero' => $zero],
             'departments' => $departments,
-            'letterhead'  => $this->_letterhead($claims),
+            'letterhead'  => report_letterhead($claims),
         ], $s['title']);
     }
 
@@ -140,13 +139,13 @@ class Reports extends CI_Controller
         list($from, $to) = $this->_range('year');
         $levels = $this->_levels(0);
         $s = $S->changes_in_equity($from, $to, $levels);
-        if ($this->_csv_wanted($claims)) {
+        if (report_csv_wanted($claims)) {
             return $this->_statement_csv('changes-in-equity-' . $from . '-to-' . $to . '.csv', $s, 'For ' . $from . ' to ' . $to,
                 ['Balance, ' . $from, $S->is_coop() ? 'Net surplus' : 'Net income', 'Other changes', 'Balance, ' . $to]);
         }
         return json_response($s + [
             'params'     => ['from' => $from, 'to' => $to, 'levels' => $levels],
-            'letterhead' => $this->_letterhead($claims),
+            'letterhead' => report_letterhead($claims),
         ], $s['title']);
     }
 
@@ -160,12 +159,12 @@ class Reports extends CI_Controller
         list($from, $to) = $this->_range('year');
         $levels = $this->_levels(2);
         $s = $S->cash_flows($from, $to, $levels);
-        if ($this->_csv_wanted($claims)) {
+        if (report_csv_wanted($claims)) {
             return $this->_statement_csv('cash-flows-' . $from . '-to-' . $to . '.csv', $s, 'For ' . $from . ' to ' . $to, ['Amount']);
         }
         return json_response($s + [
             'params'     => ['from' => $from, 'to' => $to, 'levels' => $levels],
-            'letterhead' => $this->_letterhead($claims),
+            'letterhead' => report_letterhead($claims),
         ], $s['title']);
     }
 
@@ -185,9 +184,9 @@ class Reports extends CI_Controller
 
         $tb = $this->ledger->trial_balance($as_of, $kind, (bool) $this->input->get('zero'));
 
-        if ($this->_csv_wanted($claims)) {
+        if (report_csv_wanted($claims)) {
             $m    = function ($c) { return $c ? money_major($c) : ''; };
-            $rows = $this->_csv_head('Trial balance (' . strtolower(self::KIND_LABELS[$kind]) . ')', 'As of ' . $as_of);
+            $rows = report_csv_head('Trial balance (' . strtolower(self::KIND_LABELS[$kind]) . ')', 'As of ' . $as_of);
             $rows[] = ['Code', 'Account', 'Debit', 'Credit'];
             foreach ($tb['rows'] as $r) $rows[] = [$r['code'], $r['name'], $m($r['debit_cents']), $m($r['credit_cents'])];
             if ($tb['unclosed_prior_cents'] !== 0) {
@@ -195,13 +194,13 @@ class Reports extends CI_Controller
                 $rows[] = ['', 'Net income of earlier years not yet closed', $m(max($p, 0)), $m(max(-$p, 0))];
             }
             $rows[] = ['', 'Total', money_major($tb['total_debit_cents']), money_major($tb['total_credit_cents'])];
-            return $this->_csv('trial-balance-' . $as_of . '.csv', $rows);
+            return report_csv('trial-balance-' . $as_of . '.csv', $rows);
         }
 
         $fy = $tb['fiscal_year'];
         $tb['fiscal_year'] = $fy ? ['name' => $fy['name'], 'start_date' => $fy['start_date'], 'end_date' => $fy['end_date'], 'status' => $fy['status']] : NULL;
         $tb['kind_label']  = self::KIND_LABELS[$kind];
-        $tb['letterhead']  = $this->_letterhead($claims);
+        $tb['letterhead']  = report_letterhead($claims);
         return json_response($tb, 'Trial balance');
     }
 
@@ -214,14 +213,14 @@ class Reports extends CI_Controller
         $id = (int) $this->input->get('account');
         if ($id <= 0) return json_invalid(['account' => 'Choose an account.']);
         list($from, $to) = $this->_range('year');
-        $csv = $this->_csv_wanted($claims);
+        $csv = report_csv_wanted($claims);
 
         $g = $this->ledger->account_ledger($id, $from, $to, $csv ? 100000 : 3000);
         if ( ! $g) return json_error('That account does not exist.', 404);
 
         if ($csv) {
             $a    = $g['account'];
-            $rows = $this->_csv_head('General ledger — ' . $a['code'] . ' ' . $a['name'], 'For ' . $from . ' to ' . $to);
+            $rows = report_csv_head('General ledger — ' . $a['code'] . ' ' . $a['name'], 'For ' . $from . ' to ' . $to);
             $rows[] = ['Date', 'Entry', 'Book', 'Particulars', 'Memo', 'Customer or supplier', 'Debit', 'Credit', 'Balance'];
             $rows[] = ['', '', '', 'Balance brought forward', '', '', '', '', money_major($g['opening_cents'])];
             foreach ($g['lines'] as $l) {
@@ -231,11 +230,11 @@ class Reports extends CI_Controller
             }
             $rows[] = ['', '', '', 'Totals for the period', '', '', money_major($g['debit_cents']), money_major($g['credit_cents']), ''];
             $rows[] = ['', '', '', 'Balance carried forward', '', '', '', '', money_major($g['closing_cents'])];
-            return $this->_csv('general-ledger-' . $a['code'] . '-' . $from . '-to-' . $to . '.csv', $rows);
+            return report_csv('general-ledger-' . $a['code'] . '-' . $from . '-to-' . $to . '.csv', $rows);
         }
         return json_response($g + [
             'params'     => ['account' => $id, 'from' => $from, 'to' => $to],
-            'letterhead' => $this->_letterhead($claims),
+            'letterhead' => report_letterhead($claims),
         ], 'General ledger');
     }
 
@@ -249,14 +248,14 @@ class Reports extends CI_Controller
         $book = (string) $this->input->get('book');
         if ( ! isset(Journal_model::BOOK_LABELS[$book])) $book = '';
         list($from, $to) = $this->_range('month');
-        $csv = $this->_csv_wanted($claims);
+        $csv = report_csv_wanted($claims);
         $p   = get_pagination_params(50, 500);
 
         list($js, $n, $total) = $this->ledger->book_register($book, $from, $to, $csv ? 20000 : $p['limit'], $csv ? 0 : $p['offset']);
         $label = $book !== '' ? Journal_model::BOOK_LABELS[$book] : 'All books';
 
         if ($csv) {
-            $rows = $this->_csv_head($label, 'For ' . $from . ' to ' . $to);
+            $rows = report_csv_head($label, 'For ' . $from . ' to ' . $to);
             $rows[] = ['Date', 'Entry', 'Book', 'Reference', 'Particulars', 'Account code', 'Account', 'Debit', 'Credit'];
             foreach ($js as $j) {
                 foreach ($j['lines'] as $i => $l) {
@@ -266,7 +265,7 @@ class Reports extends CI_Controller
                 }
             }
             $rows[] = ['', '', '', '', 'Total', '', '', money_major($total), money_major($total)];
-            return $this->_csv(($book !== '' ? $book : 'all-books') . '-' . $from . '-to-' . $to . '.csv', $rows);
+            return report_csv(($book !== '' ? $book : 'all-books') . '-' . $from . '-to-' . $to . '.csv', $rows);
         }
 
         $out = build_pagination_meta($js, $n, $p['page'], $p['limit']);
@@ -278,9 +277,154 @@ class Reports extends CI_Controller
             'to'          => $to,
             'total_cents' => $total,
             'params'      => ['book' => $book, 'from' => $from, 'to' => $to],
-            'letterhead'  => $this->_letterhead($claims),
+            'letterhead'  => report_letterhead($claims),
         ];
         return json_response($out, 'Books of accounts');
+    }
+
+    /**
+     * GET /api/v1/reports/columnar-book?book=&from=&to=
+     *
+     * The cash receipts, cash disbursements, sales or purchase book in columns
+     * (Books_lib), the whole period at once so the printout can carry page
+     * totals and "brought forward" from page to page.
+     */
+    public function columnar_book()
+    {
+        $claims = viewer_check();
+        require_method('GET');
+        $this->load->library('Books_lib', NULL, 'books_lib');
+
+        $book = (string) $this->input->get('book');
+        if ( ! isset(Books_lib::LAYOUTS[$book])) return json_invalid(['book' => 'Choose the cash receipts, cash disbursements, sales or purchase book.']);
+        list($from, $to) = $this->_range('month');
+        $csv = report_csv_wanted($claims);
+        $b   = $this->books_lib->build($book, $from, $to, $csv ? 20000 : 5000);
+
+        if ($csv) {
+            $m    = function ($c) { return $c ? money_major($c) : ''; };
+            $rows = report_csv_head($b['title'], 'For ' . $from . ' to ' . $to);
+            $rows[] = array_merge(['Date', 'Number', 'Reference', 'Name', 'Particulars'],
+                array_map(function ($c) { return $c['label'] . ' ' . ($c['side'] === 'dr' ? 'Dr' : 'Cr'); }, $b['columns']),
+                ['Sundry account', 'Sundry Dr', 'Sundry Cr']);
+            foreach ($b['rows'] as $r) {
+                $n = max(1, count($r['sundry']));
+                for ($i = 0; $i < $n; $i++) {
+                    $s = $r['sundry'][$i] ?? NULL;
+                    $rows[] = array_merge(
+                        $i ? ['', '', '', '', ''] : [$r['date'], $r['journal_no'], (string) $r['reference'], (string) $r['party'], $r['description']],
+                        array_map(function ($c) use ($r, $i, $m) { return $i ? '' : $m($r['cols'][$c['key']]); }, $b['columns']),
+                        $s ? [$s['code'] . ' ' . $s['name'], $m($s['debit_cents']), $m($s['credit_cents'])] : ['', '', '']
+                    );
+                }
+            }
+            $rows[] = array_merge(['', '', '', '', 'Total'], array_map(function ($c) use ($b) { return money_major($b['totals']['cols'][$c['key']]); }, $b['columns']),
+                ['', money_major($b['totals']['sundry_debit_cents']), money_major($b['totals']['sundry_credit_cents'])]);
+            return report_csv($book . '-columnar-' . $from . '-to-' . $to . '.csv', $rows);
+        }
+
+        return json_response($b + [
+            'rows_per_page' => max(10, min(80, (int) (shop_cfg('report_rows_per_page', 40) ?: 40))),
+            'letterhead'    => report_letterhead($claims),
+        ], $b['title']);
+    }
+
+    /**
+     * GET /api/v1/reports/worksheet?as_of=
+     *
+     * The ten-column worksheet: the unadjusted trial balance, the adjusting
+     * entries, the adjusted trial balance, and the adjusted balances carried
+     * into the income statement and balance sheet columns, with net income
+     * balancing the last two pairs. Income and expenses count from the start
+     * of the fiscal year, as the trial balance does.
+     */
+    public function worksheet()
+    {
+        $claims = viewer_check();
+        require_method('GET');
+
+        $as_of = $this->_date('as_of', company_today());
+        $u = $this->ledger->trial_balance($as_of, 'unadjusted', FALSE);
+        $a = $this->ledger->trial_balance($as_of, 'adjusted', FALSE);
+        $un = [];
+        $ad = [];
+        foreach ($u['rows'] as $r) $un[$r['account_id']] = $r['debit_cents'] - $r['credit_cents'];
+        foreach ($a['rows'] as $r) $ad[$r['account_id']] = $r['debit_cents'] - $r['credit_cents'];
+
+        $rows = [];
+        $t = array_fill_keys(['ub_dr', 'ub_cr', 'adj_dr', 'adj_cr', 'ab_dr', 'ab_cr', 'is_dr', 'is_cr', 'bs_dr', 'bs_cr'], 0);
+        $split = function ($n) { return [$n > 0 ? $n : 0, $n < 0 ? -$n : 0]; };
+        foreach ($this->db->where('is_header', 0)->order_by('sort_order')->order_by('code')->get('gp_accounts')->result_array() as $acc) {
+            $id = (int) $acc['id'];
+            if ( ! isset($un[$id]) && ! isset($ad[$id])) continue;
+            $ub  = $un[$id] ?? 0;
+            $ab  = $ad[$id] ?? 0;
+            $adj = $ab - $ub;
+            $is  = in_array($acc['type'], ['income', 'expense'], TRUE);
+            $row = ['account_id' => $id, 'code' => $acc['code'], 'name' => $acc['name'], 'type' => $acc['type'], 'section' => $is ? 'is' : 'bs'];
+            list($row['ub_dr'], $row['ub_cr'])   = $split($ub);
+            list($row['adj_dr'], $row['adj_cr']) = $split($adj);
+            list($row['ab_dr'], $row['ab_cr'])   = $split($ab);
+            list($row[$is ? 'is_dr' : 'bs_dr'], $row[$is ? 'is_cr' : 'bs_cr']) = $split($ab);
+            $row += ['is_dr' => 0, 'is_cr' => 0, 'bs_dr' => 0, 'bs_cr' => 0];
+            foreach ($t as $k => $v) $t[$k] += $row[$k];
+            $rows[] = $row;
+        }
+
+        /* Income of earlier years not yet closed sits in equity: in both trial
+           balances and the balance sheet columns. */
+        $prior = (int) $a['unclosed_prior_cents'];
+        if ($prior !== 0) {
+            list($pd, $pc) = $split($prior);
+            foreach (['ub', 'ab', 'bs'] as $k) { $t[$k . '_dr'] += $pd; $t[$k . '_cr'] += $pc; }
+        }
+        $ni = $t['is_cr'] - $t['is_dr'];
+
+        $out = [
+            'as_of'        => $as_of,
+            'fiscal_year'  => $a['fiscal_year'] ? ['name' => $a['fiscal_year']['name'], 'start_date' => $a['fiscal_year']['start_date']] : NULL,
+            'rows'         => $rows,
+            'prior_cents'  => $prior,
+            'totals'       => $t,
+            'net_income_cents' => $ni,
+            'balanced'     => $t['ub_dr'] === $t['ub_cr'] && $t['adj_dr'] === $t['adj_cr'] && $t['ab_dr'] === $t['ab_cr']
+                              && $t['is_dr'] + max($ni, 0) === $t['is_cr'] + max(-$ni, 0) && $t['bs_dr'] + max(-$ni, 0) === $t['bs_cr'] + max($ni, 0),
+        ];
+
+        if (report_csv_wanted($claims)) {
+            $m    = function ($c) { return $c ? money_major($c) : ''; };
+            $csv  = report_csv_head('Worksheet', 'As of ' . $as_of);
+            $csv[] = ['Code', 'Account', 'Unadjusted Dr', 'Unadjusted Cr', 'Adjustments Dr', 'Adjustments Cr', 'Adjusted Dr', 'Adjusted Cr', 'Income statement Dr', 'Income statement Cr', 'Balance sheet Dr', 'Balance sheet Cr'];
+            foreach ($rows as $r) $csv[] = [$r['code'], $r['name'], $m($r['ub_dr']), $m($r['ub_cr']), $m($r['adj_dr']), $m($r['adj_cr']), $m($r['ab_dr']), $m($r['ab_cr']), $m($r['is_dr']), $m($r['is_cr']), $m($r['bs_dr']), $m($r['bs_cr'])];
+            if ($prior !== 0) {
+                list($pd, $pc) = $split($prior);
+                $csv[] = ['', 'Net income of earlier years not yet closed', $m($pd), $m($pc), '', '', $m($pd), $m($pc), '', '', $m($pd), $m($pc)];
+            }
+            $csv[] = ['', 'Totals', money_major($t['ub_dr']), money_major($t['ub_cr']), money_major($t['adj_dr']), money_major($t['adj_cr']), money_major($t['ab_dr']), money_major($t['ab_cr']), money_major($t['is_dr']), money_major($t['is_cr']), money_major($t['bs_dr']), money_major($t['bs_cr'])];
+            $csv[] = ['', $ni >= 0 ? 'Net income' : 'Net loss', '', '', '', '', '', '', $m(max($ni, 0)), $m(max(-$ni, 0)), $m(max(-$ni, 0)), $m(max($ni, 0))];
+            return report_csv('worksheet-' . $as_of . '.csv', $csv);
+        }
+        return json_response($out + ['letterhead' => report_letterhead($claims)], 'Worksheet');
+    }
+
+    /** GET /api/v1/reports/integrity — accountants and administrators */
+    public function integrity()
+    {
+        $claims = accountant_check();
+        require_method('GET');
+        $this->load->library('Integrity_lib', NULL, 'integrity');
+        $r = $this->integrity->run();
+
+        if (report_csv_wanted($claims)) {
+            $rows = report_csv_head('Integrity check', 'As of ' . $r['as_of']);
+            $rows[] = ['Check', 'Result', 'Count', 'Example'];
+            foreach ($r['checks'] as $c) {
+                $rows[] = [$c['title'], strtoupper($c['status']), $c['count'], $c['items'] ? $c['items'][0]['text'] : ''];
+                foreach (array_slice($c['items'], 1) as $i) $rows[] = ['', '', '', $i['text']];
+            }
+            return report_csv('integrity-' . $r['as_of'] . '.csv', $rows);
+        }
+        return json_response($r + ['letterhead' => report_letterhead($claims)], 'Integrity check');
     }
 
     // =========================================================================
@@ -298,8 +442,8 @@ class Reports extends CI_Controller
         $as_of = $this->_date('as_of', company_today());
         $a = $this->analysis->ratios($as_of);
 
-        if ($this->_csv_wanted($claims)) {
-            $rows = $this->_csv_head('Financial analysis', 'As of ' . $as_of . ' (income and turnover from ' . $a['from'] . ')');
+        if (report_csv_wanted($claims)) {
+            $rows = report_csv_head('Financial analysis', 'As of ' . $as_of . ' (income and turnover from ' . $a['from'] . ')');
             $rows[] = ['Group', 'Measure', 'Value', 'Same date last year', 'Formula'];
             $fmt = function ($v, $unit) {
                 if ($v === NULL) return '';
@@ -308,11 +452,11 @@ class Reports extends CI_Controller
                 return number_format($v, $unit === 'days' ? 0 : 2, '.', '');
             };
             foreach ($a['ratios'] as $r) $rows[] = [$r['group'], $r['label'], $fmt($r['value'], $r['unit']), $fmt($r['prior'], $r['unit']), $r['formula']];
-            return $this->_csv('financial-analysis-' . $as_of . '.csv', $rows);
+            return report_csv('financial-analysis-' . $as_of . '.csv', $rows);
         }
         return json_response($a + [
             'params'     => ['as_of' => $as_of],
-            'letterhead' => $this->_letterhead($claims),
+            'letterhead' => report_letterhead($claims),
         ], 'Financial analysis');
     }
 
@@ -356,62 +500,9 @@ class Reports extends CI_Controller
         return $c['from'] . ' to ' . $c['to'];
     }
 
-    /**
-     * The company block, note and signatories a printed report carries.
-     * "Prepared by" is whoever asked for the report; the others come from
-     * Settings → Printed reports, and an empty name leaves its block out.
-     */
-    private function _letterhead(array $claims)
-    {
-        $u    = $this->db->select('full_name, username, role')->get_where('gp_users', ['id' => (int) $claims['user_id']], 1)->row_array();
-        $who  = $u ? (trim((string) $u['full_name']) ?: (string) $u['username']) : '';
-        $sign = [['role' => 'Prepared by', 'name' => $who, 'title' => $u ? (self::ROLE_TITLES[$u['role']] ?? '') : '']];
-        foreach (['checked' => 'Checked by', 'approved' => 'Approved by', 'noted' => 'Noted by'] as $k => $label) {
-            $name = trim((string) shop_cfg('sign_' . $k . '_by', ''));
-            if ($name !== '') $sign[] = ['role' => $label, 'name' => $name, 'title' => trim((string) shop_cfg('sign_' . $k . '_title', ''))];
-        }
-        $coop = shop_cfg('entity_type') === 'cooperative';
-        return [
-            'company'     => (string) shop_cfg('store_name', ''),
-            'legal_name'  => trim((string) shop_cfg('store_legal_name', '')),
-            'tagline'     => trim((string) shop_cfg('store_tagline', '')),
-            'address'     => trim((string) shop_cfg('store_address', '')),
-            'tin'         => trim((string) shop_cfg('store_tin', '')),
-            'tin_label'   => (string) shop_cfg('tax_id_label', 'TIN') ?: 'TIN',
-            'cda_reg_no'  => $coop ? trim((string) shop_cfg('coop_cda_reg_no', '')) : '',
-            'logo'        => shop_cfg('store_logo') ?: NULL,
-            'note'        => trim((string) shop_cfg('report_note', '')),
-            'signatories' => $sign,
-            'printed_by'  => shop_bool('report_show_printed_by', TRUE) ? $who : '',
-            'printed_at'  => gmdate('Y-m-d H:i:s'),
-            'currency'    => (string) shop_cfg('currency_code', 'PHP'),
-            'entity_type' => $coop ? 'cooperative' : 'business',
-        ];
-    }
-
-    private function _csv_wanted(array $claims)
-    {
-        if ((string) $this->input->get('format') !== 'csv') return FALSE;
-        rate_limit((int) $claims['user_id'], 'report_export');
-        return TRUE;
-    }
-
-    private function _csv_head($title, $period)
-    {
-        $name  = (string) shop_cfg('store_name', '');
-        $rows  = [[$name]];
-        $legal = trim((string) shop_cfg('store_legal_name', ''));
-        if ($legal !== '' && $legal !== $name) $rows[] = [$legal];
-        $rows[] = [$title];
-        $rows[] = [$period];
-        $rows[] = ['Amounts in ' . (string) shop_cfg('currency_code', 'PHP')];
-        $rows[] = [];
-        return $rows;
-    }
-
     private function _statement_csv($filename, array $s, $period, array $labels)
     {
-        $rows = $this->_csv_head($s['title'], $period);
+        $rows = report_csv_head($s['title'], $period);
         $rows[] = array_merge(['Code', 'Particulars'], $labels);
         foreach ($s['lines'] as $l) {
             $code  = in_array($l['type'], ['account', 'group'], TRUE) ? (string) ($l['code'] ?? '') : '';
@@ -420,24 +511,6 @@ class Reports extends CI_Controller
             if ( ! empty($l['amounts'])) foreach ($l['amounts'] as $c) $row[] = money_major((int) $c);
             $rows[] = $row;
         }
-        return $this->_csv($filename, $rows);
-    }
-
-    private function _csv($filename, array $rows)
-    {
-        $cell = function ($v) {
-            $s = str_replace(["\r", "\n", "\t"], ' ', (string) $v);
-            if ($s !== '' && strpos('=+-@', $s[0]) !== FALSE && ! preg_match('/^-?\d+(\.\d+)?$/', $s)) $s = "'" . $s;
-            return '"' . str_replace('"', '""', $s) . '"';
-        };
-        $out = "\xEF\xBB\xBF";
-        foreach ($rows as $r) $out .= implode(',', array_map($cell, $r)) . "\r\n";
-
-        $this->output
-            ->set_status_header(200)
-            ->set_content_type('text/csv', 'utf-8')
-            ->set_header('Content-Disposition: attachment; filename="' . $filename . '"')
-            ->set_header('Cache-Control: no-store')
-            ->set_output($out);
+        return report_csv($filename, $rows);
     }
 }
