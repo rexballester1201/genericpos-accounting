@@ -90,12 +90,10 @@ $config['fiscal_year_start_month'] = 1;
 // =============================================================================
 
 /**
- * Access-token lifetimes. Refresh tokens (30 days) renew them silently, so
- * these bound how long a STOLEN access token stays useful. Every account here
- * is staff; the customer lifetime is kept only for the shared token code.
+ * Access-token lifetime. Refresh tokens (30 days) renew it silently, so this
+ * bounds how long a STOLEN access token stays useful.
  */
-$config['jwt_expiry_customer_s'] = 43200;
-$config['jwt_expiry_staff_s']    = 43200;    // 12 h
+$config['jwt_expiry_staff_s'] = 43200;    // 12 h
 
 $config['refresh_token_expiry_s'] = 2592000; // 30 days
 

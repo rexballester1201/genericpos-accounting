@@ -221,7 +221,7 @@ class Auth extends CI_Controller
         $user   = $this->users->find_by_id($claims['user_id']);
         if ($user === NULL) return json_error('Account not found.', 404);
 
-        return json_response(['user' => $this->users->public_fields($user), 'pos' => $claims['pos'] ?? NULL], 'Current user');
+        return json_response(['user' => $this->users->public_fields($user)], 'Current user');
     }
 
     // =========================================================================

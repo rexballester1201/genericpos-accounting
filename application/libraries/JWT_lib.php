@@ -9,32 +9,34 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *   generate(array $payload) → string
  *   validate(string $token)  → stdClass payload | FALSE
  *
- * Required claims: user_id, role, account_state, auth_method. Optional: pos
- * (register id) and dev (device id) — present only on a register (PIN) session.
- * generate() adds iat, exp and jti.
- *
- * Lifetime by audience (app.php Section B):
- *   POS session (pos claim) → jwt_expiry_pos_s
- *   customer                → jwt_expiry_customer_s
- *   staff                   → jwt_expiry_staff_s
+ * Required claims: user_id, role, account_state, auth_method. generate() adds
+ * iss, iat, exp and jti; the lifetime is jwt_expiry_staff_s (app.php Section B)
+ * unless the caller passes its own.
  *
  * validate() checks structure, algorithm (HS256 only — 'none' is rejected
- * loudly), the HMAC in constant time, and expiry. It does NOT check the
- * account; api_helper::auth_check() does that once per request.
+ * loudly), the HMAC in constant time, the ISSUER and expiry. It does NOT check
+ * the account; api_helper::auth_check() does that once per request.
+ *
+ * NOTE: THE ISSUER IS A SECOND LOCK, not decoration. Another application on the
+ * same machine — GenericPOS, which this was forked from — mints tokens of the
+ * same shape, and both have a user #1. If the two ever ended up sharing
+ * GP_JWT_SECRET, its token would otherwise be accepted here as that user. A
+ * token whose iss is not ours is refused whatever it is signed with.
  */
 class JWT_lib
 {
     const ALGORITHM = 'HS256';
     const HASH_ALGO = 'sha256';
 
+    /** This application. Changing it signs everyone out at their next request. */
+    const ISSUER = 'gp-accounting';
+
     const REQUIRED_PAYLOAD_FIELDS = ['user_id', 'role', 'account_state', 'auth_method'];
 
     protected $CI;
     protected $secret;
     protected $leeway;
-    protected $exp_customer;
     protected $exp_staff;
-    protected $exp_pos;
 
     public function __construct()
     {
@@ -62,16 +64,14 @@ class JWT_lib
         $this->leeway = (int) ($this->CI->config->item('jwt_leeway_s', 'jwt') ?? 0);
 
         $this->CI->config->load('app', FALSE, TRUE);
-        $this->exp_customer = (int) ($this->CI->config->item('jwt_expiry_customer_s') ?: 86400);
-        $this->exp_staff    = (int) ($this->CI->config->item('jwt_expiry_staff_s')    ?: 43200);
-        $this->exp_pos      = (int) ($this->CI->config->item('jwt_expiry_pos_s')      ?: 57600);
+        $this->exp_staff = (int) ($this->CI->config->item('jwt_expiry_staff_s') ?: 43200);
     }
 
     /**
-     * @param int|null $ttl  seconds; NULL = the lifetime for the audience. A
-     *                       short-lived purpose token (a manager's approval at
-     *                       the till) passes its own and carries a `typ` claim,
-     *                       which auth_check() refuses as a session.
+     * @param int|null $ttl  seconds; NULL = the ordinary session lifetime. A
+     *                       short-lived purpose token passes its own and
+     *                       carries a `typ` claim, which auth_check() refuses
+     *                       as a session.
      */
     public function generate(array $payload, $ttl = NULL): string
     {
@@ -83,16 +83,11 @@ class JWT_lib
         }
 
         $payload['user_id'] = (int) $payload['user_id'];
-        if (isset($payload['pos'])) $payload['pos'] = (int) $payload['pos'];
-        if (isset($payload['dev'])) $payload['dev'] = (int) $payload['dev'];
 
         $now = time();
+        $ttl = $ttl !== NULL ? max(30, (int) $ttl) : $this->exp_staff;
 
-        if ($ttl !== NULL)                          $ttl = max(30, (int) $ttl);
-        elseif ( ! empty($payload['pos']))          $ttl = $this->exp_pos;
-        elseif ($payload['role'] === 'customer')    $ttl = $this->exp_customer;
-        else                                        $ttl = $this->exp_staff;
-
+        $payload['iss'] = self::ISSUER;
         $payload['iat'] = $now;
         $payload['exp'] = $now + $ttl;
         $payload['jti'] = bin2hex(random_bytes(8));
@@ -131,6 +126,9 @@ class JWT_lib
 
         $payload = $this->_decode_json($p64);
         if ($payload === FALSE || ! isset($payload->exp)) return FALSE;
+
+        /* Ours, not another application's on the same machine. */
+        if ( ! isset($payload->iss) || ! is_string($payload->iss) || ! hash_equals(self::ISSUER, $payload->iss)) return FALSE;
 
         if ((int) $payload->exp < (time() - $this->leeway)) return FALSE;
 

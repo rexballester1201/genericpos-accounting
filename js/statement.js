@@ -6,7 +6,7 @@
  *   /reports/balance-sheet       as of a date; beside the end of last year or the same date last year
  *   /reports/income-statement    for a period; beside the previous period or last year, or month by month
  *   /reports/changes-in-equity   for a period
- *   /reports/cash-flows          for a period, by the indirect method
+ *   /reports/cash-flows          for a period, by the indirect or the direct method
  *
  * The server lays each statement out from the chart of accounts
  * (Statement_lib). This screen draws the lines, adds the percentage and
@@ -47,7 +47,9 @@ export async function mount(root, ctx) {
     pct: q.get('pct') === '1',
     zero: q.get('zero') === '1',
     department: q.get('department') || '',
+    method: q.get('method') === 'direct' ? 'direct' : 'indirect',
   };
+  const cf = kind === 'cash-flows';
 
   const sheet = qs('[data-sheet]', root);
   const form = qs('[data-controls]', root);
@@ -64,7 +66,7 @@ export async function mount(root, ctx) {
   const list = presets(years, today);
 
   // ── the choices ───────────────────────────────────────────────────────
-  const detail = kind === 'cash-flows' ? [['2', 'Line items'], ['0', 'Every account']]
+  const detail = cf ? [['2', 'Line items'], ['0', 'Every account']]
     : kind === 'changes-in-equity' ? [['0', 'Every account'], ['2', 'Line items']]
     : [['1', 'Summary'], ['2', 'Line items'], ['0', 'Every account']];
   let html = bs
@@ -81,6 +83,10 @@ export async function mount(root, ctx) {
       + '<option value="monthly">Month by month</option></select>'
       + '<select class="select" name="department" id="st-dept" aria-label="Department" style="width:auto" hidden><option value="">All departments</option></select>';
   }
+  if (cf) {
+    html += '<select class="select" name="method" id="st-method" aria-label="Method" style="width:auto">'
+      + '<option value="indirect">Indirect method</option><option value="direct">Direct method</option></select>';
+  }
   html += '<div class="segmented" role="group" aria-label="Detail" data-seg>'
     + detail.map(([v, l]) => '<button type="button" data-v="' + v + '">' + esc(l) + '</button>').join('') + '</div>';
   if (bs || is) {
@@ -92,6 +98,7 @@ export async function mount(root, ctx) {
   if (f.as_of) f.as_of.value = state.as_of;
   if (f.from) { f.from.value = state.from; f.to.value = state.to; f.preset.value = presetFor(list, state.from, state.to); }
   if (f.compare) { f.compare.value = state.compare; state.compare = f.compare.value; } else state.compare = '';
+  if (f.method) f.method.value = state.method;
   if (f.pct) f.pct.checked = state.pct;
   if (f.zero) f.zero.checked = state.zero;
   const paintSeg = () => qsa('[data-seg] button', form).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === state.levels)));
@@ -101,11 +108,13 @@ export async function mount(root, ctx) {
   const query = () => (bs
     ? { as_of: state.as_of === today ? '' : state.as_of, compare: state.compare, levels: state.levels === detailDefault ? '' : state.levels, pct: state.pct, zero: state.zero }
     : { from: state.from, to: state.to, compare: is ? state.compare : '', department: is ? state.department : '',
-        levels: state.levels === detailDefault ? '' : state.levels, pct: is && state.pct, zero: is && state.zero });
+        levels: state.levels === detailDefault ? '' : state.levels, pct: is && state.pct, zero: is && state.zero,
+        method: cf && state.method === 'direct' ? 'direct' : '' });
   const params = () => (bs
     ? { as_of: state.as_of, compare: state.compare, levels: state.levels, zero: state.zero ? 1 : '' }
     : Object.assign({ from: state.from, to: state.to, levels: state.levels },
-      is ? { compare: state.compare, department: state.department, zero: state.zero ? 1 : '' } : {}));
+      is ? { compare: state.compare, department: state.department, zero: state.zero ? 1 : '' } : {},
+      cf ? { method: state.method } : {}));
 
   const TABS = [['balance-sheet', coop ? 'Financial condition' : 'Balance sheet'], ['income-statement', coop ? 'Operations' : 'Income statement'],
     ['changes-in-equity', 'Changes in equity'], ['cash-flows', 'Cash flows']];
@@ -171,7 +180,12 @@ export async function mount(root, ctx) {
     if (kind === 'changes-in-equity') {
       notes.push('Other changes are contributions, withdrawals, dividends and transfers between funds, and the closing entries that move ' + netWord.toLowerCase() + ' into equity.');
     }
-    if (kind === 'cash-flows') {
+    if (cf && state.method === 'direct') {
+      notes.push('Direct method: every entry that touched cash, with the cash it moved attributed to the other accounts in the same entry. '
+        + 'Interest and income tax are shown on their own lines where they ran through an income or expense account; '
+        + 'tax settled through a payable is grouped with the other operating amounts. '
+        + 'The note below reaches the same operating figure from ' + netWord.toLowerCase() + '.');
+    } else if (cf) {
       notes.push('Indirect method: ' + netWord.toLowerCase() + ', with depreciation added back and the change in every other balance-sheet account. '
         + 'Opening-balance entries count as the starting position; closing entries move no cash and are left out.');
     }
@@ -237,6 +251,7 @@ export async function mount(root, ctx) {
         if (f.preset) f.preset.value = presetFor(list, state.from, state.to);
         break;
       case 'compare': state.compare = t.value; break;
+      case 'method': state.method = t.value === 'direct' ? 'direct' : 'indirect'; break;
       case 'department': state.department = t.value; break;
       case 'zero': state.zero = t.checked; break;
       case 'pct':

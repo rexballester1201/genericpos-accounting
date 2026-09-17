@@ -89,6 +89,20 @@ The setup screen answers only while there is no user; after the first
 administrator exists it refuses everybody. See
 [docs/guide/02-first-time-setup.md](docs/guide/02-first-time-setup.md).
 
+### Installing from a shell instead
+
+A server with no browser to hand does the same three things by command:
+
+```bash
+php index.php tools seed_chart business_corporation   # or business_sole_proprietorship, cooperative
+php index.php tools create_year 2026-01-01            # the first day of the first month of the books
+php index.php tools create_admin owner%40example.test # prints a password once
+```
+
+The first fiscal year fixes the month the books turn on, which Settings will
+not change afterwards. Percent-encode the `@` in an address: CodeIgniter reads
+these arguments as a URI and refuses the character.
+
 ### The scheduled job
 
 Every fifteen minutes:
@@ -107,6 +121,8 @@ notifications. The audit log is never pruned.
 php index.php tools                                   what there is
 php index.php tools create_admin <email> [password]   create or promote an administrator
 php index.php tools create_user <email> <role> [password]
+php index.php tools seed_chart <kind>                 the starting chart of accounts
+php index.php tools create_year [YYYY-MM-01]          the next fiscal year and its twelve months
 php index.php tools cache                             rebuild the sign-in page's branding cache
 php index.php tools cron                              the scheduled job
 php index.php tools seed_demo                         a demo company (development only, empty database)

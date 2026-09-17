@@ -1,5 +1,5 @@
 // budget-smoke.mjs — quick look at every GET endpoint of the budgets module (scratch DB only)
-const BASE = 'http://127.0.0.1:8784/api/v1';
+const BASE = process.argv[2] || 'http://127.0.0.1:8784/api/v1';
 async function call(method, path, body, token) {
   const headers = { Accept: 'application/json' };
   if (body != null) headers['Content-Type'] = 'application/json';

@@ -22,9 +22,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | NOTE: never reuse a secret from another project — two apps sharing a secret
 | accept each other's tokens.
 |
-| Per-audience lifetimes live in app.php Section B (jwt_expiry_*), NOT here:
-| both files load into one flat namespace, and a key defined twice is decided
-| by load order.
+| NOTE: the secret is not the only lock. Every token carries JWT_lib::ISSUER,
+| and one issued by any other application is refused here even if the two ever
+| shared a secret by accident.
+|
+| The session lifetime lives in app.php Section B (jwt_expiry_staff_s), NOT
+| here: both files load into one flat namespace, and a key defined twice is
+| decided by load order.
 */
 require_once APPPATH . 'helpers/secrets_helper.php';
 

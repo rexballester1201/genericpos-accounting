@@ -118,6 +118,36 @@ try {
   const cfA = await get('/reports/cash-flows?from=' + Y + '-08-01&to=' + Y + '-08-31', V);
   check('August\'s cash flows reconcile', cfA.ok && cfA.data.checks.reconciled[0], cfA.data && cfA.data.totals);
 
+  // ── cash flows, the direct method ──
+  const cd = await get('/reports/cash-flows?method=direct&from=' + fy.start_date + '&to=' + today, V);
+  const d = cd.data && cd.data.totals;
+  check('the direct method loads: ' + (cd.data && cd.data.title), cd.ok && cd.data.method === 'direct', cd.message);
+  check('it reconciles to the cash accounts', cd.data.checks.reconciled[0], d);
+  check('the same cash moved either way: ' + d.change, d.change === t.change && d.beginning === t.beginning && d.ending === t.ending,
+    [d.change, t.change, d.beginning, t.beginning, d.ending, t.ending]);
+  check('operating + investing + financing = net change', d.operating + d.investing + d.financing === d.change, d);
+  const caps = cd.data.lines.filter((l) => /^Cash (received|paid)/.test(l.label)).map((l) => l.label);
+  check('it says who the money came from and went to: ' + caps.join(' · '), caps.length >= 2, cd.data.lines.map((l) => l.label));
+  console.log('        operating ' + d.operating + ' · investing ' + d.investing + ' · financing ' + d.financing
+    + (d.non_cash ? ' · non-cash investing/financing ' + d.non_cash : ''));
+
+  // the reconciliation note: every line from its heading down must foot to the same operating figure
+  const noteAt = cd.data.lines.findIndex((l) => /^Reconciliation of/.test(l.label));
+  const note = cd.data.lines.slice(noteAt + 1);
+  const noteEnd = note.findIndex((l) => l.type === 'total');
+  const noteSum = sum(note.slice(0, noteEnd).map((l) => (l.amounts ? l.amounts[0] : 0)));
+  check('the note reaches the same operating figure from net income', noteAt > 0 && noteEnd > 0
+    && noteSum === d.operating && note[noteEnd].amounts[0] === d.operating, [noteAt, noteEnd, noteSum, d.operating]);
+  check('and it starts from the income statement\'s net income', d.net_income === is.data.totals.net[0], [d.net_income, is.data.totals.net[0]]);
+
+  const cd0 = await get('/reports/cash-flows?method=direct&levels=0&from=' + fy.start_date + '&to=' + today, V);
+  check('by every account it reconciles too', cd0.ok && cd0.data.checks.reconciled[0] && cd0.data.totals.change === d.change,
+    cd0.data && cd0.data.totals);
+  const cdA = await get('/reports/cash-flows?method=direct&from=' + Y + '-08-01&to=' + Y + '-08-31', V);
+  check('August by the direct method reconciles, and moved the same cash as the indirect',
+    cdA.ok && cdA.data.checks.reconciled[0] && cdA.data.totals.change === cfA.data.totals.change,
+    [cdA.data && cdA.data.totals.change, cfA.data.totals.change]);
+
   // ── general ledger ──
   const accts = (await get('/accounts', V)).data.items;
   const byCode = Object.fromEntries(accts.map((a) => [a.code, a]));

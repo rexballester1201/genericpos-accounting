@@ -158,12 +158,13 @@ class Reports extends CI_Controller
 
         list($from, $to) = $this->_range('year');
         $levels = $this->_levels(2);
-        $s = $S->cash_flows($from, $to, $levels);
+        $method = $this->input->get('method') === 'direct' ? 'direct' : 'indirect';
+        $s = $S->cash_flows($from, $to, $levels, $method);
         if (report_csv_wanted($claims)) {
-            return $this->_statement_csv('cash-flows-' . $from . '-to-' . $to . '.csv', $s, 'For ' . $from . ' to ' . $to, ['Amount']);
+            return $this->_statement_csv('cash-flows-' . $method . '-' . $from . '-to-' . $to . '.csv', $s, 'For ' . $from . ' to ' . $to, ['Amount']);
         }
         return json_response($s + [
-            'params'     => ['from' => $from, 'to' => $to, 'levels' => $levels],
+            'params'     => ['from' => $from, 'to' => $to, 'levels' => $levels, 'method' => $method],
             'letterhead' => report_letterhead($claims),
         ], $s['title']);
     }

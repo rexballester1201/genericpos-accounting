@@ -10,6 +10,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *   php index.php tools create_admin <email> [password]   create (or promote) an administrator;
  *                                                         prints a generated password once
  *   php index.php tools create_user <email> <role> [password]
+ *   php index.php tools seed_chart <kind>                 the starting chart of accounts; run it
+ *                                                         with no kind to see the three
+ *   php index.php tools create_year [YYYY-MM-01]          the next fiscal year and its twelve months
  *   php index.php tools cache                             rebuild the shell's branding cache
  *   php index.php tools cron                              the scheduled job: recurring entries and
  *                                                         housekeeping (run it every 15 minutes)
@@ -43,6 +46,8 @@ class Tools extends CI_Controller
         $this->out('GenericPOS Accounting tools');
         $this->out('  php index.php tools create_admin <email> [password]');
         $this->out('  php index.php tools create_user <email> <viewer|bookkeeper|accountant|admin> [password]');
+        $this->out('  php index.php tools seed_chart <business_corporation|business_sole_proprietorship|cooperative>');
+        $this->out('  php index.php tools create_year [YYYY-MM-01]');
         $this->out('  php index.php tools cache');
         $this->out('  php index.php tools cron                 (the scheduled job; every 15 minutes)');
         $this->out('  php index.php tools seed_demo            (development only, empty database)');
@@ -90,6 +95,78 @@ class Tools extends CI_Controller
            account it created. */
         log_admin_action(GP_SYSTEM_ACTOR, 'cli.create_user', 'user', $id, ['email' => $email, 'role' => $role, 'via' => 'command line']);
         if ($generated) $this->out('Password (shown once — store it now): ' . $password);
+    }
+
+    /**
+     * The chart of accounts a company starts from, for an install done from a
+     * shell instead of through the setup wizard.
+     *
+     * It seeds and never merges: a ledger that already has accounts is left
+     * alone. The template's own settings (the statement wording, the account
+     * defaults) come with it, so the statements read correctly from the start.
+     */
+    public function seed_chart($kind = '')
+    {
+        require_once APPPATH . 'libraries/Chart_templates.php';
+        $kinds = array_keys(Chart_templates::labels());
+        if ( ! in_array($kind, $kinds, TRUE)) $this->fail('usage: tools seed_chart <' . implode('|', $kinds) . '>');
+
+        $this->load->model('Account_model', 'accounts');
+        $this->load->model('Settings_model', 'settings');
+        if ($this->accounts->count_all() > 0) {
+            $this->fail('This ledger already has ' . $this->accounts->count_all() . ' accounts. Nothing was changed.');
+        }
+
+        $tpl = Chart_templates::get($kind);
+        $this->db->trans_begin();
+        try {
+            $this->accounts->seed_template($tpl['accounts']);
+
+            $values = $tpl['settings'];
+            foreach ($tpl['defaults'] as $k => $code) if ($code !== '') $values[$k] = $code;
+            $r = $this->settings->set_many($values, NULL, TRUE);
+            if ($r['errors']) throw new RuntimeException('settings refused: ' . json_encode($r['errors']));
+
+            $this->db->trans_commit();
+        } catch (Throwable $t) {
+            $this->db->trans_rollback();
+            $this->fail($t->getMessage());
+        }
+
+        log_admin_action(GP_SYSTEM_ACTOR, 'cli.seed_chart', NULL, NULL, ['kind' => $kind, 'accounts' => $this->accounts->count_all()]);
+        $this->out('Seeded ' . Chart_templates::labels()[$kind] . ': ' . $this->accounts->count_all() . ' accounts.');
+        $this->out('Next: php index.php tools create_year <YYYY-MM-01>, the first day of the first month of the books.');
+    }
+
+    /**
+     * The next fiscal year and its twelve months.
+     *
+     * With no date it takes the day after the last year ends, so a shell
+     * install (or a scheduled line in December) needs no arithmetic. The first
+     * year of all has no "next", so that one is given its start date.
+     */
+    public function create_year($start = '')
+    {
+        $this->load->model('Period_model', 'periods');
+        $start = trim((string) $start);
+        $first = $start === '' || $this->periods->next_year_start() === NULL;
+        if ($start === '') $start = (string) $this->periods->next_year_start();
+        if ($start === '') $this->fail('usage: tools create_year <YYYY-MM-01> — the first fiscal year needs its start date.');
+
+        list($fy, $err) = $this->periods->create_year($start, NULL);
+        if ($err !== '') $this->fail($err);
+
+        /* The first year fixes the month the books turn on. The wizard writes
+           it too; a shell install has no other chance, because Settings refuses
+           to change it once it is chosen. */
+        if ($first) {
+            $this->load->model('Settings_model', 'settings');
+            $this->settings->set('fiscal_year_start_month', (string) (int) substr($start, 5, 2), NULL, TRUE);
+        }
+
+        log_admin_action(GP_SYSTEM_ACTOR, 'cli.create_year', 'fiscal_year', $fy, ['start' => $start]);
+        $y = $this->periods->year($fy);
+        $this->out('Created ' . $y['name'] . ': ' . $y['start_date'] . ' to ' . $y['end_date'] . ', twelve open months.');
     }
 
     public function cache()

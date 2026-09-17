@@ -92,6 +92,20 @@ It does two things: it turns recurring saved entries that are due into drafts fo
 
 On Windows, a Task Scheduler task running the same command does the job.
 
+## Setting up from a command line
+
+The setup screen is the ordinary way in ([First-time setup](02-first-time-setup.md)). A server with no browser to hand can do the same three things by command:
+
+```bash
+php index.php tools seed_chart business_corporation   # or business_sole_proprietorship, cooperative
+php index.php tools create_year 2026-01-01            # the first day of the first month of the books
+php index.php tools create_admin owner%40example.test # prints a password once
+```
+
+The chart is seeded only into an empty ledger, never merged into one that already has accounts. The first fiscal year fixes the month the books turn on, and Settings will not change that afterwards. Percent-encode the `@` in an address, as above.
+
+Later years need no date: `tools create_year` on its own takes the day after the last one ends.
+
 ## Keeping the books safe
 
 - **Back up the database every day**, and keep a copy off the server. The books live there; everything else can be reinstalled.

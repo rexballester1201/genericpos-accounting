@@ -9,7 +9,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *   balance_sheet($dates, $levels, $zero)             financial position (co-op: financial condition)
  *   income_statement($ranges, $levels, $zero, $dept)  comprehensive income (co-op: operations)
  *   changes_in_equity($from, $to, $levels)
- *   cash_flows($from, $to, $levels)                   the indirect method
+ *   cash_flows($from, $to, $levels, $method)          indirect or direct
  *
  * Each returns { title, columns, lines, base, checks }. A line is one row of
  * the printed statement:
@@ -450,7 +450,24 @@ class Statement_lib
      * $levels = 0 lists every account; otherwise accounts are grouped under
      * the header that names their line item ("Trade and Other Receivables").
      */
-    public function cash_flows($from, $to, $levels = 2)
+    /**
+     * The statement of cash flows, by either method.
+     *
+     * Both answer the same question and must reach the same figure. The
+     * INDIRECT method starts from net income and adjusts it; the DIRECT method
+     * reads the cash accounts themselves and says who the money came from and
+     * where it went. The direct statement carries the indirect operating
+     * section as its reconciliation note, and `checks.agrees` compares the two
+     * totals — if they ever differ, the classification lost a centavo.
+     */
+    public function cash_flows($from, $to, $levels = 2, $method = 'indirect')
+    {
+        return $method === 'direct'
+            ? $this->_cash_flows_direct($from, $to, $levels)
+            : $this->_cash_flows_indirect($from, $to, $levels);
+    }
+
+    private function _cash_flows_indirect($from, $to, $levels = 2)
     {
         $this->chart();
         $w = $this->words();
@@ -546,6 +563,206 @@ class Statement_lib
             'totals'  => ['net_income' => $ni, 'operating' => $op, 'investing' => $sum['investing'], 'financing' => $sum['financing'],
                           'change' => $change, 'beginning' => $begin, 'ending' => $finish],
         ];
+    }
+
+    /**
+     * THE DIRECT METHOD — read outward from the cash accounts.
+     *
+     * Every entry that touched cash is taken apart. Because an entry balances,
+     * the cash it moved is exactly accounted for by its other lines, so each of
+     * those lines is credited with its share, centavo for centavo, and then
+     * captioned by the account it sits on: the receivables and sales side of an
+     * entry that brought cash in is "Cash received from customers", the
+     * payables, inventory and expense side of one that took cash out is "Cash
+     * paid to suppliers and employees".
+     *
+     * Nothing is estimated and nothing is left over, which is why the
+     * statement's own check — beginning plus change equals ending — also proves
+     * that the classification covered every centavo that moved.
+     *
+     * The indirect operating section follows as the reconciliation note. Where
+     * the two methods part company, they part for a reason: an asset bought on
+     * account moves no cash, and the note carries that difference on a line of
+     * its own rather than hiding it.
+     */
+    private function _cash_flows_direct($from, $to, $levels = 2)
+    {
+        $this->chart();
+        $w = $this->words();
+        $before = self::day_before($from);
+
+        $flow  = $this->net($from, $to, ['exclude_books' => ['opening', 'closing']]);
+        $all   = $this->net($from, $to);
+        $prior = $this->net(NULL, $before);
+
+        $cash = [];
+        foreach ($this->acc as $id => $a) if ( ! $a['is_header'] && $a['cf'] === 'cash') $cash[] = $id;
+        if ( ! $cash) foreach ($this->acc as $id => $a) if ( ! $a['is_header'] && isset($a['tagset']['cash'])) $cash[] = $id;
+        $is_cash = array_fill_keys($cash, TRUE);
+
+        /* One row per entry and account. A reversal reads the source of the
+           entry it reverses, so an undone disposal is still a disposal. */
+        $entries = [];
+        foreach ($this->CI->db->query(
+            "SELECT l.journal_id AS j, l.account_id AS a, COALESCE(o.source, l.source) AS src,
+                    COALESCE(SUM(l.debit_cents), 0) - COALESCE(SUM(l.credit_cents), 0) AS n
+               FROM gp_ledger l
+               LEFT JOIN gp_journals o ON l.source = 'reversal' AND o.id = l.source_id
+              WHERE l.entry_date >= ? AND l.entry_date <= ? AND l.book NOT IN ('opening', 'closing')
+              GROUP BY l.journal_id, l.account_id, COALESCE(o.source, l.source)", [$from, $to]
+        )->result_array() as $r) $entries[(int) $r['j']][] = [(int) $r['a'], (int) $r['n'], (string) $r['src']];
+
+        $caps = ['operating' => [], 'investing' => [], 'financing' => []];
+        foreach ($entries as $entry) {
+            $touched = FALSE;
+            foreach ($entry as $l) if (isset($is_cash[$l[0]])) { $touched = TRUE; break; }
+            if ( ! $touched) continue;
+
+            foreach ($entry as $l) {
+                list($id, $n, $src) = $l;
+                if ($n === 0 || isset($is_cash[$id]) || ! isset($this->acc[$id])) continue;
+                list($class, $key, $label, $sort) = $this->_cfd_caption($this->acc[$id], $src);
+
+                /* "Every account" shows the counterpart itself; otherwise the
+                   standard captions, and the chart's own groups where there is
+                   no standard caption to use. */
+                $gid = NULL;
+                if ((int) $levels === 0 || $key === NULL) {
+                    $gid   = (int) $levels === 0 ? $id : $this->_cf_group($id);
+                    $key   = 'a' . $gid;
+                    $label = $this->acc[$gid]['name'];
+                }
+                if ( ! isset($caps[$class][$key])) {
+                    $caps[$class][$key] = ['label' => $label, 'sort' => $sort, 'amount' => 0];
+                    if ($gid !== NULL) $caps[$class][$key] += ['id' => $gid, 'code' => $this->acc[$gid]['code'], 'head' => $this->acc[$gid]['is_header']];
+                }
+                $caps[$class][$key]['amount'] -= $n;
+            }
+        }
+
+        $sorted = function ($class) use ($caps) {
+            $rows = $caps[$class];
+            uasort($rows, function ($x, $y) { return $x['sort'] === $y['sort'] ? strcmp($x['label'], $y['label']) : $x['sort'] - $y['sort']; });
+            return array_filter($rows, function ($c) { return $c['amount'] !== 0; });
+        };
+        $row = function (array $c) {
+            $l = ['type' => isset($c['id']) ? ($c['head'] ? 'group' : 'account') : 'computed',
+                  'label' => $c['label'], 'indent' => 1, 'amounts' => [$c['amount']]];
+            if (isset($c['id'])) { $l['id'] = $c['id']; $l['code'] = $c['code']; }
+            else $l['strong'] = FALSE;
+            return $l;
+        };
+
+        $L = [['type' => 'heading', 'label' => 'Cash flows from operating activities', 'indent' => 0]];
+        $gen   = 0;
+        $below = [];
+        foreach ($sorted('operating') as $c) {
+            if ($c['sort'] >= self::CFD_BELOW) { $below[] = $c; continue; }
+            $L[] = $row($c);
+            $gen += $c['amount'];
+        }
+        $op = $gen;
+        if ($below) {
+            $L[] = ['type' => 'subtotal', 'label' => 'Cash generated from operations', 'indent' => 0, 'amounts' => [$gen]];
+            foreach ($below as $c) { $L[] = $row($c); $op += $c['amount']; }
+        }
+        $L[] = ['type' => 'total', 'label' => 'Net cash from (used in) operating activities', 'indent' => 0, 'amounts' => [$op]];
+
+        $sum = ['investing' => 0, 'financing' => 0];
+        foreach (['investing' => 'Cash flows from investing activities', 'financing' => 'Cash flows from financing activities'] as $k => $title) {
+            $L[] = ['type' => 'heading', 'label' => $title, 'indent' => 0];
+            foreach ($sorted($k) as $c) { $L[] = $row($c); $sum[$k] += $c['amount']; }
+            $L[] = ['type' => 'total', 'label' => 'Net cash from (used in) ' . $k . ' activities', 'indent' => 0, 'amounts' => [$sum[$k]]];
+        }
+
+        $change = $op + $sum['investing'] + $sum['financing'];
+        $begin  = 0;
+        $finish = 0;
+        foreach ($cash as $id) {
+            $begin  += ($prior[$id] ?? 0) + (($all[$id] ?? 0) - ($flow[$id] ?? 0));
+            $finish += ($prior[$id] ?? 0) + ($all[$id] ?? 0);
+        }
+        $L[] = ['type' => 'computed', 'label' => 'Net increase (decrease) in cash and cash equivalents', 'indent' => 0, 'amounts' => [$change], 'strong' => TRUE];
+        $L[] = ['type' => 'computed', 'label' => 'Cash and cash equivalents at the beginning of the period', 'indent' => 0, 'amounts' => [$begin], 'strong' => FALSE];
+        $L[] = ['type' => 'grand', 'label' => 'Cash and cash equivalents at the end of the period', 'indent' => 0, 'amounts' => [$finish]];
+
+        /* The note: the same operating figure reached the other way. */
+        $ind = $this->_cash_flows_indirect($from, $to, $levels);
+        $L[] = ['type' => 'heading', 'label' => 'Reconciliation of ' . $w['net'] . ' to net cash from operating activities', 'indent' => 0];
+        foreach (array_slice($ind['lines'], 1) as $l) {
+            if ($l['type'] === 'total') break;
+            $L[] = $l;
+        }
+        $gap = $op - $ind['totals']['operating'];
+        if ($gap !== 0) {
+            $L[] = ['type' => 'computed', 'label' => 'Investing and financing activities that moved no cash',
+                    'indent' => 1, 'amounts' => [$gap], 'strong' => FALSE];
+        }
+        $L[] = ['type' => 'total', 'label' => 'Net cash from (used in) operating activities', 'indent' => 0, 'amounts' => [$op]];
+
+        return [
+            'title'   => $w['cf'],
+            'columns' => [['from' => $from, 'to' => $to]],
+            'lines'   => $L,
+            'base'    => NULL,
+            'method'  => 'direct',
+            'checks'  => ['reconciled' => [$begin + $change === $finish]],
+            'totals'  => ['net_income' => $ind['totals']['net_income'], 'operating' => $op, 'investing' => $sum['investing'],
+                          'financing' => $sum['financing'], 'change' => $change, 'beginning' => $begin, 'ending' => $finish,
+                          'non_cash' => $gap],
+        ];
+    }
+
+    /** Anything from this sort order down sits below "Cash generated from operations". */
+    const CFD_BELOW = 50;
+
+    /**
+     * Where a cash movement belongs when it is read from the counterpart
+     * account: [class, caption key, caption, sort]. A NULL key means there is
+     * no standard caption — group it by the chart instead.
+     */
+    private function _cfd_caption(array $a, $src)
+    {
+        $class = $this->_cfd_class($a);
+        if ($class !== 'operating') {
+            return $src === 'disposal'
+                ? [$class, 'disposal', 'Proceeds from the disposal of property and equipment', 10]
+                : [$class, NULL, NULL, 50];
+        }
+
+        $t   = $a['tagset'];
+        $sub = $this->sub_of($a);
+        if (isset($t['interest_income']))  return ['operating', 'int_in',  'Interest received', 60];
+        if (isset($t['interest_expense'])) return ['operating', 'int_out', 'Interest paid', 70];
+        if ($a['type'] === 'expense' && $sub === 'finance')    return ['operating', 'int_out', 'Interest paid', 70];
+        if ($a['type'] === 'expense' && $sub === 'income_tax') return ['operating', 'tax', 'Income taxes paid', 80];
+        if (isset($t['receivable']) || isset($t['trade_receivable']) || isset($t['sales'])
+            || ($a['type'] === 'income' && $sub === 'operating')) return ['operating', 'cust', 'Cash received from customers', 10];
+        if ($a['type'] === 'expense' || isset($t['payable']) || isset($t['trade_payable'])
+            || isset($t['inventory']) || isset($t['cogs'])) return ['operating', 'sup', 'Cash paid to suppliers and employees', 30];
+        return ['operating', 'other', 'Other operating receipts (payments)', 20];
+    }
+
+    /**
+     * The activity a counterpart account belongs to under the direct method.
+     *
+     * NOTE: this is not _cf_class(). There, accumulated depreciation is an
+     * add-back and the gain on a disposal is taken out of net income. Here,
+     * every line of a disposal — the cost, the accumulated depreciation and the
+     * gain or loss — is part of the one thing that happened, and what the buyer
+     * paid is an investing receipt.
+     */
+    private function _cfd_class(array $a)
+    {
+        /* Before the account's own classification: a disposal's gain or loss
+           sits in other income or other expenses, which the chart calls
+           operating, but the cash it brought in is an investing receipt. */
+        if (isset($a['tagset']['accum_depr']) || isset($a['tagset']['disposal_gain']) || isset($a['tagset']['disposal_loss'])) return 'investing';
+        if (in_array($a['cf'], ['operating', 'investing', 'financing'], TRUE)) return $a['cf'];
+        if ($a['type'] === 'equity') return 'financing';
+        if (in_array($a['type'], self::PL, TRUE)) return 'operating';
+        if ($this->sub_of($a) === 'non_current') return $a['type'] === 'asset' ? 'investing' : 'financing';
+        return 'operating';
     }
 
     private function _cf_class(array $a)

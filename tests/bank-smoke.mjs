@@ -1,5 +1,5 @@
-// bank-smoke.mjs — a quick look at the banking API on the scratch DB (port 8782)
-const BASE = 'http://127.0.0.1:8782/api/v1';
+// bank-smoke.mjs — a quick look at the banking API on the scratch DB
+const BASE = process.argv[2] || 'http://127.0.0.1:8782/api/v1';
 async function call(method, path, body, token) {
   const headers = { Accept: 'application/json' };
   if (body != null) headers['Content-Type'] = 'application/json';

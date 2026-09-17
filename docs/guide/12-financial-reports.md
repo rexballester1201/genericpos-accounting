@@ -39,9 +39,20 @@ Closing entries are left out, so a closed year still reports the income it earne
 Each equity account from the balance at the start of the period, through the result for the period and everything else that moved it — contributions, withdrawals, dividends, transfers between funds, the year-end closing — to the balance at the end. The ending column equals the equity on the balance sheet.
 
 ### Cash flows
-Where the cash came from and where it went, by the indirect method: the result for the period, adjusted for depreciation and the movements in the other balance-sheet accounts, split into operating, investing and financing.
+Where the cash came from and where it went, split into operating, investing and financing. Both methods PAS 7 allows are here; pick one from the **Method** list.
 
-- Selling an asset shows as one thing: the **proceeds** in investing, with the gain or loss taken back out of the operating section, because the whole amount the buyer paid is an investing flow.
+**Indirect** (the usual one) starts from the result for the period and adjusts it: depreciation added back, then the movement in every other balance-sheet account.
+
+**Direct** starts from the cash accounts themselves. Every entry that touched cash is taken apart, and the cash it moved is attributed to the other accounts in the same entry, so the statement reads as receipts and payments:
+
+- **Cash received from customers** — the receivables and sales side of the entries that brought cash in.
+- **Cash paid to suppliers and employees** — the payables, inventory and expense side of the entries that took it out.
+- **Cash generated from operations**, then interest received, interest paid and income taxes paid on their own lines. Income tax settled through a payable account sits with the other operating amounts.
+- Underneath, a note reaches the same operating figure the other way, from the result for the period. Where the two methods differ, the note says why on a line called **Investing and financing activities that moved no cash** — equipment bought on account is the usual reason. The direct method is right there: no cash moved, so nothing is shown in investing.
+
+Either way:
+
+- Selling an asset shows as one thing: the **proceeds** in investing, because the whole amount the buyer paid is an investing flow.
 - The foot reconciles: cash at the beginning, the change, cash at the end. Those figures are the cash accounts themselves.
 
 ## The trial balance

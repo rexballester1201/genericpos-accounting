@@ -49,7 +49,8 @@ php index.php tools cache      # seeding rewrote the shell's branding cache
 | `ar-test.mjs <base> <db>` | receivables and payables end to end, and their reports |
 | `fa-test.mjs <base> <db>` | fixed assets: the register, depreciation runs, disposals, the lapsing schedule |
 | `fa-lib-test.php` | the depreciation maths on its own (`php tests/fa-lib-test.php`) |
-| `bank-smoke.mjs`, `budget-smoke.mjs` | a quick pass over the banking and budget endpoints |
+| `bank-smoke.mjs <base>`, `budget-smoke.mjs <base>` | a quick pass over the banking and budget endpoints |
+| `cli-test.mjs <db> [php] [mysql]` | installing a ledger from a shell: `seed_chart`, `create_year`, `create_admin`. It loads the schema itself and needs no server |
 | `coop-test.mjs <base> <key>` | every report on an empty co-operative |
 | `modcheck.mjs [root]` | static check: every module parses, every import resolves, every page and icon exists |
 
