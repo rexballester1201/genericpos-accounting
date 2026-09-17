@@ -1,0 +1,49 @@
+<div data-module="contact">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="customers" data-crumb-list>Customers</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>…</span></div>
+      <h1 class="row gap-2" data-title>Customer or supplier</h1>
+      <p class="sub" data-sub></p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <div class="stack-lg" data-body hidden>
+    <div class="alert alert-neutral" data-banner hidden></div>
+    <div class="stats" data-stats></div>
+
+    <section class="card card-pad"><div class="je-head" data-head></div></section>
+
+    <section class="card card-flush">
+      <div class="card-head"><h3>Open documents</h3><span class="small muted" data-open-count></span></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Number</th><th>Date</th><th>Due</th><th>Status</th><th class="num">Total</th><th class="num">Open</th></tr></thead>
+          <tbody data-open></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card card-flush" data-drafts-card hidden>
+      <div class="card-head"><h3>Drafts waiting to post</h3></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Draft</th><th>Date</th><th class="num">Amount</th></tr></thead>
+          <tbody data-drafts></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card card-flush">
+      <div class="card-head"><h3>Recent activity</h3><span class="small muted">Posted lines on the receivables and payables accounts</span></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Date</th><th>Entry</th><th>Particulars</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+          <tbody data-activity></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>

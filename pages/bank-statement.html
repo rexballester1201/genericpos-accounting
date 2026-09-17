@@ -1,0 +1,56 @@
+<div data-module="bank-statement">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="banking">Banking</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>Statement</span></div>
+      <h1 class="row gap-2" data-title>Bank statement</h1>
+      <p class="sub" data-sub></p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <div class="stack-lg" data-body hidden>
+    <div class="stack" data-alerts></div>
+
+    <section class="card card-pad"><div class="je-head" data-head></div></section>
+
+    <section class="card" data-selbar hidden style="position:sticky;top:68px;z-index:5;box-shadow:var(--shadow-3)">
+      <div class="card-body row between gap-2" style="padding:var(--s3) var(--s4)">
+        <div class="small grow" data-sel-text></div>
+        <div class="row gap-2" data-sel-actions></div>
+      </div>
+    </section>
+
+    <div class="grid-2" style="align-items:start">
+      <section class="card card-flush">
+        <div class="card-head"><h3>Bank lines</h3><span class="small muted" data-line-count></span></div>
+        <div class="tabs" role="tablist" aria-label="Bank lines" data-tabs style="padding:0 var(--s3)"></div>
+        <div class="table-wrap">
+          <table class="table table-compact">
+            <thead><tr><th><span class="sr-only">Choose</span></th><th>Date</th><th>Description</th><th class="num">Amount</th><th>Status</th></tr></thead>
+            <tbody data-lines></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card card-flush">
+        <div class="card-head"><h3>Book lines not yet matched</h3><span class="small muted" data-book-count></span></div>
+        <div class="toolbar">
+          <div class="input-icon search">
+            <span data-icon="magnifying-glass" data-icon-size="16"></span>
+            <input class="input" type="search" data-book-q id="bs-q" placeholder="Entry, reference or amount" aria-label="Search book lines" autocomplete="off" />
+          </div>
+          <label class="check small" style="align-items:center"><input type="checkbox" data-older id="bs-older" /> Older lines</label>
+        </div>
+        <div class="table-wrap">
+          <table class="table table-compact">
+            <thead><tr><th><span class="sr-only">Choose</span></th><th>Date</th><th>Entry</th><th class="num">Amount</th></tr></thead>
+            <tbody data-books></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <p class="small muted" data-foot></p>
+  </div>
+</div>

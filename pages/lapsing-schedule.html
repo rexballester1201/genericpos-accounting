@@ -1,0 +1,24 @@
+<div data-module="lapsing-schedule">
+  <div class="page-head no-print">
+    <div>
+      <div class="breadcrumb"><a href="assets">Fixed assets</a><span data-icon="caret-right" data-icon-size="12"></span><span>Lapsing schedule</span></div>
+      <h1>Lapsing schedule</h1>
+      <p class="sub" data-sub>&nbsp;</p>
+    </div>
+    <div class="row gap-2">
+      <button class="btn btn-secondary" type="button" data-csv><span data-icon="download-simple" data-icon-size="18"></span>Download CSV</button>
+      <button class="btn" type="button" data-print><span data-icon="printer" data-icon-size="18"></span>Print</button>
+    </div>
+  </div>
+
+  <div class="card card-flush report-controls no-print">
+    <form class="toolbar" data-controls novalidate>
+      <select class="select" name="preset" id="ls-preset" aria-label="Period" style="width:auto"></select>
+      <input class="input" type="date" name="from" id="ls-from" aria-label="From" style="width:auto" />
+      <span class="faint">to</span>
+      <input class="input" type="date" name="to" id="ls-to" aria-label="To" style="width:auto" />
+    </form>
+  </div>
+  <div class="alert alert-warn mb-4 no-print" data-warn hidden></div>
+  <article class="report-sheet is-wide" data-sheet><div class="loading-block"><div class="spinner"></div></div></article>
+</div>

@@ -1,0 +1,41 @@
+<div data-module="contacts">
+  <div class="page-head">
+    <div>
+      <h1 data-title>Customers</h1>
+      <p class="sub" data-sub>&nbsp;</p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div class="stats mb-4" data-stats hidden></div>
+
+  <div class="card card-flush">
+    <form class="toolbar" data-filters role="search" novalidate>
+      <div class="input-icon search">
+        <span data-icon="magnifying-glass" data-icon-size="16"></span>
+        <input class="input" type="search" name="q" id="ct-q" placeholder="Code, name, TIN or contact person" aria-label="Search" autocomplete="off" />
+      </div>
+      <div class="segmented" role="group" aria-label="Which ones" data-active>
+        <button type="button" data-v="1">Active</button>
+        <button type="button" data-v="0">Inactive</button>
+        <button type="button" data-v="all">All</button>
+      </div>
+      <select class="select" name="sort" id="ct-sort" aria-label="Sort by" style="width:auto">
+        <option value="name">By name</option>
+        <option value="code">By code</option>
+        <option value="balance">Largest balance first</option>
+      </select>
+    </form>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Code</th><th>Name</th><th>TIN</th><th class="num">Terms</th><th class="num" data-col-balance>Balance</th><th class="num">Open</th><th class="num">Overdue</th></tr>
+        </thead>
+        <tbody data-rows><tr><td colspan="7"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+        <tfoot data-foot></tfoot>
+      </table>
+    </div>
+    <div data-pager hidden></div>
+  </div>
+  <p class="small muted mt-3" data-foot-note></p>
+</div>

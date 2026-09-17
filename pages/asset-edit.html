@@ -1,0 +1,123 @@
+<div data-module="asset-edit">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="assets">Fixed assets</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>New asset</span></div>
+      <h1 data-title>New asset</h1>
+      <p class="sub" data-sub>The asset number is given when you save. Depreciation is worked out from the figures below; once it has been charged they are fixed.</p>
+    </div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <form class="stack-lg" data-form novalidate hidden>
+    <div class="alert alert-err" data-banner hidden></div>
+    <div class="alert alert-neutral" data-frozen hidden></div>
+
+    <section class="card">
+      <div class="card-head"><h3>The asset</h3></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field span-2">
+            <label class="label" for="fe-name">Description</label>
+            <input class="input" id="fe-name" name="name" maxlength="160" autocomplete="off" placeholder="Isuzu delivery truck" />
+            <div class="error" data-error-for="name"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-cat">Category</label>
+            <select class="select" id="fe-cat" name="category_id"></select>
+            <div class="hint" data-cat-hint></div>
+            <div class="error" data-error-for="category_id"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-acq">Date acquired</label>
+            <input class="input" type="date" id="fe-acq" name="acquired_on" />
+            <div class="error" data-error-for="acquired_on"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-dept">Department <span class="opt">(optional)</span></label>
+            <select class="select" id="fe-dept" name="department_id"></select>
+            <div class="hint">Its depreciation is charged to this department.</div>
+            <div class="error" data-error-for="department_id"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-loc">Location <span class="opt">(optional)</span></label>
+            <input class="input" id="fe-loc" name="location" maxlength="120" autocomplete="off" placeholder="Main office" />
+            <div class="error" data-error-for="location"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-serial">Serial or plate no. <span class="opt">(optional)</span></label>
+            <input class="input" id="fe-serial" name="serial_no" maxlength="80" autocomplete="off" />
+            <div class="error" data-error-for="serial_no"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-sup">Supplier <span class="opt">(optional)</span></label>
+            <select class="select" id="fe-sup" name="supplier_id"></select>
+            <div class="error" data-error-for="supplier_id"></div>
+          </div>
+          <div class="field span-2">
+            <label class="label" for="fe-aj">Purchase entry <span class="opt">(optional)</span></label>
+            <select class="select" id="fe-aj" name="acquisition_journal_id"></select>
+            <div class="hint" data-aj-hint>The posted bill or journal entry that recorded the purchase: entries that debit the category's asset account.</div>
+            <div class="error" data-error-for="acquisition_journal_id"></div>
+          </div>
+          <div class="field span-2">
+            <label class="label" for="fe-notes">Notes <span class="opt">(optional)</span></label>
+            <textarea class="textarea" id="fe-notes" name="notes" maxlength="500" style="min-height:64px"></textarea>
+            <div class="error" data-error-for="notes"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h3>Depreciation</h3></div>
+      <div class="card-body stack">
+        <div class="form-grid">
+          <div class="field">
+            <label class="label" for="fe-cost">Cost</label>
+            <input class="input" id="fe-cost" name="cost_cents" inputmode="decimal" autocomplete="off" placeholder="0.00" />
+            <div class="hint">What it cost to buy and make ready for use, net of VAT the company can claim.</div>
+            <div class="error" data-error-for="cost_cents"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-res">Residual value</label>
+            <input class="input" id="fe-res" name="residual_cents" inputmode="decimal" autocomplete="off" placeholder="0.00" />
+            <div class="hint" data-res-hint>What it should be worth at the end of its life. 0 is common.</div>
+            <div class="error" data-error-for="residual_cents"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-life">Useful life</label>
+            <div class="row-nw">
+              <input class="input" id="fe-life" name="life" inputmode="numeric" maxlength="4" autocomplete="off" style="max-width:110px" />
+              <select class="select" name="life_unit" aria-label="Years or months" style="width:auto"><option value="years">years</option><option value="months">months</option></select>
+            </div>
+            <div class="error" data-error-for="useful_life_months"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-method">Method</label>
+            <select class="select" id="fe-method" name="method"></select>
+            <div class="error" data-error-for="method"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-start">Depreciation starts</label>
+            <input class="input" type="date" id="fe-start" name="depreciation_start" />
+            <div class="hint" data-start-hint>The first month depreciated (the 1st of that month).</div>
+            <div class="error" data-error-for="depreciation_start"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="fe-open">Accumulated depreciation brought in</label>
+            <input class="input" id="fe-open" name="opening_accum_cents" inputmode="decimal" autocomplete="off" placeholder="0.00" />
+            <div class="hint">Only for an asset the company already had at go-live: the depreciation charged before these books, already in the opening balance. 0 for a new purchase.</div>
+            <div class="error" data-error-for="opening_accum_cents"></div>
+          </div>
+        </div>
+        <div class="alert alert-neutral" data-preview hidden></div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="assets" data-cancel>Cancel</a>
+      <button class="btn" type="submit" data-save>Register asset</button>
+    </div>
+  </form>
+</div>

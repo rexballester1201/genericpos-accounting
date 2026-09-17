@@ -1,0 +1,36 @@
+<div data-module="settlements">
+  <div class="page-head">
+    <div>
+      <h1 data-title>Receipts</h1>
+      <p class="sub" data-sub>&nbsp;</p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div class="card card-flush">
+    <div class="tabs" role="tablist" aria-label="Status" data-tabs style="padding:0 var(--s3)"></div>
+    <form class="toolbar" data-filters role="search" novalidate>
+      <div class="input-icon search">
+        <span data-icon="magnifying-glass" data-icon-size="16"></span>
+        <input class="input" type="search" name="q" id="sl-q" placeholder="Number, OR or cheque number, or name" aria-label="Search" autocomplete="off" />
+      </div>
+      <select class="select" name="state" id="sl-state" aria-label="Applied or not" style="width:auto">
+        <option value="">Applied or not</option>
+        <option value="unapplied">Not fully applied</option>
+      </select>
+      <select class="select" name="contact_id" id="sl-contact" aria-label="Customer or supplier" style="width:auto;max-width:260px"></select>
+      <input class="input" type="date" name="from" id="sl-from" aria-label="From date" style="width:auto" />
+      <input class="input" type="date" name="to" id="sl-to" aria-label="To date" style="width:auto" />
+    </form>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Number</th><th>Date</th><th data-col-contact>Customer</th><th data-col-ref>OR number</th><th>Account</th><th class="num">Amount</th><th class="num">Withheld</th><th class="num">Unapplied</th><th>Status</th></tr>
+        </thead>
+        <tbody data-rows><tr><td colspan="9"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+        <tfoot data-foot></tfoot>
+      </table>
+    </div>
+    <div data-pager hidden></div>
+  </div>
+</div>

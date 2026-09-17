@@ -1,0 +1,39 @@
+<div data-module="depreciation">
+  <div class="page-head">
+    <div>
+      <h1>Depreciation</h1>
+      <p class="sub">One run a month posts the depreciation of every asset in use as a single adjusting entry.</p>
+    </div>
+    <div class="row gap-2">
+      <a class="btn btn-ghost" href="assets"><span data-icon="package" data-icon-size="18"></span>Fixed assets</a>
+      <a class="btn btn-ghost" href="reports/lapsing-schedule"><span data-icon="table" data-icon-size="18"></span>Lapsing schedule</a>
+    </div>
+  </div>
+
+  <div class="stack-lg">
+    <section class="card" data-run-card hidden>
+      <div class="card-head"><h3>Run depreciation</h3></div>
+      <div class="card-body stack">
+        <form class="row gap-2" data-run-form novalidate>
+          <label class="label" for="dp-period" style="margin:0">Month</label>
+          <select class="select" id="dp-period" name="period_id" style="width:auto"></select>
+          <button class="btn btn-secondary" type="submit"><span data-icon="eye" data-icon-size="18"></span>Preview</button>
+        </form>
+        <div data-preview></div>
+      </div>
+    </section>
+
+    <section class="card card-flush">
+      <div class="card-head"><h3>Runs</h3><span class="small muted" data-count></span></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Month</th><th>Entry</th><th class="num">Depreciation</th><th class="num">Assets</th><th>Run by</th><th>Run on</th><th></th></tr>
+          </thead>
+          <tbody data-rows><tr><td colspan="7"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <p class="small muted mt-3">Runs go month by month: once a month has been run, earlier months can no longer be. Only the latest run can be undone, while its month is open. Open a run to see what it charged each asset.</p>
+</div>

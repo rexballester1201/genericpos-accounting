@@ -1,0 +1,93 @@
+<div data-module="document-edit">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="invoices" data-crumb-list>Invoices</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>New invoice</span></div>
+      <h1 data-title>New invoice</h1>
+      <p class="sub" data-sub>&nbsp;</p>
+    </div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <form class="stack-lg" data-form novalidate hidden>
+    <div class="alert alert-err" data-banner hidden></div>
+    <div class="alert alert-warn" data-note hidden></div>
+
+    <section class="card card-pad">
+      <div class="form-grid">
+        <div class="field">
+          <label class="label" for="de-contact" data-contact-label>Customer</label>
+          <select class="select" id="de-contact" name="contact_id"></select>
+          <div class="hint" data-contact-hint></div>
+          <div class="error" data-error-for="contact_id"></div>
+        </div>
+        <div class="field" data-related-field hidden>
+          <label class="label" for="de-related" data-related-label>Corrects invoice</label>
+          <select class="select" id="de-related" name="related_document_id"></select>
+          <div class="hint" data-related-hint></div>
+          <div class="error" data-error-for="related_document_id"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="de-date" data-date-label>Date</label>
+          <input class="input" type="date" id="de-date" name="doc_date" required />
+          <div class="hint" data-date-hint></div>
+          <div class="error" data-error-for="doc_date"></div>
+        </div>
+        <div class="field" data-due-field>
+          <label class="label" for="de-due">Due date</label>
+          <input class="input" type="date" id="de-due" name="due_date" />
+          <div class="hint" data-due-hint></div>
+          <div class="error" data-error-for="due_date"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="de-ref" data-ref-label>Reference <span class="opt">(optional)</span></label>
+          <input class="input" id="de-ref" name="reference" maxlength="60" autocomplete="off" />
+          <div class="error" data-error-for="reference"></div>
+        </div>
+        <div class="field span-2">
+          <label class="label" for="de-desc">Description <span class="opt">(optional)</span></label>
+          <input class="input" id="de-desc" name="description" maxlength="500" autocomplete="off" />
+          <div class="error" data-error-for="description"></div>
+        </div>
+        <div class="field span-2" data-inclusive-field>
+          <label class="check"><input type="checkbox" name="prices_include_tax" id="de-incl" /> <span>Amounts include VAT</span></label>
+          <div class="hint" data-inclusive-hint></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card card-flush">
+      <div class="card-head">
+        <h3>Lines</h3>
+        <button class="btn btn-secondary btn-sm" type="button" data-add-line><span data-icon="plus" data-icon-size="16"></span>Add a line</button>
+      </div>
+      <div class="table-wrap">
+        <table class="je-lines">
+          <thead>
+            <tr>
+              <th style="min-width:230px">Account</th>
+              <th style="min-width:200px">Description</th>
+              <th class="amt" style="width:100px;min-width:90px">Quantity</th>
+              <th class="amt">Unit price</th>
+              <th class="amt">Amount</th>
+              <th data-col-vat style="min-width:140px">VAT</th>
+              <th data-col-dept style="min-width:150px">Department</th>
+              <th class="row-x"><span class="sr-only">Remove</span></th>
+            </tr>
+          </thead>
+          <tbody data-lines></tbody>
+        </table>
+      </div>
+      <div class="error" data-error-for="lines" style="padding:var(--s2) var(--s4) 0"></div>
+      <div class="card-body">
+        <div class="totals" data-totals style="max-width:380px;margin-left:auto"></div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="invoices" data-cancel>Cancel</a>
+      <button class="btn btn-secondary" type="submit" data-then="draft">Save draft</button>
+      <button class="btn" type="submit" data-then="post" hidden>Save and post</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,40 @@
+<div data-module="settlement">
+  <div class="page-head no-print">
+    <div>
+      <div class="breadcrumb"><a href="receipts" data-crumb-list>Receipts</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>Receipt</span></div>
+      <h1 class="row gap-2" data-title>Receipt</h1>
+      <p class="sub" data-sub></p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <div class="stack-lg" data-body hidden>
+    <div class="alert no-print" data-banner hidden></div>
+
+    <article class="report-sheet" data-sheet></article>
+
+    <section class="card card-flush no-print" data-alloc-card hidden>
+      <div class="card-head"><h3>What it settled</h3><span class="small muted" data-alloc-sub></span></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th data-alloc-col>Invoice</th><th>Date</th><th>Due</th><th class="num">Its total</th><th class="num">Applied</th><th class="num"><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody data-allocs></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div data-attachments></div>
+
+    <section class="card no-print">
+      <div class="card-head"><h3>In the books</h3></div>
+      <div class="card-body"><div class="je-head" data-books></div></div>
+    </section>
+
+    <section class="card no-print">
+      <div class="card-head"><h3>History</h3><span class="small muted">From the audit log</span></div>
+      <div class="card-body"><ul class="timeline" data-trail></ul></div>
+    </section>
+  </div>
+</div>

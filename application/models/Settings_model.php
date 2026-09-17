@@ -101,8 +101,8 @@ class Settings_model extends CI_Model
             'tax_id_label'       => ['type' => 'string', 'group' => 'tax', 'max_len' => 12, 'label' => 'Tax ID label', 'hint' => ''],
 
             // ── The ledger ────────────────────────────────────────────────
-            'ledger_require_approval'    => ['type' => 'bool', 'group' => 'ledger', 'label' => 'Entries need approval', 'hint' => 'A bookkeeper\'s entry stays a draft until an accountant approves it.'],
-            'ledger_allow_self_approval' => ['type' => 'bool', 'group' => 'ledger', 'label' => 'Preparers may approve their own entries', 'hint' => 'For a one-person office only — it switches off maker-checker.'],
+            'ledger_require_approval'    => ['type' => 'bool', 'group' => 'ledger', 'label' => 'A second person approves every entry', 'hint' => 'On: an accountant or administrator approves each entry, invoice, bill, receipt and payment, and never one they prepared. Off: they may approve their own. A bookkeeper\'s work always waits for an accountant.'],
+            'ledger_allow_self_approval' => ['type' => 'bool', 'group' => 'ledger', 'label' => 'Preparers may approve their own entries', 'hint' => 'Lets an accountant or administrator approve what they prepared even while the setting above is on. For a one-person office only — it switches off maker-checker.'],
             'ledger_number_digits'       => ['type' => 'int',  'group' => 'ledger', 'min' => 3, 'max' => 8, 'label' => 'Digits in journal numbers', 'hint' => 'CD-2026-00042 has five.'],
             'ledger_max_lines'           => ['type' => 'int',  'group' => 'ledger', 'min' => 2, 'max' => 2000, 'label' => 'Most lines in one entry', 'hint' => ''],
             'book_prefix_general'            => $book('General journal'),
@@ -153,6 +153,11 @@ class Settings_model extends CI_Model
             'coop_cdf_pct'           => $pct('Community development fund (%)', 'Of net surplus.'),
             'coop_optional_fund_pct' => $pct('Optional fund (%)', 'Of net surplus.'),
             'coop_isc_pct'           => $pct('Interest on share capital (% of the remainder)', 'The patronage refund takes the rest.'),
+            'coop_bench_par_max'           => $pct('Portfolio at risk — at most (%)', 'The share of the loan portfolio past due that the co-operative will accept. CDA guidance: 5 % or less.'),
+            'coop_bench_allowance_min'     => $pct('Allowance cover — at least (%)', 'Allowance for probable losses against loans past due. CDA guidance: 35 % of loans 1 to 12 months past due, 100 % of older ones.', 500),
+            'coop_bench_share_capital_min' => $pct('Share capital to total assets — at least (%)', 'CDA guidance: between 35 % and 45 %.'),
+            'coop_bench_statutory_min'     => $pct('Statutory funds to total assets — at least (%)', 'The reserve, education and training, community development and optional funds together.'),
+            'coop_bench_cost_max'          => $pct('Operating cost ratio — at most (%)', 'Operating and financing costs against revenue.'),
             'acct_coop_reserve_fund'      => $acct('Reserve fund', '', ['equity'], NULL, 'coop'),
             'acct_coop_cetf'              => $acct('Education and training fund', '', ['equity'], NULL, 'coop'),
             'acct_coop_cdf'               => $acct('Community development fund', '', ['equity'], NULL, 'coop'),
@@ -397,6 +402,11 @@ class Settings_model extends CI_Model
                 if (isset($meta['pattern']) && $to !== '' && ! preg_match($meta['pattern'], $to)) return $this->_err('That value is not in the expected format.', $from);
         }
 
+        /* Number prefixes: never blank, never shared. Two books with one prefix
+           would share one counter ("CA" for both cash books), and two document
+           types with one prefix would print the same number twice. */
+        if (($why = $this->_prefix_problem($key, $to, $registry)) !== '') return $this->_err($why, $from);
+
         /* Bounds on the SERVER — a form's min/max attributes do not cover a
            direct API call. */
         if (in_array($meta['type'], ['int', 'float', 'money'], TRUE)) {
@@ -439,6 +449,23 @@ class Settings_model extends CI_Model
         $this->config->set_item($key, $to);
 
         return ['ok' => TRUE, 'error' => '', 'from' => $from, 'to' => $to];
+    }
+
+    /** '' unless $key is a number prefix and $to is blank or already used by its family. */
+    protected function _prefix_problem($key, $to, array $registry)
+    {
+        foreach (['book_prefix_', 'doc_prefix_'] as $family) {
+            if (strpos($key, $family) !== 0) continue;
+            if ((string) $to === '') return 'Enter a prefix. Every ' . ($family === 'book_prefix_' ? 'book' : 'kind of document') . ' needs its own.';
+            foreach ($registry as $k => $m) {
+                if ($k === $key || strpos($k, $family) !== 0) continue;
+                if (strtoupper((string) $this->get($k)) === strtoupper((string) $to)) {
+                    return $to . ' is already the ' . lcfirst(preg_replace('/ prefix$/', '', $m['label'])) . ' prefix. Choose another, so their numbers stay apart.';
+                }
+            }
+        }
+        if ($key === 'fa_asset_prefix' && (string) $to === '') return 'Enter a prefix for asset numbers.';
+        return '';
     }
 
     /** '' when $code names an active postable account that fits $meta; otherwise why not. */

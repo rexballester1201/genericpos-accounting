@@ -1,0 +1,29 @@
+<div data-module="departments">
+  <div class="page-head">
+    <div>
+      <h1>Departments</h1>
+      <p class="sub" data-sub>Departments, branches or cost centres, for journal lines and budgets.</p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div class="card card-flush">
+    <form class="toolbar" data-filters role="search" novalidate>
+      <div class="input-icon search">
+        <span data-icon="magnifying-glass" data-icon-size="16"></span>
+        <input class="input" type="search" name="q" id="dp-q" placeholder="Code or name" aria-label="Search departments" autocomplete="off" />
+      </div>
+      <label class="check small" style="align-items:center"><input type="checkbox" name="inactive" id="dp-inactive" /> Show inactive</label>
+    </form>
+    <div class="table-wrap">
+      <table class="table table-compact">
+        <thead>
+          <tr><th>Code</th><th>Department</th><th class="num">Income</th><th class="num">Expenses</th><th class="num" data-net-head>Net</th><th>Status</th><th><span class="sr-only">Reports</span></th></tr>
+        </thead>
+        <tbody data-rows><tr><td colspan="7"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+        <tfoot data-total-rows></tfoot>
+      </table>
+    </div>
+  </div>
+  <p class="small muted mt-3" data-foot></p>
+</div>

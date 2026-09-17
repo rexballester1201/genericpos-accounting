@@ -1,0 +1,39 @@
+<div data-module="asset">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="assets">Fixed assets</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>Asset</span></div>
+      <h1 class="row gap-2" data-title>Asset</h1>
+      <p class="sub" data-sub></p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <div class="stack-lg" data-body hidden>
+    <div class="alert" data-banner hidden></div>
+
+    <div class="stats" data-stats></div>
+
+    <section class="card card-pad"><div class="je-head" data-head></div></section>
+
+    <section class="card card-flush">
+      <div class="card-head">
+        <h3>Depreciation schedule</h3>
+        <div class="segmented" role="group" aria-label="Show the schedule" data-view>
+          <button type="button" data-v="years">By year</button>
+          <button type="button" data-v="months">By month</button>
+        </div>
+      </div>
+      <div class="table-wrap"><table class="table table-compact" data-schedule></table></div>
+      <p class="small muted mb-0" data-schedule-note style="padding:var(--s3) var(--s4)"></p>
+    </section>
+
+    <div data-attachments></div>
+
+    <section class="card">
+      <div class="card-head"><h3>History</h3><span class="small muted">From the audit log</span></div>
+      <div class="card-body"><ul class="timeline" data-trail></ul></div>
+    </section>
+  </div>
+</div>

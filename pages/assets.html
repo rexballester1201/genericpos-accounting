@@ -1,0 +1,41 @@
+<div data-module="assets">
+  <div class="page-head">
+    <div>
+      <h1>Fixed assets</h1>
+      <p class="sub" data-sub>The register: what the company owns, what each asset cost, and what is left to depreciate.</p>
+    </div>
+    <div class="row gap-2" data-actions>
+      <a class="btn btn-ghost" href="asset-categories"><span data-icon="folder" data-icon-size="18"></span>Categories</a>
+      <a class="btn btn-ghost" href="depreciation"><span data-icon="clock-counter-clockwise" data-icon-size="18"></span>Depreciation</a>
+      <a class="btn btn-ghost" href="reports/lapsing-schedule"><span data-icon="table" data-icon-size="18"></span>Lapsing schedule</a>
+      <button class="btn btn-secondary" type="button" data-csv><span data-icon="download-simple" data-icon-size="18"></span>Download CSV</button>
+    </div>
+  </div>
+
+  <div class="card card-flush">
+    <div class="tabs" role="tablist" aria-label="Status" data-tabs style="padding:0 var(--s3)"></div>
+    <form class="toolbar" data-filters role="search" novalidate>
+      <div class="input-icon search">
+        <span data-icon="magnifying-glass" data-icon-size="16"></span>
+        <input class="input" type="search" name="q" id="fa-q" placeholder="Number, name, serial no. or location" aria-label="Search assets" autocomplete="off" />
+      </div>
+      <select class="select" name="category" id="fa-cat" aria-label="Category" style="width:auto"><option value="">All categories</option></select>
+      <select class="select" name="department" id="fa-dept" aria-label="Department" style="width:auto"><option value="">All departments</option></select>
+    </form>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Number</th><th>Asset</th><th>Category</th><th>Acquired</th>
+            <th class="num">Cost</th><th class="num">Accumulated</th><th class="num">Net book value</th>
+            <th>Status</th><th>Department</th><th>Location</th>
+          </tr>
+        </thead>
+        <tbody data-rows><tr><td colspan="10"><div class="loading-block"><div class="spinner"></div></div></td></tr></tbody>
+        <tfoot data-totals></tfoot>
+      </table>
+    </div>
+    <div data-pager hidden></div>
+  </div>
+  <p class="small muted mt-3" data-foot>Accumulated depreciation includes what was charged before the books moved to this system. Open an asset to see its depreciation schedule.</p>
+</div>

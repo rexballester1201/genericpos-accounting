@@ -1,0 +1,97 @@
+<div data-module="settlement-edit">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="receipts" data-crumb-list>Receipts</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>Record a receipt</span></div>
+      <h1 data-title>Record a receipt</h1>
+      <p class="sub" data-sub>&nbsp;</p>
+    </div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <form class="stack-lg" data-form novalidate hidden>
+    <div class="alert alert-err" data-banner hidden></div>
+
+    <section class="card card-pad">
+      <div class="form-grid">
+        <div class="field">
+          <label class="label" for="se-contact" data-contact-label>Customer</label>
+          <select class="select" id="se-contact" name="contact_id"></select>
+          <div class="hint" data-contact-hint></div>
+          <div class="error" data-error-for="contact_id"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="se-date" data-date-label>Date received</label>
+          <input class="input" type="date" id="se-date" name="settle_date" required />
+          <div class="hint" data-date-hint></div>
+          <div class="error" data-error-for="settle_date"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="se-cash" data-cash-label>Deposited to</label>
+          <select class="select" id="se-cash" name="cash_account_id"></select>
+          <div class="error" data-error-for="cash_account_id"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="se-ref" data-ref-label>OR number</label>
+          <input class="input" id="se-ref" name="reference" maxlength="60" autocomplete="off" />
+          <div class="hint" data-ref-hint></div>
+          <div class="error" data-error-for="reference"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="se-amount" data-amount-label>Amount received</label>
+          <input class="input" id="se-amount" name="amount" inputmode="decimal" autocomplete="off" />
+          <div class="hint" data-amount-hint></div>
+          <div class="error" data-error-for="amount_cents"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="se-wh" data-wh-label>Tax withheld</label>
+          <div class="row-nw gap-2" data-cwt-row>
+            <label class="check small" style="white-space:nowrap"><input type="checkbox" name="wh_on" /> <span>Customer withheld tax</span></label>
+            <div class="input-group" style="max-width:120px"><input class="input input-sm" name="wh_rate" inputmode="decimal" value="1" aria-label="Rate in percent"><span class="addon">%</span></div>
+          </div>
+          <input class="input" id="se-wh" name="withholding" inputmode="decimal" autocomplete="off" />
+          <div class="hint" data-wh-hint></div>
+          <div class="error" data-error-for="withholding_cents"></div>
+        </div>
+        <div class="field span-2">
+          <label class="label" for="se-desc">Description <span class="opt">(optional)</span></label>
+          <input class="input" id="se-desc" name="description" maxlength="500" autocomplete="off" />
+          <div class="error" data-error-for="description"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card card-flush">
+      <div class="card-head">
+        <h3 data-alloc-title>What it pays</h3>
+        <div class="row gap-2">
+          <button class="btn btn-secondary btn-sm" type="button" data-fill><span data-icon="arrow-right" data-icon-size="16"></span>Fill oldest first</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-clear>Clear</button>
+        </div>
+      </div>
+      <div class="card-body small muted" data-alloc-state>Choose the customer to see their open invoices.</div>
+      <div class="table-wrap" data-targets-wrap hidden>
+        <table class="je-lines">
+          <thead><tr><th data-target-col>Invoice</th><th>Date</th><th>Due</th><th class="amt">Open</th><th class="amt">Apply</th></tr></thead>
+          <tbody data-targets></tbody>
+        </table>
+      </div>
+      <div class="table-wrap" data-notes-wrap hidden>
+        <table class="je-lines">
+          <thead><tr><th data-note-col>Credit note</th><th>Date</th><th></th><th class="amt">Not applied</th><th class="amt">Use</th></tr></thead>
+          <tbody data-notes></tbody>
+        </table>
+      </div>
+      <div class="error" data-error-for="allocations" style="padding:var(--s2) var(--s4) 0"></div>
+      <div class="card-body">
+        <div class="totals" data-summary style="max-width:420px;margin-left:auto"></div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="receipts" data-cancel>Cancel</a>
+      <button class="btn btn-secondary" type="submit" data-then="draft">Save draft</button>
+      <button class="btn" type="submit" data-then="post" hidden>Save and post</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,46 @@
+<div data-module="budget">
+  <div class="page-head">
+    <div>
+      <div class="breadcrumb"><a href="budgets">Budgets</a><span data-icon="caret-right" data-icon-size="12"></span><span data-crumb>Budget</span></div>
+      <h1 class="row gap-2" data-title>Budget</h1>
+      <p class="sub" data-sub></p>
+    </div>
+    <div class="row gap-2" data-actions></div>
+  </div>
+
+  <div data-state><div class="loading-block"><div class="spinner spinner-lg"></div></div></div>
+
+  <div class="stack-lg" data-body hidden>
+    <div class="alert" data-banner hidden></div>
+
+    <section class="card card-flush">
+      <form class="toolbar" data-controls novalidate>
+        <label class="row gap-2 small" for="bd-dept">Department
+          <select class="select" id="bd-dept" name="dept" style="width:auto"></select>
+        </label>
+        <span class="grow"></span>
+        <span class="small muted" data-dirty></span>
+        <button class="btn btn-secondary btn-sm" type="button" data-discard hidden>Discard changes</button>
+        <button class="btn btn-sm" type="button" data-save hidden><span data-icon="check" data-icon-size="16"></span>Save changes</button>
+      </form>
+      <div class="alert alert-err" data-grid-error hidden style="margin:12px 16px 0"></div>
+      <div class="table-wrap"><table class="table table-compact" data-grid></table></div>
+    </section>
+
+    <section class="card" data-import-report hidden>
+      <div class="card-head"><h3>Import: rows skipped</h3><button class="btn btn-ghost btn-sm" type="button" data-close-report>Close</button></div>
+      <div class="card-body" data-import-body></div>
+    </section>
+
+    <div class="grid-2">
+      <section class="card">
+        <div class="card-head"><h3>About this budget</h3></div>
+        <div class="card-body" data-about></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>History</h3><span class="small muted">From the audit log</span></div>
+        <div class="card-body"><ul class="timeline" data-trail></ul></div>
+      </section>
+    </div>
+  </div>
+</div>

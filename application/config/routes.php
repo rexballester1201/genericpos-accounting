@@ -117,6 +117,25 @@ $route['api/v1/admin/settings']['post']           = 'admin/settings/save';
 $route['api/v1/admin/audit']['get'] = 'admin/audit/index';
 
 // =============================================================================
+// THE MODULES — one route file each in config/routes/, owned by that module
+// =============================================================================
+// Receivables and payables, banking, fixed assets, budgets and departments,
+// the ledger's extras (saved entries, opening balances, year-end, vouchers,
+// attachments) and the administrator's tools (imports, the integrity check).
+// A file is included only if it parses: a half-written one must not take every
+// other route down with it.
+foreach (['receivables', 'banking', 'assets', 'budgets', 'ledger', 'admin_tools'] as $_gp_module) {
+    $_gp_file = __DIR__ . '/routes/' . $_gp_module . '.php';
+    if ( ! is_file($_gp_file)) continue;
+    try {
+        include $_gp_file;
+    } catch (ParseError $_gp_error) {
+        log_message('error', '[routes] config/routes/' . $_gp_module . '.php does not parse: ' . $_gp_error->getMessage());
+    }
+}
+unset($_gp_module, $_gp_file, $_gp_error);
+
+// =============================================================================
 // COMMAND LINE — MUST STAY ABOVE THE CATCH-ALL, matched case-INSENSITIVELY
 // =============================================================================
 // CI3 routes `php index.php tools …` through this same table. Below the (.+)
