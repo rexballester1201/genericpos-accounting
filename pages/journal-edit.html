@@ -15,6 +15,10 @@
 
     <section class="card card-pad">
       <div class="form-grid">
+        <div class="field span-2" data-tpl-field hidden>
+          <label class="label" for="je-tpl">Start from a saved entry <span class="opt">(optional)</span></label>
+          <select class="select" id="je-tpl" data-tpl></select>
+        </div>
         <div class="field">
           <label class="label" for="je-book">Book</label>
           <select class="select" id="je-book" name="book"></select>
@@ -77,6 +81,7 @@
     </section>
 
     <div class="form-actions">
+      <button class="btn btn-ghost" type="button" data-save-tpl><span data-icon="copy" data-icon-size="18"></span>Save as a saved entry</button>
       <a class="btn btn-ghost" href="journals" data-cancel>Cancel</a>
       <button class="btn btn-secondary" type="submit" data-then="draft">Save draft</button>
       <button class="btn" type="submit" data-then="submit">Save and submit</button>

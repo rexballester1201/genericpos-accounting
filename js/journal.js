@@ -13,6 +13,7 @@ import { api } from './api.js';
 import { money, fmtDay, fmtDate, todayYmd } from './store.js';
 import { qs, esc, emptyState, statusBadge, confirmDialog, promptDialog, openModal, toast, busy, formError, clearErrors } from './ui.js';
 import { setAdminTitle } from './chrome.js';
+import { attachmentsPanel } from './attachments.js';
 
 const ACTIONS = {
   'journal.create': 'Prepared',
@@ -64,7 +65,8 @@ export async function mount(root, ctx) {
     } else if (d.reversal_of) {
       alertBox('info', '<span data-icon="arrow-u-up-left"></span><div>This entry reverses ' + link(d.reversal_of) + '.</div>');
     } else if (j.source !== 'manual') {
-      alertBox('info', '<span data-icon="info"></span><div>Posted from ' + esc(j.source_label) + '. It is undone from there, so the document and the ledger stay in step.</div>');
+      alertBox('info', '<span data-icon="info"></span><div>Posted from ' + esc(j.source_label) + '.'
+        + (d.source_link ? ' <a href="' + esc(d.source_link) + '">Open it</a>.' : '') + ' It is undone from there, so the document and the ledger stay in step.</div>');
     } else {
       alertBox('', '');
     }
@@ -112,6 +114,7 @@ export async function mount(root, ctx) {
     const c = d.can;
     const btn = (act, label, icon, cls) => '<button class="btn ' + cls + '" type="button" data-do="' + act + '"><span data-icon="' + icon + '" data-icon-size="18"></span>' + label + '</button>';
     actions.innerHTML = [
+      j.status !== 'cancelled' ? '<a class="btn btn-ghost" href="vouchers/' + j.id + '"><span data-icon="printer" data-icon-size="18"></span>Voucher</a>' : '',
       c.copy ? '<a class="btn btn-ghost" href="journals/new?copy=' + j.id + '"><span data-icon="copy" data-icon-size="18"></span>Copy</a>' : '',
       c.cancel ? btn('cancel', 'Cancel entry', 'prohibit', 'btn-ghost') : '',
       c.edit ? '<a class="btn btn-secondary" href="journals/' + j.id + '/edit"><span data-icon="pencil-simple" data-icon-size="18"></span>Edit</a>' : '',
@@ -209,4 +212,5 @@ export async function mount(root, ctx) {
   stateEl.innerHTML = '';
   body.hidden = false;
   paint();
+  attachmentsPanel(qs('[data-attachments]', root), { owner: 'journal', id, user: ctx.user });
 }

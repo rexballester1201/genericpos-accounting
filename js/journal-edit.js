@@ -3,8 +3,12 @@
  *
  * GenericPOS Accounting · ES module · bookkeepers and above
  *
- *   /journals/new             a new entry (?copy=ID starts from another entry's lines)
+ *   /journals/new             a new entry (?copy=ID starts from another entry's lines,
+ *                             ?template=ID from a saved entry)
  *   /journals/{id}/edit       a draft or a rejected entry — its preparer only
+ *
+ * "Save as a saved entry" keeps the form's shape under a name (Saved entries),
+ * amounts and all; lines whose amounts change every time may be left at zero.
  *
  * Amounts are typed in pesos and sent as integer centavos (store.toCents —
  * exact, no floats). The totals row keeps a running difference, a new line
@@ -15,7 +19,7 @@
 
 import { api } from './api.js';
 import { money, toCents, toMajor, fmtDay } from './store.js';
-import { qs, qsa, esc, emptyState, busy, toast, formError, clearErrors, setErrors } from './ui.js';
+import { qs, qsa, esc, emptyState, busy, toast, formError, clearErrors, setErrors, confirmDialog, promptDialog } from './ui.js';
 import { hasRole } from './router.js';
 
 const TYPE_LABELS = { asset: 'Assets', liability: 'Liabilities', equity: 'Equity', income: 'Income', expense: 'Expenses' };
@@ -25,6 +29,7 @@ const blank = () => ({ account_id: 0, memo: '', department_id: 0, contact_id: 0,
 export async function mount(root, ctx) {
   const id = ctx.params.id ? parseInt(ctx.params.id, 10) || 0 : 0;
   const copyId = id ? 0 : parseInt(ctx.query.get('copy') || '0', 10) || 0;
+  const tplId = id || copyId ? 0 : parseInt(ctx.query.get('template') || '0', 10) || 0;
   const stateEl = qs('[data-state]', root);
   const form = qs('[data-form]', root);
   const tbody = qs('[data-lines]', root);
@@ -32,10 +37,14 @@ export async function mount(root, ctx) {
 
   let lk;
   let entry = null;
+  let tpls = [];
   try {
     const tasks = [api.get('/journals/lookups', null, { signal: ctx.signal })];
     if (id || copyId) tasks.push(api.get('/journals/' + (id || copyId), null, { signal: ctx.signal }));
     [lk, entry] = await Promise.all(tasks);
+    if (!id) {
+      try { tpls = (await api.get('/journal-templates', null, { signal: ctx.signal })).items || []; } catch { tpls = []; }
+    }
   } catch (err) {
     if (ctx.signal.aborted) return;
     stateEl.innerHTML = emptyState('warning', 'Could not open the entry form', err.message, '<a class="btn btn-secondary" href="journals">Back to the entries</a>');
@@ -62,6 +71,9 @@ export async function mount(root, ctx) {
   f.book.innerHTML = lk.books.filter((b) => b.manual).map((b) => '<option value="' + b.key + '">' + esc(b.label) + '</option>').join('');
   const manual = new Set(lk.books.filter((b) => b.manual).map((b) => b.key));
   const src = entry ? entry.journal : null;
+  const tpl = tplId ? tpls.find((t) => t.id === tplId) || null : null;
+  const monthOf = (ymd) => { const d = new Date(String(ymd) + 'T00:00:00'); return isNaN(d) ? '' : d.toLocaleString('en', { month: 'long' }) + ' ' + d.getFullYear(); };
+  const fill = (s) => String(s || '').replace(/\{month\}/g, monthOf(lk.today)).replace(/\{year\}/g, String(lk.today).slice(0, 4));
 
   if (id) {
     const t = 'Edit ' + (src.status === 'rejected' ? 'rejected entry' : 'draft') + ' #' + src.id;
@@ -87,6 +99,28 @@ export async function mount(root, ctx) {
       f.party_name.value = src.party_name || '';
       qs('[data-sub]', root).textContent = 'A copy of ' + (src.journal_no || '#' + src.id) + '. Check the date, the reference and the amounts before saving.';
     }
+    if (tpl) {
+      f.book.value = manual.has(tpl.book) ? tpl.book : 'general';
+      f.description.value = fill(tpl.description);
+      f.reference.value = tpl.reference || '';
+      f.party_name.value = tpl.party_name || '';
+      qs('[data-sub]', root).textContent = 'From the saved entry "' + tpl.name + '". Check the date, the reference and the amounts before saving.'
+        + (tpl.problems.length ? ' It needs fixing: ' + tpl.problems.join('; ') + '.' : '');
+    }
+    if (tpls.length) {
+      const sel = qs('[data-tpl]', root);
+      sel.innerHTML = '<option value="">A blank entry</option>' + tpls.filter((t) => t.is_active || t.id === tplId)
+        .map((t) => '<option value="' + t.id + '"' + (t.id === tplId ? ' selected' : '') + '>' + esc(t.name) + '</option>').join('');
+      qs('[data-tpl-field]', root).hidden = false;
+      sel.addEventListener('change', async () => {
+        if (form.getAttribute('data-dirty') && !(await confirmDialog({ title: 'Start again from a saved entry?', body: 'What you typed here is replaced.', confirmLabel: 'Replace it' }))) {
+          sel.value = tplId ? String(tplId) : '';
+          return;
+        }
+        form.removeAttribute('data-dirty');
+        ctx.navigate('/journals/new' + (sel.value ? '?template=' + sel.value : ''), { replace: true });
+      });
+    }
   }
 
   const periods = lk.open_periods || [];
@@ -95,10 +129,9 @@ export async function mount(root, ctx) {
     : 'No month is open for entries. An accountant can reopen one.';
 
   // ── the lines ─────────────────────────────────────────────────────────
-  let lines = entry
-    ? entry.lines.map((l) => ({ account_id: l.account_id, memo: l.memo || '', department_id: l.department_id || 0, contact_id: l.contact_id || 0,
-        debit: l.debit_cents ? toMajor(l.debit_cents) : '', credit: l.credit_cents ? toMajor(l.credit_cents) : '' }))
-    : [blank(), blank()];
+  const fromLines = (ls) => ls.map((l) => ({ account_id: l.account_id, memo: l.memo || '', department_id: l.department_id || 0, contact_id: l.contact_id || 0,
+    debit: l.debit_cents ? toMajor(l.debit_cents) : '', credit: l.credit_cents ? toMajor(l.credit_cents) : '' }));
+  let lines = entry ? fromLines(entry.lines) : (tpl ? fromLines(tpl.lines.filter((l) => l.account_id)) : [blank(), blank()]);
   if (lines.length < 2) lines.push(blank());
 
   const groups = {};
@@ -309,6 +342,38 @@ export async function mount(root, ctx) {
     } finally {
       busy(btn, false);
     }
+  });
+
+  // ── saving the shape as a saved entry ─────────────────────────────────
+  qs('[data-save-tpl]', root).addEventListener('click', async (e) => {
+    read();
+    const bad = [];
+    const out = [];
+    lines.forEach((l, i) => {
+      if (!l.account_id) return;
+      const dc = l.debit.trim() ? toCents(l.debit.trim()) : 0;
+      const cc = l.credit.trim() ? toCents(l.credit.trim()) : 0;
+      if (dc === null || cc === null) { bad.push(i + 1); return; }
+      out.push({ account_id: l.account_id, debit_cents: dc, credit_cents: cc, memo: l.memo.trim(), department_id: l.department_id || 0, contact_id: l.contact_id || 0 });
+    });
+    if (bad.length) { toast('Check the amount on line ' + bad.join(', ') + '.', { kind: 'error' }); return; }
+    if (out.length < 2) { toast('Choose the accounts of at least two lines first.', { kind: 'error' }); return; }
+    if (!f.description.value.trim()) { setErrors(form, { description: 'Describe the entry. {month} becomes the month of each entry made from it.' }); return; }
+
+    const replace = tpl && (await confirmDialog({ title: 'Replace "' + tpl.name + '"?', body: 'Save these lines over the saved entry you started from, or choose Cancel to save them under a new name.', confirmLabel: 'Replace it' }));
+    const name = replace ? tpl.name : await promptDialog({ title: 'Save as a saved entry', label: 'Name', hint: 'For example "Monthly office rent". It appears under Saved entries and in "Start from a saved entry".', value: tpl ? tpl.name + ' (copy)' : f.description.value.trim().slice(0, 120), required: true, maxlength: 120, confirmLabel: 'Save' });
+    if (!name) return;
+
+    const body = { name, book: f.book.value, description: f.description.value.trim(), reference: f.reference.value.trim(), party_name: f.party_name.value.trim(), lines: out };
+    if (replace) Object.assign(body, { recur_day: tpl.recur_day, next_date: tpl.next_date, is_active: tpl.is_active });
+    const btn = e.currentTarget;
+    busy(btn, true);
+    try {
+      const t = replace ? await api.put('/journal-templates/' + tpl.id, body) : await api.post('/journal-templates', body);
+      toast('Saved as "' + t.name + '". Find it under Saved entries.');
+    } catch (err) {
+      toast(err.errors ? Object.values(err.errors).join(' ') : err.message, { kind: 'error' });
+    } finally { busy(btn, false); }
   });
 
   stateEl.innerHTML = '';

@@ -11,6 +11,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *                                                         prints a generated password once
  *   php index.php tools create_user <email> <role> [password]
  *   php index.php tools cache                             rebuild the shell's branding cache
+ *   php index.php tools cron                              the scheduled job: recurring entries and
+ *                                                         housekeeping (run it every 15 minutes)
  *   php index.php tools seed_demo                         demo company and books (development only)
  *   php index.php tools trial_balance [date] [kind]       print a trial balance (kind: unadjusted |
  *                                                         adjusted | post_closing)
@@ -42,6 +44,7 @@ class Tools extends CI_Controller
         $this->out('  php index.php tools create_admin <email> [password]');
         $this->out('  php index.php tools create_user <email> <viewer|bookkeeper|accountant|admin> [password]');
         $this->out('  php index.php tools cache');
+        $this->out('  php index.php tools cron                 (the scheduled job; every 15 minutes)');
         $this->out('  php index.php tools seed_demo            (development only, empty database)');
         $this->out('  php index.php tools trial_balance [YYYY-MM-DD] [unadjusted|adjusted|post_closing]');
     }
@@ -83,7 +86,9 @@ class Tools extends CI_Controller
             $this->out('Created ' . $role . ' #' . $id . ' <' . $email . '>.');
         }
 
-        log_admin_action(['user_id' => $id], 'cli.create_user', 'user', $id, ['email' => $email, 'role' => $role]);
+        /* Nobody signed in did this: it is recorded as the system, not as the
+           account it created. */
+        log_admin_action(GP_SYSTEM_ACTOR, 'cli.create_user', 'user', $id, ['email' => $email, 'role' => $role, 'via' => 'command line']);
         if ($generated) $this->out('Password (shown once — store it now): ' . $password);
     }
 
@@ -92,6 +97,56 @@ class Tools extends CI_Controller
         $this->load->model('Store_model', 'store');
         $ok = $this->store->refresh_public_cache();
         $this->out($ok ? 'Branding cache written: ' . Store_model::cache_path() : 'Could not write the cache.');
+    }
+
+    /**
+     * The scheduled job (README → "The scheduled job"):
+     *   · recurring saved entries that are due become DRAFTS for their owners,
+     *     who are told in their notifications (Template_model::run_due);
+     *   · housekeeping: rate-limit windows, old login attempts and expired
+     *     refresh tokens, spent password-reset links, and notifications read
+     *     more than retain_notification_days ago. The audit log is never pruned.
+     * One run at a time: a second one finds the named lock taken and stops.
+     * Exits 1 when a part failed, so the scheduler's log shows it.
+     */
+    public function cron()
+    {
+        if ((int) $this->db->query("SELECT GET_LOCK('acc_cron', 0) AS l")->row()->l !== 1) {
+            $this->out('Another run is still going; nothing done.');
+            return;
+        }
+
+        $failed = FALSE;
+        $today  = company_today();
+        $this->out('Scheduled job, ' . gmdate('Y-m-d H:i:s') . ' UTC (company date ' . $today . ')');
+
+        try {
+            $this->load->model('Template_model', 'templates');
+            $r = $this->templates->run_due($today);
+            foreach ($r['lines'] as $l) $this->out('  ' . $l);
+            $this->out('Recurring entries: ' . $r['made'] . ' drafted' . ($r['failed'] ? ', ' . $r['failed'] . ' could not be' : '') . '.');
+        } catch (Throwable $t) {
+            $failed = TRUE;
+            log_message('error', '[cron] recurring entries: ' . $t->getMessage());
+            fwrite(STDERR, 'ERROR: recurring entries: ' . $t->getMessage() . PHP_EOL);
+        }
+
+        try {
+            $auth = $this->users->prune_auth_tables();
+            $this->load->model('PasswordReset_model', 'resets');
+            $resets = $this->resets->prune();
+            $days = max(30, (int) ($this->config->item('retain_notification_days') ?: 365));
+            $this->db->query('DELETE FROM gp_notifications WHERE is_read = 1 AND created_at < ? LIMIT 5000', [date('Y-m-d H:i:s', time() - $days * 86400)]);
+            $read = $this->db->affected_rows();
+            $this->out('Housekeeping: ' . json_encode(['auth' => $auth, 'password_resets' => $resets, 'read_notifications' => $read]));
+        } catch (Throwable $t) {
+            $failed = TRUE;
+            log_message('error', '[cron] housekeeping: ' . $t->getMessage());
+            fwrite(STDERR, 'ERROR: housekeeping: ' . $t->getMessage() . PHP_EOL);
+        }
+
+        $this->db->query("SELECT RELEASE_LOCK('acc_cron')");
+        if ($failed) exit(1);
     }
 
     /**

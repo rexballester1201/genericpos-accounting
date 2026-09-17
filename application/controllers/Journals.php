@@ -272,11 +272,72 @@ class Journals extends CI_Controller
         return json_response($this->_detail($id, $claims), $ok);
     }
 
+    /** GET /api/v1/journals/{id}/voucher — the entry as a printable voucher */
+    public function voucher($id)
+    {
+        $claims = viewer_check();
+        require_method('GET');
+        $d = $this->_detail((int) $id, $claims);
+        if ( ! $d) return json_error('That entry does not exist.', 404);
+
+        /* The cash that moved: the lines on cash accounts (a cash-flow class of
+           'cash', inherited from the header). A payment with tax withheld pays
+           less than its total, and the voucher spells what was paid. */
+        $cf = [];
+        $parent = [];
+        foreach ($this->db->select('id, parent_id, cash_flow')->get('gp_accounts')->result_array() as $a) {
+            $cf[(int) $a['id']] = $a['cash_flow'];
+            $parent[(int) $a['id']] = (int) $a['parent_id'];
+        }
+        $is_cash = function ($aid) use ($cf, $parent) {
+            for ($i = 0; $aid && $i < 12; $i++, $aid = $parent[$aid] ?? 0) {
+                if ( ! empty($cf[$aid])) return $cf[$aid] === 'cash';
+            }
+            return FALSE;
+        };
+        $book = $d['journal']['book'];
+        $cash = 0;
+        foreach ($d['lines'] as $l) {
+            if ( ! $is_cash((int) $l['account_id'])) continue;
+            $cash += $book === 'cash_disbursements' ? (int) $l['credit_cents'] - (int) $l['debit_cents'] : (int) $l['debit_cents'] - (int) $l['credit_cents'];
+        }
+
+        $d['letterhead']   = report_letterhead($claims);
+        $d['cash_cents']   = $cash;
+        $d['amount_words'] = amount_in_words($cash > 0 ? $cash : (int) $d['journal']['total_cents']);
+        return json_response($d, 'Voucher');
+    }
+
     private function _detail($id, array $claims)
     {
         $d = $this->journals->detail($id);
         if ( ! $d) return NULL;
         $d['can'] = $this->journals->permissions($d['journal'], (int) $claims['user_id'], $claims['role']);
+        $d['source_link'] = $this->_source_link($d['journal']);
         return $d;
+    }
+
+    /** Where an entry a module posted is looked after — its document, run or statement. */
+    private function _source_link(array $j)
+    {
+        $sid = (int) $j['source_id'];
+        switch ($j['source']) {
+            case 'invoice': case 'credit_note': case 'bill': case 'debit_note':
+                return $sid ? 'documents/' . $sid : NULL;
+            case 'receipt': case 'payment':
+                return $sid ? 'settlements/' . $sid : NULL;
+            case 'depreciation':
+                return 'depreciation';
+            case 'disposal':
+                return $sid ? 'assets/' . $sid : NULL;
+            case 'bank':
+                $st = $sid ? $this->db->select('statement_id')->get_where('gp_bank_lines', ['id' => $sid], 1)->row_array() : NULL;
+                return $st ? 'banking/statements/' . (int) $st['statement_id'] : 'banking';
+            case 'closing':
+                return 'year-end' . ($sid ? '?fiscal_year_id=' . $sid : '');
+            case 'opening':
+                return 'opening-balances';
+        }
+        return NULL;
     }
 }
