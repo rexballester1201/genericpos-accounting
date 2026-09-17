@@ -88,22 +88,48 @@ const NAV = [
   ['Ledger', 'viewer', [
     ['journals', 'journals', 'book-open', 'Journal entries', 'viewer', 'my_rejected'],
     ['approvals', 'approvals', 'check-square', 'Approvals', 'accountant', 'awaiting_approval'],
+    ['templates', 'saved-entries', 'copy', 'Saved entries', 'bookkeeper'],
     ['accounts', 'accounts', 'list-numbers', 'Chart of accounts'],
     ['periods', 'periods', 'calendar', 'Fiscal years and periods'],
+    ['opening', 'opening-balances', 'stack', 'Opening balances', 'admin'],
+    ['year-end', 'year-end', 'lock-key', 'Year-end closing', 'admin'],
+  ]],
+  ['Sales', 'viewer', [
+    ['customers', 'customers', 'users', 'Customers'],
+    ['invoices', 'invoices', 'receipt', 'Invoices'],
+    ['receipts', 'receipts', 'coins', 'Receipts'],
+  ]],
+  ['Purchases', 'viewer', [
+    ['suppliers', 'suppliers', 'truck', 'Suppliers'],
+    ['bills', 'bills', 'article', 'Bills'],
+    ['payments', 'payments', 'money', 'Payments'],
+  ]],
+  ['Cash and assets', 'viewer', [
+    ['banking', 'banking', 'bank', 'Banking'],
+    ['assets', 'assets', 'package', 'Fixed assets'],
+    ['depreciation', 'depreciation', 'clock-counter-clockwise', 'Depreciation'],
+  ]],
+  ['Planning', 'viewer', [
+    ['budgets', 'budgets', 'sliders', 'Budgets'],
+    ['departments', 'departments', 'buildings', 'Departments'],
   ]],
   ['Reports', 'viewer', [
     ['bs', 'reports/balance-sheet', 'scales', 'Balance sheet'],
     ['is', 'reports/income-statement', 'chart-line', 'Income statement'],
     ['tb', 'reports/trial-balance', 'calculator', 'Trial balance'],
     ['gl', 'reports/general-ledger', 'rows', 'General ledger'],
+    ['aging', 'reports/aging', 'hourglass', 'Aging'],
     ['analysis', 'reports/analysis', 'chart-bar', 'Financial analysis'],
-    ['reports', 'reports', 'article', 'All reports'],
+    ['reports', 'reports', 'folder', 'All reports'],
   ]],
   ['Administration', 'admin', [
     ['users', 'users', 'users-three', 'Users'],
     ['settings', 'settings', 'gear', 'Settings'],
+    ['imports', 'imports', 'upload-simple', 'Imports'],
+    ['integrity', 'reports/integrity', 'shield-check', 'Integrity check'],
     ['audit', 'audit', 'clipboard-text', 'Audit log'],
   ]],
+  ['', 'user', [['help', 'help', 'question', 'Help', 'user']]],
 ];
 
 const BADGE_CLASS = { my_rejected: 'badge-err', awaiting_approval: 'badge-warn' };

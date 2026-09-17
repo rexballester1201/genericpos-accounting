@@ -348,6 +348,10 @@ const STATUS = {
   // journals and periods
   submitted: ['Waiting for approval', 'warn'], posted: ['Posted', 'ok'], locked: ['Locked', 'neutral'],
   parked: ['Parked', 'warn'], credited: ['Credited', 'ok'], applied: ['Applied', 'ok'],
+  // the modules: banking, fixed assets, budgets, receivables and payables
+  reconciled: ['Reconciled', 'ok'], unmatched: ['Unmatched', 'warn'], matched: ['Matched', 'ok'], ignored: ['Ignored', 'neutral'],
+  disposed: ['Disposed', 'neutral'], fully_depreciated: ['Fully depreciated', 'info'], approved: ['Approved', 'ok'],
+  overdue: ['Overdue', 'err'], due: ['Due', 'warn'], not_due: ['Not yet due', 'neutral'], inactive: ['Inactive', 'neutral'],
 };
 
 export function statusBadge(status, labelOverride) {

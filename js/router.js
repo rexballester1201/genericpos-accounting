@@ -68,6 +68,54 @@ const TABLE = [
   r('/reports/general-ledger', 'general-ledger', 'admin', { auth: 'viewer', nav: 'gl', title: 'General ledger' }),
   r('/reports/books', 'books', 'admin', { auth: 'viewer', nav: 'reports', title: 'Books of accounts' }),
   r('/reports/analysis', 'analysis', 'admin', { auth: 'viewer', nav: 'analysis', title: 'Financial analysis' }),
+  r('/reports/aging', 'aging', 'admin', { auth: 'viewer', nav: 'aging', title: 'Aging' }),
+  r('/reports/customer-statement', 'statement-of-account', 'admin', { auth: 'viewer', nav: 'customers', title: 'Statement of account' }),
+  r('/reports/subsidiary-ledger', 'subsidiary-ledger', 'admin', { auth: 'viewer', nav: 'reports', title: 'Subsidiary ledger' }),
+  r('/reports/bank-reconciliation', 'bank-reconciliation', 'admin', { auth: 'viewer', nav: 'banking', title: 'Bank reconciliation' }),
+  r('/reports/lapsing-schedule', 'lapsing-schedule', 'admin', { auth: 'viewer', nav: 'assets', title: 'Lapsing schedule' }),
+  r('/reports/budget-vs-actual', 'budget-vs-actual', 'admin', { auth: 'viewer', nav: 'budgets', title: 'Budget vs actual' }),
+  r('/reports/department-income', 'department-income', 'admin', { auth: 'viewer', nav: 'departments', title: 'Income by department' }),
+  r('/reports/worksheet', 'worksheet', 'admin', { auth: 'viewer', nav: 'reports', title: 'Worksheet' }),
+  r('/reports/integrity', 'integrity', 'admin', { auth: 'accountant', nav: 'integrity', title: 'Integrity check' }),
+
+  // ── sales and purchases ──────────────────────────────────────────────────
+  r('/customers', 'contacts', 'admin', { auth: 'viewer', nav: 'customers', title: 'Customers', params: { role: 'customer' } }),
+  r('/suppliers', 'contacts', 'admin', { auth: 'viewer', nav: 'suppliers', title: 'Suppliers', params: { role: 'supplier' } }),
+  r('/contacts/:id', 'contact', 'admin', { auth: 'viewer', nav: 'customers', title: 'Customer or supplier' }),
+  r('/invoices', 'documents', 'admin', { auth: 'viewer', nav: 'invoices', title: 'Invoices', params: { side: 'sales' } }),
+  r('/bills', 'documents', 'admin', { auth: 'viewer', nav: 'bills', title: 'Bills', params: { side: 'purchases' } }),
+  r('/documents/new', 'document-edit', 'admin', { auth: 'bookkeeper', nav: 'invoices', title: 'New document' }),
+  r('/documents/:id/edit', 'document-edit', 'admin', { auth: 'bookkeeper', nav: 'invoices', title: 'Edit document' }),
+  r('/documents/:id', 'document', 'admin', { auth: 'viewer', nav: 'invoices', title: 'Document' }),
+  r('/receipts', 'settlements', 'admin', { auth: 'viewer', nav: 'receipts', title: 'Receipts', params: { kind: 'receipt' } }),
+  r('/payments', 'settlements', 'admin', { auth: 'viewer', nav: 'payments', title: 'Payments', params: { kind: 'payment' } }),
+  r('/settlements/new', 'settlement-edit', 'admin', { auth: 'bookkeeper', nav: 'receipts', title: 'New receipt or payment' }),
+  r('/settlements/:id/edit', 'settlement-edit', 'admin', { auth: 'bookkeeper', nav: 'receipts', title: 'Edit receipt or payment' }),
+  r('/settlements/:id', 'settlement', 'admin', { auth: 'viewer', nav: 'receipts', title: 'Receipt or payment' }),
+
+  // ── cash and assets ──────────────────────────────────────────────────────
+  r('/banking', 'banking', 'admin', { auth: 'viewer', nav: 'banking', title: 'Banking' }),
+  r('/banking/statements/:id', 'bank-statement', 'admin', { auth: 'viewer', nav: 'banking', title: 'Bank statement' }),
+  r('/assets', 'assets', 'admin', { auth: 'viewer', nav: 'assets', title: 'Fixed assets' }),
+  r('/assets/new', 'asset-edit', 'admin', { auth: 'bookkeeper', nav: 'assets', title: 'New asset' }),
+  r('/assets/:id/edit', 'asset-edit', 'admin', { auth: 'bookkeeper', nav: 'assets', title: 'Edit asset' }),
+  r('/assets/:id', 'asset', 'admin', { auth: 'viewer', nav: 'assets', title: 'Asset' }),
+  r('/asset-categories', 'asset-categories', 'admin', { auth: 'viewer', nav: 'assets', title: 'Asset categories' }),
+  r('/depreciation', 'depreciation', 'admin', { auth: 'viewer', nav: 'depreciation', title: 'Depreciation' }),
+
+  // ── planning ─────────────────────────────────────────────────────────────
+  r('/budgets', 'budgets', 'admin', { auth: 'viewer', nav: 'budgets', title: 'Budgets' }),
+  r('/budgets/:id', 'budget', 'admin', { auth: 'viewer', nav: 'budgets', title: 'Budget' }),
+  r('/departments', 'departments', 'admin', { auth: 'viewer', nav: 'departments', title: 'Departments' }),
+
+  // ── the ledger's extras ──────────────────────────────────────────────────
+  r('/saved-entries', 'templates', 'admin', { auth: 'bookkeeper', nav: 'templates', title: 'Saved entries' }),
+  r('/opening-balances', 'opening-balances', 'admin', { auth: 'admin', nav: 'opening', title: 'Opening balances' }),
+  r('/year-end', 'year-end', 'admin', { auth: 'admin', nav: 'year-end', title: 'Year-end closing' }),
+  r('/vouchers/:id', 'voucher', 'admin', { auth: 'viewer', nav: 'journals', title: 'Voucher' }),
+  r('/imports', 'imports', 'admin', { auth: 'admin', nav: 'imports', title: 'Imports' }),
+  r('/help', 'help', 'admin', { auth: 'user', nav: 'help', title: 'Help' }),
+  r('/help/:chapter', 'help', 'admin', { auth: 'user', nav: 'help', title: 'Help' }),
 
   // ── you ──────────────────────────────────────────────────────────────────
   r('/notifications', 'notifications', 'admin', { auth: 'user', nav: 'notifications', title: 'Notifications' }),

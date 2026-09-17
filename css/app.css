@@ -1111,3 +1111,120 @@ a.list-item.is-unread:hover { background: var(--brand-soft); }
   .stmt a, .report-head a { color: #000 !important; text-decoration: none !important; }
   .ratio, .figure-row { break-inside: avoid; }
 }
+
+
+/* ═════════════════════════════════════════════════════════════════════════
+   THE MODULES' OWN SCREENS
+   Attachments, the integrity report, the columnar books, vouchers and
+   official receipts, the worksheet and the import preview. Everything here
+   builds on the tokens above; nothing introduces a new colour.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── Attachments ───────────────────────────────────────────────────────── */
+.att-list { list-style: none; margin: 0; padding: 0; }
+.att-row { display: flex; align-items: center; gap: var(--s3); padding: 10px var(--s5); border-top: 1px solid var(--line); }
+.att-row:first-child { border-top: 0; }
+.att-row > [data-icon] { color: var(--text-3); flex: none; }
+.att-name { flex: 1 1 auto; min-width: 0; text-align: left; background: none; border: 0; padding: 0; font: inherit;
+  color: var(--brand-strong); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-name:hover { text-decoration: underline; }
+.att-row .xs { flex: none; }
+label.is-busy { opacity: .6; pointer-events: none; }
+
+/* ── The integrity report ──────────────────────────────────────────────── */
+.int-list { display: flex; flex-direction: column; gap: var(--s3); margin-top: var(--s5); }
+.int-check { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s4); background: var(--surface); }
+.int-check.is-fail { border-color: var(--err); }
+.int-check.is-warn { border-color: var(--warn); }
+.int-head { display: flex; align-items: flex-start; gap: var(--s3); }
+.int-head > [data-icon] { flex: none; margin-top: 1px; }
+.int-check.is-ok .int-head > [data-icon] { color: var(--ok); }
+.int-check.is-warn .int-head > [data-icon] { color: var(--warn); }
+.int-check.is-fail .int-head > [data-icon] { color: var(--err); }
+.int-title { font-weight: 650; }
+.int-check details { margin-top: var(--s3); }
+.int-check summary { cursor: pointer; color: var(--text-2); }
+.int-items { margin: var(--s2) 0 0; padding-left: var(--s5); font-size: 13.5px; }
+.int-items li { margin: 3px 0; }
+
+/* ── The columnar books ────────────────────────────────────────────────── */
+.book-page + .book-page { margin-top: var(--s7); padding-top: var(--s6); border-top: 1px dashed var(--line-strong); }
+.bp-head { font-size: 12.5px; color: var(--text-2); margin-bottom: var(--s3); }
+.bp-foot { font-size: 11.5px; color: var(--text-3); text-align: right; margin-top: var(--s2); }
+.stmt.columnar { font-size: 12.5px; }
+.stmt.columnar td, .stmt.columnar th { padding: 4px 7px; }
+.stmt.columnar td.n { min-width: 6.5em; }
+.stmt.columnar th .sub { display: block; font-weight: 400; font-size: 10.5px; color: var(--text-3); }
+
+/* ── Vouchers, official receipts, statements of account ────────────────── */
+.voucher-status { display: inline-block; margin: 0 0 var(--s4); padding: 4px 10px; border: 1px solid var(--err);
+  color: var(--err); border-radius: var(--r-sm); font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+.voucher-kv { margin: var(--s5) 0; }
+.voucher-amount { display: flex; flex-wrap: wrap; gap: var(--s5); align-items: baseline;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); padding: var(--s4); margin: var(--s5) 0; }
+.va-figure { font-size: 22px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.va-words { font-style: italic; }
+.voucher-sign { margin-top: 40px; }
+
+/* ── The worksheet ─────────────────────────────────────────────────────── */
+.stmt.worksheet { font-size: 12px; }
+.stmt.worksheet td, .stmt.worksheet th { padding: 3px 6px; }
+.stmt.worksheet td.n { min-width: 5.8em; }
+.stmt th.c { text-align: center; }
+
+/* ── Ratios: the mark a co-op measures an indicator against ────────────── */
+.r-bench { margin-top: 4px; }
+
+/* ── The import preview ────────────────────────────────────────────────── */
+.table tr.is-bad td { background: var(--err-bg); }
+
+@media print {
+  /* Each columnar page is a sheet of paper, with its own totals. */
+  .book-page { break-after: page; }
+  .book-page:last-child { break-after: auto; }
+  .voucher-amount { border-color: #000; }
+  .voucher-status { border-color: #000; color: #000; }
+}
+
+/* ── The guide (Help) ──────────────────────────────────────────────────── */
+.help-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: var(--s6); align-items: start; }
+@media (max-width: 880px) { .help-layout { grid-template-columns: minmax(0, 1fr); } }
+.help-nav { position: sticky; top: var(--s5); display: flex; flex-direction: column; gap: var(--s3); max-height: calc(100vh - 120px); overflow: auto; }
+.help-link { display: flex; align-items: baseline; gap: var(--s3); padding: 7px 10px; border-radius: var(--r-sm); color: var(--text-2); text-decoration: none; font-size: 14px; }
+.help-link:hover { background: var(--surface-2); color: var(--text); }
+.help-link.is-on { background: var(--brand-softer); color: var(--brand-strong); font-weight: 650; }
+.help-no { font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+.help-hits { padding: 0 10px 8px 34px; font-size: 12px; color: var(--text-3); }
+.help-hits mark { background: var(--warn-bg); color: inherit; }
+.help-body { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s6) clamp(16px, 3vw, 36px); max-width: 74ch; }
+.help-body h1 { font-size: 26px; margin: 0 0 var(--s4); }
+.help-body h2 { font-size: 19px; margin: var(--s6) 0 var(--s3); padding-top: var(--s2); border-top: 1px solid var(--line); }
+.help-body h3 { font-size: 16px; margin: var(--s5) 0 var(--s2); }
+.help-body h4 { font-size: 14.5px; margin: var(--s4) 0 var(--s2); }
+.help-body p, .help-body ul, .help-body ol { line-height: 1.65; margin: 0 0 var(--s3); }
+.help-body ul, .help-body ol { padding-left: var(--s6); }
+.help-body li { margin: 4px 0; }
+.help-body li > ul { margin-top: 4px; }
+.help-body code { font-family: var(--mono); font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.help-body pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: var(--s3) var(--s4); overflow-x: auto; }
+.help-body pre code { background: none; padding: 0; }
+.help-body blockquote { margin: var(--s4) 0; padding: var(--s3) var(--s4); border-left: 3px solid var(--line-strong); background: var(--surface-2); border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.help-body blockquote.is-tip { border-left-color: var(--ok); }
+.help-body blockquote.is-note { border-left-color: var(--info); }
+.help-body blockquote.is-warning { border-left-color: var(--warn); }
+.help-body .table-wrap { margin: var(--s3) 0 var(--s4); }
+.help-toc { background: var(--surface-2); border-radius: var(--r-md); padding: var(--s4); margin-bottom: var(--s5); font-size: 13.5px; }
+.help-toc ul { columns: 2; column-gap: var(--s5); margin: var(--s2) 0 0; padding-left: var(--s5); }
+@media (max-width: 560px) { .help-toc ul { columns: 1; } }
+.help-move { display: flex; justify-content: space-between; gap: var(--s3); margin-top: var(--s7); padding-top: var(--s4); border-top: 1px solid var(--line); }
+.help-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--s3); }
+.help-card { display: flex; gap: var(--s3); padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r-md); text-decoration: none; color: inherit; background: var(--surface); }
+.help-card:hover { border-color: var(--brand); box-shadow: var(--shadow-1); }
+.hc-no { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+
+@media print {
+  .help-layout { display: block; }
+  .help-body { border: 0; padding: 0; max-width: none; }
+  .help-body h2 { break-after: avoid; }
+  .help-body blockquote { border-left: 3px solid #999; background: none; }
+}
