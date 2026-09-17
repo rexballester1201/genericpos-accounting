@@ -422,16 +422,24 @@ class Journal_model extends CI_Model
     // DRAFTS
     // =========================================================================
 
-    /** @return array [id, errors] */
-    public function create_draft(array $head, array $lines, $user_id, $source = 'manual', $source_id = NULL)
+    /**
+     * @param array|null $actor  who the audit row names, when that is not the preparer — the
+     *                           scheduled job drafting a recurring entry for its owner (GP_SYSTEM_ACTOR)
+     * @param array      $note   extra audit detail (the saved entry it came from)
+     * @return array [id, errors]
+     */
+    public function create_draft(array $head, array $lines, $user_id, $source = 'manual', $source_id = NULL, $actor = NULL, array $note = [])
     {
         list($h, $clean, $e, $total, $period) = $this->validate($head, $lines, FALSE);
         if ($e) return [0, $e];
 
         $id  = 0;
-        $err = $this->_in_transaction(function () use ($h, $clean, $total, $period, $user_id, $source, $source_id, &$id) {
+        $err = $this->_in_transaction(function () use ($h, $clean, $total, $period, $user_id, $source, $source_id, $actor, $note, &$id) {
             $id = $this->_insert($h, $clean, $total, $period, $user_id, 'draft', $source, $source_id);
-            return $this->_audit($user_id, 'journal.create', $id, ['book' => $h['book'], 'total_cents' => $total]);
+            $detail = ['book' => $h['book'], 'total_cents' => $total] + $note;
+            if ($actor === NULL) return $this->_audit($user_id, 'journal.create', $id, $detail);
+            return log_admin_action($actor, 'journal.create', 'journal', (int) $id, $detail + ['prepared_for' => (int) $user_id])
+                ? '' : 'The audit trail could not be written, so nothing was saved.';
         });
         return $err === '' ? [$id, []] : [0, ['_' => $err]];
     }
@@ -608,6 +616,44 @@ class Journal_model extends CI_Model
         if ( ! Period_model::valid_date($date))      return [0, 'Enter the date of the reversal.'];
         if ($date < $j['entry_date'])                return [0, 'Date the reversal on or after ' . $j['entry_date'] . ', the date of the entry it reverses.'];
 
+        return $this->_reverse_entry($j, $user_id, $date, $reason);
+    }
+
+    /**
+     * Reverse an entry a module posted, from that module: a cancelled invoice,
+     * an undone depreciation run, a reopened year. The caller names the source
+     * it owns, so a module can only ever undo its own entries. Closing and
+     * opening entries are allowed here: they are undone from the year-end and
+     * opening-balance screens.
+     *
+     * Call it inside the module's own transaction, together with the change to
+     * the module's document. Nested, a failure THROWS (see _in_transaction),
+     * and the module's transaction rolls both back. A refusal found before
+     * anything is written (a closed period, a missing reason) comes back as
+     * [0, error] — check it.
+     *
+     * @return array [new id, error]
+     */
+    public function reverse_system($id, $user_id, $date, $reason, $source)
+    {
+        $j = $this->find($id);
+        $reason = trim(preg_replace('/\s+/u', ' ', (string) $reason));
+        $date   = trim((string) $date);
+        if (in_array((string) $source, ['manual', 'reversal'], TRUE)) return [0, 'Manual entries are reversed from the journal screen, and a reversal is never reversed.'];
+        if ( ! $j)                              return [0, 'No such entry.'];
+        if ($j['source'] !== (string) $source)  return [0, 'That entry was not posted from here.'];
+        if ($j['status'] !== 'posted')          return [0, 'Only a posted entry can be reversed.'];
+        if ($j['reversed_by_id'])               return [0, 'This entry has already been reversed.'];
+        if ($reason === '')                     return [0, 'Say why the entry is reversed.'];
+        if ( ! Period_model::valid_date($date)) return [0, 'Enter the date of the reversal.'];
+        if ($date < $j['entry_date'])           return [0, 'Date the reversal on or after ' . $j['entry_date'] . ', the date of the entry it reverses.'];
+        return $this->_reverse_entry($j, $user_id, $date, mb_substr($reason, 0, 300));
+    }
+
+    /** The reversal itself: every side swapped, dated $date, linked both ways, posted at once. */
+    private function _reverse_entry(array $j, $user_id, $date, $reason)
+    {
+        $id    = (int) $j['id'];
         $lines = [];
         foreach ($this->_stored_lines($id) as $l) {
             $lines[] = ['debit_cents' => $l['credit_cents'], 'credit_cents' => $l['debit_cents']] + $l;

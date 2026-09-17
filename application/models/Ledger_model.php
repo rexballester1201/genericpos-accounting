@@ -65,6 +65,7 @@ class Ledger_model extends CI_Model
             }
         }
         if ( ! empty($opts['department_id'])) { $where[] = 'l.department_id = ?'; $args[] = (int) $opts['department_id']; }
+        if ( ! empty($opts['no_department'])) $where[] = 'l.department_id IS NULL';   // lines no department was put on
         if ( ! empty($opts['contact_id']))    { $where[] = 'l.contact_id = ?';    $args[] = (int) $opts['contact_id']; }
 
         $rows = $this->db->query(

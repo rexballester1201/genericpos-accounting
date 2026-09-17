@@ -118,9 +118,10 @@ $autoload['drivers'] = array();
 |	$autoload['helper'] = array('url', 'file');
 */
 /* api: responses, guards, rate limiting, the shell.  shop: money, tokens,
-   slugs, sequences. Both are pure function libraries — loading them opens no
+   slugs, sequences.  report: the letterhead and CSV downloads every report
+   shares. All are pure function libraries — loading them opens no
    connection, so the DB-free shell path stays DB-free. */
-$autoload['helper'] = array('url', 'file', 'api', 'shop');
+$autoload['helper'] = array('url', 'file', 'api', 'shop', 'report');
 
 /*
 | -------------------------------------------------------------------
