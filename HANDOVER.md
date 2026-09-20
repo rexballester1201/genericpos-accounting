@@ -6,6 +6,11 @@ and back it up, what runs on a schedule, and what is still open.
 For what the system does, see [README.md](README.md). For how to use it, see
 the guide in [docs/guide/](docs/guide/) — it is also the Help screen in the app.
 
+This note is the short version. The full set is in
+[docs/manual/](docs/manual/): HO·1 is this note expanded, TS·1 is the technical
+specification, DS·1 the design specification, and AG·1, DG·1 and TG·1 cover
+administration, deployment and troubleshooting.
+
 ## The shape of it
 
 | Part | Where |
@@ -18,6 +23,7 @@ the guide in [docs/guide/](docs/guide/) — it is also the Help screen in the ap
 | The database | `SCHEMA.sql` — the whole thing, with the reasoning in its comments |
 | Decisions | `PLAN.md` |
 | The guide | `docs/guide/*.md` → `help/guide.json` (`node docs/build-guide.mjs`) |
+| The documentation set | `docs/manual/` — nine HTML documents (`node docs/build-docs.mjs`) |
 | Tests | `tests/` (see `tests/README.md`) |
 
 ## Installing

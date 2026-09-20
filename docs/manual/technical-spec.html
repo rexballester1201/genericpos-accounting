@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Technical Specification · GenericPOS Accounting</title>
+<meta name="description" content="The architecture, the data model, the API and the rules the code enforces.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#EDF0EC; --sheet:#F9FBF7; --ink:#141E19; --ink-2:#44534B; --ink-3:#66756D;
+  --rule:#C8D3CC; --rule-2:#93A79A; --accent:#1B5940; --accent-soft:#DCE8E1;
+  --gold:#8A5A12; --gold-soft:#F5EBD8; --code:#E2E9E4; --sel:#CFE3D7;
+  --f-head:"Libre Franklin","Franklin Gothic Medium","Segoe UI",Arial,sans-serif;
+  --f-body:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+    --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+    --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+  --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+  --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel);color:var(--ink)}
+a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+code{font-family:var(--f-mono);font-size:.82em;background:var(--code);padding:.1em .36em;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3,h4{font-family:var(--f-head);color:var(--ink);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-weight:800;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.06;letter-spacing:-.018em}
+h2{font-weight:700;font-size:1.42rem;line-height:1.22}
+h3{font-weight:700;font-size:1.06rem;line-height:1.3}
+h4{font-weight:600;font-size:.95rem;line-height:1.35}
+p{margin:0}
+.lbl,.eyebrow,dt,th{font-family:var(--f-head);font-weight:600;font-size:.7rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3)}
+
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:var(--paper);
+  padding:10px 16px;font-family:var(--f-head);font-weight:600;z-index:99}
+.skip:focus{left:8px;top:8px}
+
+/* ── the binder ─────────────────────────────────────────────────────────── */
+.binder{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.rail{background:var(--sheet);border-bottom:1px solid var(--rule)}
+.rail-in{padding:14px 20px;display:grid;gap:12px;max-width:1180px;margin-inline:auto}
+.rail-brand{display:grid;gap:2px}
+.rail-brand b{font-family:var(--f-head);font-weight:800;font-size:.95rem;letter-spacing:-.01em}
+.rail-brand span{font-family:var(--f-head);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.rail a{display:flex;align-items:baseline;gap:8px;white-space:nowrap;text-decoration:none;
+  font-family:var(--f-head);font-size:.86rem;font-weight:600;color:var(--ink-2);
+  padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}
+.rail a:hover{color:var(--accent);border-color:var(--rule-2)}
+.rail a[aria-current="page"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.rail .r{font-family:var(--f-mono);font-size:.72rem;font-weight:500;color:var(--ink-3)}
+.rail a[aria-current="page"] .r{color:var(--accent)}
+
+.doc{padding:34px 20px 90px;max-width:none;margin:0;display:grid;gap:40px}
+.wrap{max-width:74ch;margin-inline:auto;width:100%;display:grid;gap:40px}
+
+@media (min-width:1040px){
+  .binder{grid-template-columns:270px minmax(0,1fr)}
+  .rail{border-bottom:0;border-right:1px solid var(--rule);position:sticky;top:0;align-self:start;
+    height:100vh;overflow-y:auto}
+  .rail-in{padding:30px 22px;gap:22px}
+  .rail ol{flex-direction:column;gap:3px;overflow:visible}
+  .rail a{border:0;border-radius:3px;padding:7px 10px;background:transparent;white-space:normal}
+  .rail a[aria-current="page"]{background:var(--accent-soft)}
+  .doc{padding:48px 40px 110px}
+}
+
+/* ── the document's own head ────────────────────────────────────────────── */
+.dochead{display:grid;gap:18px;border-bottom:1.5px solid var(--rule-2);padding-bottom:22px}
+.dochead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.dochead h1{max-width:18ch}
+.dochead .eyebrow{margin-bottom:8px;display:block}
+.docref{border:1.5px solid var(--accent);color:var(--accent);border-radius:4px;padding:8px 14px;
+  text-align:center;display:grid;gap:2px;flex:none}
+.docref span{font-family:var(--f-head);font-size:.64rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.docref strong{font-family:var(--f-mono);font-size:1.2rem;font-weight:600;letter-spacing:.03em}
+.lead{font-size:1.14rem;line-height:1.55;color:var(--ink-2);max-width:62ch}
+.control{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 26px;
+  border-top:1px solid var(--rule);padding-top:16px}
+.control div{display:grid;gap:3px;min-width:0}
+.control dd{margin:0;font-family:var(--f-head);font-size:.9rem;line-height:1.4;color:var(--ink)}
+
+/* ── contents ───────────────────────────────────────────────────────────── */
+.toc{display:grid;gap:8px}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.toc a{display:flex;gap:10px;text-decoration:none;font-family:var(--f-head);font-size:.92rem;
+  font-weight:600;color:var(--ink-2);padding:5px 0}
+.toc a:hover{color:var(--accent)}
+.toc .n{font-family:var(--f-mono);font-weight:500;color:var(--accent);font-size:.84rem;flex:none}
+
+/* ── sections ───────────────────────────────────────────────────────────── */
+.sec{display:grid;gap:16px;scroll-margin-top:20px}
+.sec>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--rule);padding-bottom:9px}
+.sec>h2 .n{font-family:var(--f-mono);font-weight:600;font-size:.98rem;color:var(--accent);flex:none}
+.sec h3{margin-top:10px}
+.sec ul,.sec ol{margin:0;padding-left:1.25em;display:grid;gap:8px}
+.sec li>ul,.sec li>ol{margin-top:8px}
+.sec p+p{margin-top:0}
+.note{background:var(--sheet);border-left:3px solid var(--accent);padding:14px 18px;display:grid;gap:8px}
+.note.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+.note .lbl{color:var(--accent)}
+.note.warn .lbl{color:var(--gold)}
+
+.rule-card{background:var(--sheet);border:1px solid var(--rule-2);border-radius:5px;
+  padding:18px 20px;display:grid;gap:10px}
+.rule-card h3{color:var(--accent)}
+
+dl.defs{margin:0;display:grid;gap:14px}
+dl.defs>div{display:grid;gap:4px}
+dl.defs dt{font-size:.74rem}
+dl.defs dd{margin:0}
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);
+  border-radius:5px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-head);font-size:.9rem}
+th,td{padding:9px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+thead th{border-bottom:1.5px solid var(--rule-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td code{font-size:.84em}
+.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{font-weight:700;white-space:nowrap}
+
+/* ── code ───────────────────────────────────────────────────────────────── */
+pre{margin:0;background:var(--code);border:1px solid var(--rule);border-radius:5px;
+  padding:14px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+pre code{background:none;padding:0;font-size:.82rem;line-height:1.6}
+
+blockquote{margin:0;border-left:3px solid var(--rule-2);padding-left:16px;color:var(--ink-2)}
+
+/* ── the guide's chapters ───────────────────────────────────────────────── */
+.chapter{display:grid;gap:16px;scroll-margin-top:20px;padding-top:12px}
+.chapter>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1.5px solid var(--rule-2);padding-bottom:10px}
+.chapter>h2 .n{font-family:var(--f-mono);font-weight:600;color:var(--accent);flex:none}
+.chapter .summary{color:var(--ink-2);font-size:1.02rem}
+
+/* ── the foot ───────────────────────────────────────────────────────────── */
+.docfoot{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-wrap:wrap;
+  justify-content:space-between;gap:10px 20px;font-family:var(--f-head);font-size:.82rem;color:var(--ink-3)}
+.docfoot a{font-weight:600;text-decoration:none}
+
+/* ── the contents page ──────────────────────────────────────────────────── */
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:18px 20px;
+  display:grid;gap:8px;align-content:start;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--rule-2)}
+.card .r{font-family:var(--f-mono);font-size:.78rem;font-weight:600;color:var(--accent)}
+.card h3{color:var(--ink)}
+.card p{font-size:.95rem;color:var(--ink-2);line-height:1.5}
+.card .who{font-family:var(--f-head);font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+
+@media print{
+  :root:root:root{--paper:#fff;--sheet:#fff;--ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#bbb;--rule-2:#888;--accent:#1B5940;--accent-soft:#fff;--gold:#7a4f10;
+    --gold-soft:#fff;--code:#eee;color-scheme:light}
+  @page{size:A4;margin:16mm 15mm}
+  body{font-size:10.5pt}
+  .rail,.skip,.toc{display:none}
+  .binder{display:block}
+  .doc{padding:0;gap:26px}
+  .wrap{max-width:none;gap:26px}
+  .sec,.chapter,tr,.note,.rule-card,pre{break-inside:avoid}
+  h2,h3{break-after:avoid}
+  .tablewrap{overflow:visible}
+  a{color:inherit;text-decoration:none}
+  .docfoot{margin-top:18px}
+}
+
+</style>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the document</a>
+<div class="binder">
+<nav class="rail" aria-label="The documentation set">
+  <div class="rail-in">
+    <div class="rail-brand"><b>GenericPOS Accounting</b><span>Documentation set · v1.0</span></div>
+    <ol>
+      <li><a href="index.html"><span class="r">—</span>Contents</a></li>
+      <li><a href="design-spec.html"><span class="r">DS·1</span>Design spec</a></li>
+      <li><a href="technical-spec.html" aria-current="page"><span class="r">TS·1</span>Technical spec</a></li>
+      <li><a href="users-guide.html"><span class="r">UG·1</span>User's guide</a></li>
+      <li><a href="admin-guide.html"><span class="r">AG·1</span>Admin guide</a></li>
+      <li><a href="deployment-guide.html"><span class="r">DG·1</span>Deployment guide</a></li>
+      <li><a href="troubleshooting-guide.html"><span class="r">TG·1</span>Troubleshooting</a></li>
+      <li><a href="marketing.html"><span class="r">MK·1</span>Product overview</a></li>
+      <li><a href="handover.html"><span class="r">HO·1</span>Handover</a></li>
+      <li><a href="audit.html"><span class="r">AUD·1</span>Build audit</a></li>
+    </ol>
+  </div>
+</nav>
+  <main class="doc" id="doc">
+    <div class="wrap">
+    <header class="dochead">
+      <div class="dochead-top">
+        <div>
+          <span class="eyebrow">GenericPOS Accounting · Documentation set</span>
+          <h1>Technical Specification</h1>
+        </div>
+        <div class="docref" aria-label="Document reference TS·1"><span>Doc ref</span><strong>TS·1</strong></div>
+      </div>
+      <p class="lead">The architecture, the data model, the API and the rules the code enforces.</p>
+      <dl class="control">
+        <div><dt>Version</dt><dd>1.0</dd></div>
+        <div><dt>Issued</dt><dd>20 September 2026</dd></div>
+        <div><dt>Written for</dt><dd>Developer</dd></div>
+        <div><dt>Applies to</dt><dd>Branch <code>build/accounting</code></dd></div>
+      </dl>
+    </header>
+<nav class="toc" aria-label="Contents of this document">
+      <p class="lbl">In this document</p>
+      <ol>
+        <li><a href="#stack"><span class="n">1</span>The stack, and where things live</a></li>
+        <li><a href="#request"><span class="n">2</span>A request, end to end</a></li>
+        <li><a href="#api"><span class="n">3</span>The API</a></li>
+        <li><a href="#ledger"><span class="n">4</span>The ledger engine</a></li>
+        <li><a href="#data"><span class="n">5</span>The data model</a></li>
+        <li><a href="#modules"><span class="n">6</span>The modules</a></li>
+        <li><a href="#reporting"><span class="n">7</span>Reporting</a></li>
+        <li><a href="#front"><span class="n">8</span>The front end</a></li>
+        <li><a href="#security"><span class="n">9</span>What the security rests on</a></li>
+        <li><a href="#tests"><span class="n">10</span>The tests</a></li>
+        <li><a href="#conventions"><span class="n">11</span>Conventions, and the traps</a></li>
+      </ol>
+    </nav>
+<section class="sec" id="stack">
+      <h2><span class="n">1</span>The stack, and where things live</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Layer</th><th>What</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Server</td><td>PHP 8.2 on CodeIgniter 3.1.9. Extensions: <code>mysqli</code>, <code>mbstring</code>, <code>fileinfo</code>, <code>gd</code>.</td></tr>
+          <tr><td class="k">Database</td><td>MariaDB 10.2.1+ or MySQL 8.0.16+ — the schema uses <code>CHECK</code> constraints and needs a version that enforces them. utf8mb4, strict mode on.</td></tr>
+          <tr><td class="k">Web server</td><td>Apache with <code>mod_rewrite</code> and <code>AllowOverride All</code>. The project root is the document root.</td></tr>
+          <tr><td class="k">Front end</td><td>Plain ES modules, no framework, no build step. Installs as a PWA; a service worker precaches the shell.</td></tr>
+          <tr><td class="k">Node</td><td>18+, and only to build the guide or run the test suites. The system itself never needs it.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Roughly 26,600 lines of PHP across 35 controllers, 21 models, 12 libraries and 4 helpers; 13,500 lines
+      of JavaScript in 64 modules behind 56 screens; 1,230 lines of CSS; and a 798-line schema.</p>
+      <pre><code>index.php                 the single entry point; sets ENVIRONMENT, loads the JSON error handler
+application/
+  config/routes.php       170 API routes, then one file per module in config/routes/
+  controllers/            one per resource; every method starts with its role guard
+  models/                 the data and the rules; Journal_model is the only writer into the ledger
+  libraries/              Statement_lib, Analysis_lib, Books_lib, Integrity_lib, Depreciation_lib,
+                          Arap_lib, Bank_csv, Chart_templates, JWT_lib, Mailer_lib, Demo_seed
+  helpers/                api_helper (guards, envelope, audit), report_helper (letterhead, CSV, words)
+  core/                   Api_errors.php + MY_Exceptions.php — /api/ faults answer as JSON
+css/app.css               one stylesheet
+js/&lt;page&gt;.js              one module per screen, each exporting mount(root, ctx)
+pages/&lt;page&gt;.html         its markup
+sw.js                     the service worker; CACHE_VERSION must rise with any front-end change
+SCHEMA.sql                the whole database, with the reasoning in its comments
+tests/                    sixteen suites; see tests/README.md
+docs/guide/*.md           the sixteen chapters → help/guide.json</code></pre>
+    </section>
+
+    <section class="sec" id="request">
+      <h2><span class="n">2</span>A request, end to end</h2>
+      <ol>
+        <li><code>.htaccess</code> sends everything that is not a real file to <code>index.php</code>, and
+        refuses <code>application/</code>, <code>docs/</code>, <code>tests/</code>, <code>SCHEMA.sql</code> and
+        every <code>.md</code>, <code>.sql</code>, <code>.log</code> and <code>.env</code> outright.</li>
+        <li><code>index.php</code> decides the environment. Development needs both the <code>Host</code> header
+        <em>and</em> a request from this machine, so a forged header on a public server cannot turn error pages
+        on. It then loads <code>application/core/Api_errors.php</code>, which installs the handlers that make an
+        uncaught exception or a fatal answer in the JSON envelope on any <code>/api/</code> path.</li>
+        <li>CodeIgniter routes the URI. <code>config/routes.php</code> holds the shared routes and then includes
+        <code>config/routes/{receivables,banking,assets,budgets,ledger,admin_tools}.php</code>. A module file
+        that fails to parse is logged and skipped rather than taking every other route down with it.</li>
+        <li>The controller method's <strong>first statement</strong> is its guard —
+        <code>viewer_check()</code>, <code>bookkeeper_check()</code>, <code>accountant_check()</code> or
+        <code>admin_check()</code>. Each verifies the token, re-reads the account and its role from the
+        database, and returns the claims, or exits with 401 or 403. There is no middleware to forget to
+        register; the guard is in the method.</li>
+        <li>The model does the work inside a transaction and returns either a result or a message.</li>
+        <li><code>json_response()</code> or <code>json_error()</code> writes the envelope and exits.</li>
+      </ol>
+    </section>
+
+    <section class="sec" id="api">
+      <h2><span class="n">3</span>The API</h2>
+      <p>170 routes under <code>/api/v1</code>. Every answer is the same shape:</p>
+      <pre><code>{ "status": true,  "data": { … },  "message": "Saved" }
+{ "status": false, "data": null,   "message": "That month is closed.",
+  "errors": { "entry_date": "That month is closed." } }</code></pre>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Concern</th><th>How</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Authentication</td><td>HS256 JWT in <code>Authorization: Bearer</code>. Claims: <code>user_id</code>, <code>role</code>, <code>account_state</code>, <code>auth_method</code>, plus <code>iss</code>, <code>iat</code>, <code>exp</code>, <code>jti</code>. Twelve hours.</td></tr>
+          <tr><td class="k">Refresh</td><td>Opaque token in <code>gp_refresh_tokens</code>, thirty days, spent once. A reuse revokes the whole family and logs <code>auth.refresh_reuse</code>; a 60-second grace covers two tabs refreshing together.</td></tr>
+          <tr><td class="k">Status codes</td><td>200 fine · 401 no or bad session · 403 wrong role · 404 missing · 405 wrong method · 409 conflict · 422 validation, with <code>errors</code> keyed by field · 429 rate-limited · 500 fault (still JSON).</td></tr>
+          <tr><td class="k">Pagination</td><td><code>page</code> and <code>per_page</code> in, <code>{ items, meta: { page, per_page, total, pages } }</code> out.</td></tr>
+          <tr><td class="k">Rate limiting</td><td>Per user and action in <code>gp_rate_limits</code>, on every write and on sign-in.</td></tr>
+          <tr><td class="k">CSV</td><td>Any report takes <code>format=csv</code> and answers a UTF-8 file with a byte-order mark and the letterhead in its first rows.</td></tr>
+          <tr><td class="k">Audit</td><td><code>log_admin_action()</code> writes one immutable row per staff mutation, inside the same transaction as the change. Work nobody signed in for — the command line, the scheduled job — is recorded against the system actor and shows as "System".</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="sec" id="ledger">
+      <h2><span class="n">4</span>The ledger engine</h2>
+      <p><code>application/models/Journal_model.php</code> is the only code that writes journal lines. Four ways
+      in, and nothing else:</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Call</th><th>Used by</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><code>post_system($head, $lines, $uid, $source, $source_id)</code></td><td>Every module</td><td>Validates, numbers, posts and audits in one transaction. The source and its id tie the entry to the document that caused it.</td></tr>
+          <tr><td class="k"><code>reverse_system($id, $uid, $date, $reason, $source)</code></td><td>Every module</td><td>Reverses an entry <em>that module</em> posted. Refuses a manual entry, refuses a reversal, and checks the source matches.</td></tr>
+          <tr><td class="k"><code>create_draft($head, $lines, $uid, $source, $source_id, $actor, $note)</code></td><td>Recurring entries</td><td>A draft for somebody to approve. The actor is who made it — the scheduled job records itself, not the owner.</td></tr>
+          <tr><td class="k">the workflow methods</td><td>Screens</td><td><code>update_draft</code>, <code>submit</code>, <code>approve</code>, <code>reject</code>, <code>cancel</code>, <code>reverse</code> — the manual path, each with its own rules.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>What is checked before anything is written</h3>
+      <ul>
+        <li>Two or more lines; debits equal credits; every line has exactly one side.</li>
+        <li>The date falls in an <strong>open</strong> period of an <strong>open</strong> year.</li>
+        <li>Every account exists, is active and is postable — never a header.</li>
+        <li>A line on a control account names an active customer or supplier; a line on an account that requires
+        a department names one.</li>
+        <li>The book is one of <code>general</code>, <code>cash_receipts</code>, <code>cash_disbursements</code>,
+        <code>sales</code>, <code>purchases</code>, <code>adjusting</code>, <code>closing</code>,
+        <code>opening</code>. The last two are system-only.</li>
+      </ul>
+      <p>Posting re-runs the whole validation against the <em>stored</em> lines inside the posting transaction,
+      not against what was submitted, so a chart change between submission and approval cannot slip a bad line
+      through. An account's control and needs-a-department flags freeze once it has any line at all.</p>
+      <h3>Numbering</h3>
+      <p><code>next_sequence()</code> takes a row lock on <code>gp_counters</code> and hands out the next number
+      for that book and fiscal year. The number is assigned at posting, inside the transaction, so a rolled-back
+      posting consumes nothing and a book's numbers have no gaps. Prefixes come from Settings, which refuses a
+      blank or duplicated one.</p>
+      <div class="note warn">
+        <p class="lbl">Nested transactions throw</p>
+        <p>CodeIgniter 3 counts transaction depth, and only the outermost commit or rollback reaches the
+        database — an inner rollback does nothing. So when <code>post_system()</code> is called inside a
+        caller's transaction and something fails, it <strong>throws</strong> rather than returning an error, and
+        the caller must let the exception roll its own transaction back. Note that
+        <code>mysqli_sql_exception</code> extends <code>RuntimeException</code>: catch the SQL exception first,
+        or a database fault is mistaken for a rule violation.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="data">
+      <h2><span class="n">5</span>The data model</h2>
+      <p>Thirty-five tables. <code>SCHEMA.sql</code> is the whole thing and carries the reasoning in its
+      comments; there is no migration runner, so a schema change is applied by hand.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Group</th><th>Tables</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Accounts and access</td><td><code>gp_users</code>, <code>gp_username_history</code>, <code>gp_login_attempts</code>, <code>gp_refresh_tokens</code>, <code>gp_password_resets</code>, <code>gp_rate_limits</code></td></tr>
+          <tr><td class="k">Platform</td><td><code>gp_app_state</code>, <code>gp_counters</code>, <code>gp_admin_audit_log</code>, <code>gp_settings</code>, <code>gp_notifications</code></td></tr>
+          <tr><td class="k">The ledger</td><td><code>gp_accounts</code>, <code>gp_fiscal_years</code>, <code>gp_periods</code>, <code>gp_departments</code>, <code>gp_journals</code>, <code>gp_journal_lines</code>, <code>gp_journal_templates</code>, <code>gp_attachments</code></td></tr>
+          <tr><td class="k">Receivables and payables</td><td><code>gp_contacts</code>, <code>gp_documents</code>, <code>gp_document_lines</code>, <code>gp_settlements</code>, <code>gp_allocations</code></td></tr>
+          <tr><td class="k">Banking</td><td><code>gp_bank_accounts</code>, <code>gp_bank_statements</code>, <code>gp_bank_lines</code>, <code>gp_bank_matches</code></td></tr>
+          <tr><td class="k">Fixed assets</td><td><code>gp_asset_categories</code>, <code>gp_assets</code>, <code>gp_depreciation_runs</code>, <code>gp_depreciation_entries</code></td></tr>
+          <tr><td class="k">Planning and year-end</td><td><code>gp_budgets</code>, <code>gp_budget_lines</code>, <code>gp_surplus_allocations</code></td></tr>
+        </tbody>
+      </table></div>
+      <h3>gp_ledger</h3>
+      <p>A view over <code>gp_journal_lines</code> joined to <code>gp_journals</code>, giving every line its
+      entry's book, number, date, period, fiscal year, source and description, plus
+      <code>net_cents = debit_cents - credit_cents</code>. Every report reads the view; nothing writes to it.</p>
+      <h3>Rules the database itself enforces</h3>
+      <ul>
+        <li>A line has a debit or a credit, never both and never neither (<code>CHECK</code>).</li>
+        <li>An allocation is positive and cannot exceed its settlement (<code>CHECK</code>).</li>
+        <li>Account codes, journal numbers per book and year, and document numbers are unique.</li>
+        <li>Strict mode is on, so a value that does not fit is refused rather than silently truncated.</li>
+      </ul>
+      <h3>The source of an entry</h3>
+      <p><code>gp_journals.source</code> says what caused the entry, and <code>source_id</code> points at it.
+      That pairing is what lets a module undo its own work and no one else's.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Source</th><th>source_id points at</th></tr></thead>
+        <tbody>
+          <tr><td class="k">manual</td><td>nothing — a person wrote it</td></tr>
+          <tr><td class="k">invoice · credit_note · bill · debit_note</td><td>the document</td></tr>
+          <tr><td class="k">receipt · payment</td><td>the settlement</td></tr>
+          <tr><td class="k">depreciation</td><td>the run</td></tr>
+          <tr><td class="k">disposal</td><td>the asset</td></tr>
+          <tr><td class="k">bank</td><td>the bank line</td></tr>
+          <tr><td class="k">opening · closing</td><td>the fiscal year</td></tr>
+          <tr><td class="k">reversal</td><td>the entry being reversed</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="sec" id="modules">
+      <h2><span class="n">6</span>The modules</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Module</th><th>Code</th><th>What it posts</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Receivables and payables</td><td><code>Contacts</code>, <code>Documents</code>, <code>Settlements</code>, <code>Ar_reports</code>; <code>Arap_lib</code></td><td>One entry per document and per settlement. A receipt is Dr cash, Dr creditable withholding, Cr the receivables control — both parts against the customer.</td></tr>
+          <tr><td class="k">Banking</td><td><code>Banking</code>, <code>Bank_reports</code>; <code>Bank_model</code>, <code>Bank_match_model</code>, <code>Bank_csv</code></td><td>Only what the bank did and the books do not show yet — charges, interest, direct credits — recorded from a statement line.</td></tr>
+          <tr><td class="k">Fixed assets</td><td><code>Assets</code>, <code>Asset_categories</code>, <code>Depreciation</code>, <code>Asset_reports</code>; <code>Depreciation_lib</code></td><td>One entry per depreciation run and one per disposal, the disposal clearing cost and accumulated depreciation and leaving the gain or loss.</td></tr>
+          <tr><td class="k">Budgets and departments</td><td><code>Budgets</code>, <code>Departments</code>, <code>Budget_reports</code></td><td>Nothing. A budget is a plan, not a transaction.</td></tr>
+          <tr><td class="k">Opening balances</td><td><code>Opening</code>; <code>Opening_model</code></td><td>One dated entry in the <code>opening</code> book, undoable while nothing else has been written.</td></tr>
+          <tr><td class="k">Saved entries</td><td><code>Templates</code>; <code>Template_model</code></td><td>Drafts, never postings. Stored by account <em>code</em>, so a renumbered chart cannot silently point one elsewhere.</td></tr>
+          <tr><td class="k">Year-end</td><td><code>Year_end</code>; <code>Year_end_model</code></td><td>The closing entry, and a co-operative's surplus allocation, in the <code>closing</code> book.</td></tr>
+          <tr><td class="k">Attachments</td><td><code>Attachments</code></td><td>Nothing. Files under <code>uploads/attachments/</code>, behind a deny-all rule, streamed back through a guard.</td></tr>
+          <tr><td class="k">Imports</td><td><code>Imports</code></td><td>Chart, contacts, opening balances and entries. Check first; commit the whole file in one transaction or none of it.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="sec" id="reporting">
+      <h2><span class="n">7</span>Reporting</h2>
+      <dl class="defs">
+        <div><dt>Statement_lib</dt><dd>The four statements, laid out from the chart: type chooses the
+        statement, subtype the section, the header tree the line items. Each returns
+        <code>{ title, columns, lines, base, checks, totals }</code>, where a line is typed —
+        <code>section</code>, <code>heading</code>, <code>header</code>, <code>account</code>,
+        <code>group</code>, <code>subtotal</code>, <code>total</code>, <code>computed</code>,
+        <code>grand</code> — and the browser only draws. Cash flows come both ways: the indirect method from
+        net income and the movements, the direct method read outward from the cash accounts, with the indirect
+        operating section carried underneath as the reconciliation note.</dd></div>
+        <div><dt>Books_lib</dt><dd>The five books of accounts, entry by entry or columnar and paged, with page
+        totals and the amount brought forward.</dd></div>
+        <div><dt>Analysis_lib</dt><dd>Twenty-one ratios with their formulas and inputs, and the co-operative
+        indicators against benchmarks held in Settings.</dd></div>
+        <div><dt>Integrity_lib</dt><dd>Sixteen ties over the stored records: the ledger against itself, the
+        subsidiary ledgers against their control accounts, documents against their entries, the asset register
+        against accumulated depreciation, the counters against the numbers actually used.</dd></div>
+        <div><dt>report_helper</dt><dd>The letterhead, the CSV download and <code>amount_in_words()</code>,
+        shared by every report so they all print the same.</dd></div>
+      </dl>
+    </section>
+
+    <section class="sec" id="front">
+      <h2><span class="n">8</span>The front end</h2>
+      <p>One shell, one router, one module per screen. No framework and no build step: the browser loads ES
+      modules straight from disk.</p>
+      <pre><code>// js/&lt;page&gt;.js — every screen looks like this
+export async function mount(root, ctx) { … }
+
+// ctx: { route, params, query (URLSearchParams), user, signal,
+//        navigate, setTitle, refreshChrome }</code></pre>
+      <p><code>pages/&lt;page&gt;.html</code> carries the markup and names its module in
+      <code>data-module</code>. The router matches the path, checks the role, fetches the page, imports the
+      module and calls <code>mount</code>. <code>ctx.signal</code> aborts when the user navigates away, so a
+      slow request cannot paint over the next screen.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Shared module</th><th>What it gives</th></tr></thead>
+        <tbody>
+          <tr><td class="k"><code>api.js</code></td><td><code>api.get/post/put/del/upload</code>, the session, refresh-on-401, <code>download()</code>. An <code>ApiError</code> carries <code>status</code> and <code>errors</code>.</td></tr>
+          <tr><td class="k"><code>ui.js</code></td><td>Escaping, form values and errors, busy states, toasts, dialogs, status pills.</td></tr>
+          <tr><td class="k"><code>store.js</code></td><td>The company's settings, money in and out of centavos, date formatting.</td></tr>
+          <tr><td class="k"><code>report-kit.js</code></td><td>Amounts and percentages, the sheet head and foot, period presets, links into the general ledger, the address bar, CSV export.</td></tr>
+          <tr><td class="k"><code>icons.js</code></td><td>Inline SVG, painted on demand. Every icon a page names must exist.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note warn">
+        <p class="lbl">After any front-end change</p>
+        <p>Raise <code>CACHE_VERSION</code> in <code>sw.js</code>, and add any new
+        <code>js/</code> or <code>pages/</code> file to its precache list. A browser that already has the old
+        worker will otherwise keep serving the old app. <code>node tests/modcheck.mjs</code> checks that every
+        import resolves, every route has a page, every page has its module and every icon used is defined.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="security">
+      <h2><span class="n">9</span>What the security rests on</h2>
+      <ul>
+        <li><strong>Tokens.</strong> HS256, signed with <code>GP_JWT_SECRET</code>, which has no fallback — a
+        missing secret is a clean 503, never a known default. <code>alg: none</code> is rejected loudly. Every
+        token carries an issuer claim that validation checks, so a token minted by another application on the
+        same machine is refused even if the two ever shared a secret.</li>
+        <li><strong>Roles</strong> are re-read from the database on every request. A suspended account stops
+        working immediately, not at the next sign-in.</li>
+        <li><strong>Refresh tokens</strong> rotate and are spent once; a replayed one ends every session of
+        that account.</li>
+        <li><strong>Changing the email address</strong> on an account takes the current password, feeds the
+        lockout counter, is audited, and notifies the old address with the new one masked.</li>
+        <li><strong>Every write</strong> is rate-limited per user and audited in the same transaction. A failed
+        audit row fails the change.</li>
+        <li><strong>Attachments</strong> are never served by the web server: a deny-all rule in
+        <code>uploads/attachments/</code>, the type sniffed rather than trusted, and a guarded endpoint that
+        streams them with <code>nosniff</code> and a sandbox.</li>
+        <li><strong>Development mode</strong> needs the <code>Host</code> header and a request from the machine
+        itself, so a public server cannot be talked into showing file paths.</li>
+        <li><strong>SQL</strong> goes through bound parameters; search terms have their wildcards escaped.</li>
+      </ul>
+    </section>
+
+    <section class="sec" id="tests">
+      <h2><span class="n">10</span>The tests</h2>
+      <p>Sixteen suites, 677 checks. They talk to the API the way the browser does, against a throwaway database
+      served by PHP's own web server; several refuse outright to run against a database whose name does not say
+      "scratch", so a real set of books cannot be touched.</p>
+      <pre><code>mysql -u root -e "CREATE DATABASE acc_scratch CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root acc_scratch &lt; SCHEMA.sql
+CI_ENV=development GP_DB_NAME=acc_scratch php index.php tools seed_demo
+GP_DB_NAME=acc_scratch php -S 127.0.0.1:8781 -t . tests/router.php   # leave CI_ENV unset here
+
+node tests/api-test.mjs     http://127.0.0.1:8781/api/v1 ledger
+node tests/reports-test.mjs http://127.0.0.1:8781/api/v1
+node tests/modcheck.mjs</code></pre>
+      <p>The suites mutate the seeded books, so re-seed between the ones that close a year or register an asset.
+      <code>tests/README.md</code> lists them all and what each covers. Afterwards, drop the scratch database
+      and run <code>php index.php tools cache</code> against the real one — seeding rewrites the sign-in page's
+      branding cache.</p>
+    </section>
+
+    <section class="sec" id="conventions">
+      <h2><span class="n">11</span>Conventions, and the traps</h2>
+      <ul>
+        <li><strong>Money is integer centavos</strong> everywhere, named <code>*_cents</code>. Rates are basis
+        points. Dates are <code>Y-m-d</code> strings. Use <code>company_today()</code>, not
+        <code>date()</code> — the company's timezone is a setting.</li>
+        <li><strong>The guard is the first line</strong> of every controller method. A method without one is a
+        bug, not a public endpoint.</li>
+        <li><strong>Never write journal lines directly.</strong> If a new module needs to post, it calls
+        <code>post_system()</code> and defines a new source.</li>
+        <li><strong>Catch <code>mysqli_sql_exception</code> before <code>RuntimeException</code></strong>, since
+        the first extends the second.</li>
+        <li><strong>An account's flags freeze</strong> once it has a line. Design the chart before the first
+        entry, or expect to be refused.</li>
+        <li><strong>Settings that were chosen at setup</strong> — the kind of organisation, the business form,
+        the fiscal-year start month — are read-only afterwards, by design.</li>
+        <li><strong>Strict SQL mode is on.</strong> A query that used to pass a slightly wrong value now fails.
+        That is the point.</li>
+      </ul>
+    </section>
+    <footer class="docfoot">
+      <span>TS·1 · Technical Specification · v1.0, 20 September 2026</span>
+      <span><a href="design-spec.html">← Design spec</a> &nbsp;·&nbsp; <a href="users-guide.html">User's guide →</a></span>
+    </footer>
+    </div>
+  </main>
+</div>
+</body>
+</html>

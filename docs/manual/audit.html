@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GenericPOS Accounting Audit</title>
+<meta name="description" content="Audit of the build/accounting branch: what is broken, what is missing against PLAN.md, and the ledger-engine defects reproduced on a scratch copy of the demo books.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#EDF1EC;
+  --sheet:#F8FAF7;
+  --ink:#16201B;
+  --ink-2:#46554D;
+  --ink-3:#66756D;
+  --rule:#C9D5CD;
+  --rule-2:#90A598;
+  --green:#1C5A42;
+  --green-soft:#DBE9E0;
+  --crit:#B3261E; --crit-bg:#FAE5E2;
+  --high:#8F5400; --high-bg:#FAEED6;
+  --med:#2B5A86;  --med-bg:#E1EAF4;
+  --low:#56655D;  --low-bg:#E5EAE6;
+  --code-bg:#E3EAE5;
+  --f-head:"Libre Franklin","Franklin Gothic Medium","Franklin Gothic","Segoe UI",Arial,sans-serif;
+  --f-body:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1310; --sheet:#131B17; --ink:#E0E7E2; --ink-2:#A6B4AC; --ink-3:#83938A;
+    --rule:#26332C; --rule-2:#44574C; --green:#83CDA6; --green-soft:#16271E;
+    --crit:#F28B82; --crit-bg:#3A1917; --high:#E9B25E; --high-bg:#33250F;
+    --med:#95BBE3;  --med-bg:#172536;  --low:#A8B5AE;  --low-bg:#1C2420;
+    --code-bg:#1B2520; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1310; --sheet:#131B17; --ink:#E0E7E2; --ink-2:#A6B4AC; --ink-3:#83938A;
+  --rule:#26332C; --rule-2:#44574C; --green:#83CDA6; --green-soft:#16271E;
+  --crit:#F28B82; --crit-bg:#3A1917; --high:#E9B25E; --high-bg:#33250F;
+  --med:#95BBE3;  --med-bg:#172536;  --low:#A8B5AE;  --low-bg:#1C2420;
+  --code-bg:#1B2520; color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;padding-block:40px 80px;padding-inline:20px}
+.wp{max-width:1000px;margin-inline:auto;display:grid;gap:64px}
+a{color:var(--green);text-underline-offset:3px;text-decoration-thickness:1px}
+a:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:2px}
+code{font-family:var(--f-mono);font-size:.84em;background:var(--code-bg);padding:.08em .35em;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3,h4{font-family:var(--f-head);color:var(--ink);text-wrap:balance;margin:0}
+h1{font-weight:800;font-size:clamp(2rem,4.4vw,2.9rem);line-height:1.05;letter-spacing:-.015em}
+h2{font-weight:700;font-size:1.6rem;line-height:1.2;letter-spacing:-.01em}
+.eyebrow,.lbl,dt,th{font-family:var(--f-head);font-weight:600;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.eyebrow{margin:0}
+.tk{font-style:normal;font-family:var(--f-mono);font-weight:600;color:var(--green)}
+
+/* ── Working-paper header ───────────────────────────────────────────── */
+.head{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:28px clamp(18px,4vw,36px) 20px;display:grid;gap:22px}
+.head-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.head-title{display:grid;gap:8px;min-width:0}
+.head-sub{margin:0;color:var(--ink-2);font-size:1.05rem}
+.wpref{border:1.5px solid var(--green);color:var(--green);border-radius:4px;padding:8px 14px;text-align:center;display:grid;gap:2px;font-family:var(--f-mono)}
+.wpref span{font-family:var(--f-head);font-size:.66rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.wpref strong{font-size:1.25rem;font-weight:600;letter-spacing:.04em}
+.meta{margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 28px;border-top:1px solid var(--rule);padding-top:18px}
+.meta div{display:grid;gap:4px;align-content:start;min-width:0}
+.meta dd{margin:0;font-family:var(--f-head);font-size:.93rem;line-height:1.45;color:var(--ink)}
+.meta .sig{border-bottom:1px solid var(--ink-2);min-height:1.7em}
+.legend{display:flex;flex-wrap:wrap;gap:2px 14px}
+.toc{display:flex;flex-wrap:wrap;gap:6px 20px;border-top:1px solid var(--rule);padding-top:14px;font-family:var(--f-head);font-size:.9rem}
+.toc a{text-decoration:none;font-weight:600}
+.toc a:hover{text-decoration:underline}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ── Sections ───────────────────────────────────────────────────────── */
+.sec{display:grid;gap:20px}
+.sec-head{display:grid;gap:8px;max-width:70ch}
+.sec-head p{margin:0;color:var(--ink-2)}
+.conclusion h2{font-size:clamp(1.6rem,3.2vw,2.2rem);line-height:1.15;max-width:22ch}
+.lead{font-size:1.18rem;line-height:1.55;max-width:64ch;margin:0}
+.rn{background:var(--sheet);border:1px solid var(--rule-2);border-radius:6px;padding:18px clamp(16px,3vw,26px);display:grid;gap:10px;max-width:76ch}
+.rn p{margin:0}
+.rn .eyebrow{color:var(--green)}
+
+/* ── Tables: ledger conventions (single rule over a total, double under) ── */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);border-radius:6px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-head);font-size:.93rem}
+th,td{padding:10px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+thead th{border-bottom:1.5px solid var(--rule-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sched{min-width:560px}
+.sched td a{text-decoration:none;color:var(--ink);font-weight:600}
+.sched td a:hover{color:var(--green)}
+.sched .area-code{margin-right:8px}
+.sched .zero{color:var(--ink-3)}
+.sched tfoot td{border-top:1px solid var(--ink);border-bottom:0;font-weight:700;padding-bottom:14px}
+.sched tfoot td.num span{display:inline-block;border-bottom:3px double var(--ink);padding-bottom:1px}
+.sevkey{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 22px;margin:0;font-size:.93rem;color:var(--ink-2)}
+.sevkey div{display:grid;gap:6px;align-content:start}
+.sevkey dd{margin:0}
+
+.sev{display:inline-block;font-family:var(--f-head);font-weight:700;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:3px;line-height:1.3;white-space:nowrap}
+.sev.crit,[data-sev="crit"] .sev{color:var(--crit);background:var(--crit-bg)}
+.sev.high,[data-sev="high"] .sev{color:var(--high);background:var(--high-bg)}
+.sev.med, [data-sev="med"]  .sev{color:var(--med); background:var(--med-bg)}
+.sev.low, [data-sev="low"]  .sev{color:var(--low); background:var(--low-bg)}
+
+.cov{min-width:820px}
+.cov td{font-size:.9rem;line-height:1.45}
+.cov td:first-child{font-weight:700;min-width:190px}
+.cov .phase{font-family:var(--f-mono);font-weight:600;color:var(--green);margin-right:8px}
+.cov td.prose{font-family:var(--f-body);font-size:.96rem;line-height:1.5}
+.state{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;color:var(--ink-2);font-weight:600}
+.hb{--p:0;inline-size:18px;block-size:18px;border-radius:50%;border:1.6px solid var(--green);background:conic-gradient(var(--green) calc(var(--p) * 1%),transparent 0);display:inline-block;flex:none}
+.hbkey{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--f-head);font-size:.85rem;color:var(--ink-2)}
+.hbkey span{display:inline-flex;align-items:center;gap:7px}
+
+/* ── Findings register ──────────────────────────────────────────────── */
+.reghead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px 24px}
+.filter{display:flex;flex-wrap:wrap;gap:8px;border:0;margin:0;padding:0}
+.filter legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule-2);border-radius:999px;padding:5px 12px 5px 9px;font-family:var(--f-head);font-size:.84rem;font-weight:600;color:var(--ink);cursor:pointer;background:var(--sheet);user-select:none}
+.chip input{appearance:none;-webkit-appearance:none;inline-size:14px;block-size:14px;border-radius:3px;border:1.6px solid currentColor;margin:0;cursor:pointer;background:transparent}
+.chip input:checked{background:currentColor;box-shadow:inset 0 0 0 2px var(--sheet)}
+.chip input:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.chip[data-sev="crit"] input{color:var(--crit)}
+.chip[data-sev="high"] input{color:var(--high)}
+.chip[data-sev="med"]  input{color:var(--med)}
+.chip[data-sev="low"]  input{color:var(--low)}
+.chip .n{font-family:var(--f-mono);font-weight:500;color:var(--ink-3)}
+.chip:has(input:not(:checked)){color:var(--ink-3);border-style:dashed}
+
+.area{display:grid;margin-top:30px}
+.area-h{display:flex;align-items:baseline;gap:12px;font-size:1.25rem;font-weight:700;padding-bottom:10px;border-bottom:1.5px solid var(--rule-2)}
+.area-code{font-family:var(--f-mono);color:var(--green);font-weight:600}
+.area-note{margin:12px 0 2px;color:var(--ink-2);max-width:72ch}
+.area-empty{display:none;margin:0;padding:18px 0;color:var(--ink-3);font-style:italic}
+.area.is-empty .area-empty{display:block}
+
+.f{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px 22px;padding-block:22px;border-bottom:1px solid var(--rule);scroll-margin-top:16px}
+.f-side{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.ref{font-family:var(--f-mono);font-weight:600;font-size:1rem;color:var(--ink);text-decoration:none}
+.ref:hover{color:var(--green)}
+.f-side .tk{font-size:1.05rem;line-height:1}
+.f-main{display:grid;gap:8px;min-width:0;max-width:74ch}
+.f-main h4{font-size:1.1rem;font-weight:700;line-height:1.3}
+.f-main p{margin:0}
+.f .lbl{margin-right:.55em}
+.f .fix .lbl{color:var(--green)}
+.ev{font-size:.9rem;color:var(--ink-2);line-height:1.8}
+.ev code{font-size:.8rem}
+.f-main ul{margin:0;padding-left:1.15em;display:grid;gap:7px}
+
+/* ── Order of work ─────────────────────────────────────────────────── */
+.steps{list-style:none;margin:0;padding:0;counter-reset:step;border-top:1.5px solid var(--rule-2)}
+.steps li{counter-increment:step;display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 14px;padding-block:16px;border-bottom:1px solid var(--rule)}
+.steps li::before{content:counter(step);font-family:var(--f-mono);font-weight:600;font-size:1.3rem;color:var(--green);line-height:1.25;grid-row:span 2}
+.steps h3{font-size:1.02rem;font-weight:700;line-height:1.35}
+.steps p{margin:0;color:var(--ink-2);max-width:74ch}
+
+/* ── What holds ────────────────────────────────────────────────────── */
+.holds{min-width:680px}
+.holds td:first-child{font-family:var(--f-body);font-size:.96rem;line-height:1.45;width:42%}
+.holds td.res{font-family:var(--f-mono);font-size:.82rem;font-variant-numeric:tabular-nums;line-height:1.6;color:var(--ink)}
+.holds td.mk{text-align:center;font-family:var(--f-mono);font-weight:600;color:var(--green);width:54px;font-size:1.05rem}
+
+/* ── Method & close ────────────────────────────────────────────────── */
+.method ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;max-width:76ch}
+.method li .lbl{margin-right:.6em}
+.end{border-top:1px solid var(--rule);padding-top:16px;font-family:var(--f-head);font-size:.85rem;color:var(--ink-3);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+
+@media (max-width:860px){ .meta{grid-template-columns:repeat(2,minmax(0,1fr))} .sevkey{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:640px){
+  body{font-size:16px}
+  .meta{grid-template-columns:1fr}
+  .f{grid-template-columns:1fr}
+  .f-side{flex-direction:row;align-items:center;gap:12px}
+  .reghead{align-items:flex-start}
+}
+@media print{
+  :root:root:root{--paper:#fff;--sheet:#fff;--ink:#000;--ink-2:#333;--ink-3:#555;--rule:#bbb;--rule-2:#888;--green:#1C5A42;--code-bg:#eee;
+    --crit:#B3261E;--crit-bg:#fff;--high:#8F5400;--high-bg:#fff;--med:#2B5A86;--med-bg:#fff;--low:#444;--low-bg:#fff;color-scheme:light}
+  @page{size:A4;margin:16mm 14mm}
+  body{padding:0;font-size:10.5pt}
+  .toc,.filter{display:none}
+  .f,.steps li,tr,.rn{break-inside:avoid}
+  .tablewrap{overflow:visible}
+  .sev{border:1px solid currentColor}
+  a{color:inherit;text-decoration:none}
+}
+
+/* ── Follow-up: the status of each finding ──────────────────────────── */
+.st{display:inline-block;font-family:var(--f-head);font-weight:700;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;line-height:1.3;white-space:nowrap;border:1.5px solid currentColor}
+.st.fixed{color:var(--green)}
+.st.partial{color:var(--high)}
+.st.open{color:var(--ink-3);border-style:dashed}
+.f .fu{border-left:3px solid var(--green);padding-left:12px}
+.f[data-status="partial"] .fu{border-left-color:var(--high)}
+.f[data-status="open"] .fu{border-left-color:var(--rule-2)}
+.f .fu .lbl{color:var(--green)}
+.f[data-status="partial"] .fu .lbl{color:var(--high)}
+.f[data-status="open"] .fu .lbl{color:var(--ink-3)}
+.fuwrap{display:grid;gap:14px;max-width:76ch}
+.fuwrap p{margin:0}
+.fuwrap .lbl{margin-right:.55em;color:var(--green)}
+.fustats{display:flex;flex-wrap:wrap;gap:10px 28px;margin:0;padding:0;list-style:none;font-family:var(--f-head);font-size:.95rem;color:var(--ink-2)}
+.fustats b{font-family:var(--f-mono);font-size:1.35rem;font-weight:600;margin-right:7px;color:var(--ink)}
+.steps h3 .st{margin-left:8px;vertical-align:2px}
+@media print{ .f .fu{break-inside:avoid} }
+</style>
+
+</head>
+<body>
+<nav style="font:600 13px/1.5 'Libre Franklin',Arial,sans-serif;padding:11px 20px;border-bottom:1px solid var(--rule);background:var(--sheet);display:flex;gap:14px;flex-wrap:wrap"><a href="index.html" style="color:var(--green);text-decoration:none">&#8592; GenericPOS Accounting &middot; documentation set</a><span style="color:var(--ink-3);font-weight:400">AUD&middot;1 is a working paper and keeps its own letterhead.</span></nav>
+<main class="wp">
+
+  <header class="head">
+    <div class="head-top">
+      <div class="head-title">
+        <p class="eyebrow">Working paper · Build audit</p>
+        <h1>GenericPOS Accounting</h1>
+        <p class="head-sub">Audit of branch <code>build/accounting</code> as of 14 September 2026, followed up the same afternoon and again on 17 September 2026</p>
+      </div>
+      <div class="wpref" aria-label="Working paper reference AUD 1"><span>W/P ref</span><strong>AUD·1</strong></div>
+    </div>
+    <dl class="meta">
+      <div><dt>Client</dt><dd>GenericPOS Accounting, a general ledger for one company per install</dd></div>
+      <div><dt>Scope</dt><dd>Commit <code>3ab52a9</code> plus uncommitted work: 19 files changed, 280 deleted, 6 new</dd></div>
+      <div><dt>Books examined</dt><dd>Demo Trading Corporation, 1 Jan – 13 Sep 2026: 401 posted journals, 1,277 lines</dd></div>
+      <div><dt>Prepared by</dt><dd>Claude · 14 Sep 2026, followed up 14 and 17 Sep 2026</dd></div>
+      <div><dt>Reviewed by</dt><dd class="sig"><span class="sr">Not yet reviewed</span></dd></div>
+      <div><dt>Tick marks</dt><dd class="legend"><span><i class="tk">✓</i> reproduced</span><span><i class="tk">T</i> traced in code</span><span><i class="tk">Σ</i> footed and agreed</span></dd></div>
+    </dl>
+    <nav class="toc" aria-label="Sections">
+      <a href="#followup">Follow-up 1</a><a href="#followup2">Follow-up 2</a><a href="#schedule">Schedule</a><a href="#coverage">Against the plan</a><a href="#findings">Findings</a><a href="#order">Order of work</a><a href="#holds">What holds</a><a href="#method">Method</a>
+    </nav>
+  </header>
+
+  <section class="sec conclusion" aria-labelledby="h-conc">
+    <p class="eyebrow">Conclusion · 14 September 2026</p>
+    <h2 id="h-conc">The ledger engine is sound. The application around it can’t be used yet.</h2>
+    <p class="lead">Every test on the demo books passed: debits equal credits to the centavo, journal numbers run without gaps, each customer’s and supplier’s balance ties to its control account, and closed periods refuse entries. But no screen or API route reaches the ledger, and the shell around it is still the shop’s. In a clean browser the app never finishes loading. Once someone signs in, every request fails, because the sign-in check reads a database column that was dropped. Probes on a scratch copy of the books also reproduced six engine defects, and the code shows three more. Fix those before any module is built on top.</p>
+    <aside class="rn" aria-labelledby="h-rn">
+      <p class="eyebrow" id="h-rn">Review note RN-1 · What you are probably seeing</p>
+      <p>The browser you test in is likely running <strong>old GenericPOS code</strong>. Its service worker was installed on 13 September, before the shop files were deleted, and it keeps serving its cached copies. The access log shows that browser on <code>/shop</code> at 12:26 that day. A new worker can’t replace it, because its install list still names the deleted <code>js/cart.js</code> (<a href="#A2">A2</a>). A clean browser shows only the loading spinner (<a href="#A1">A1</a>). Signing in wouldn’t get you far either: every signed-in request returns HTTP 500 (<a href="#B1">B1</a>), so your profile, settings and users don’t load.</p>
+      <p>To see the real state once those are fixed: DevTools → Application → Service workers, unregister the worker scoped to <code>/dashboard/accounting/</code>, then delete its <code>acc-</code> caches under Cache storage. Avoid “Clear site data”: <code>localhost</code> is shared with GenericPOS, and it would wipe that app’s sign-in and data too.</p>
+    </aside>
+  </section>
+
+  <section class="sec" id="followup" aria-labelledby="h-fu">
+    <p class="eyebrow">Follow-up 1 · 14 Sep 2026, afternoon</p>
+    <h2 id="h-fu">The app starts, and phase A is built.</h2>
+    <div class="fuwrap">
+      <p class="lead">Steps 1 to 3 of the order of work are done or nearly so, and most of step 4. Every role signs in to a back office built for the ledger. The chart of accounts, fiscal years and periods, journal entry with the full approval workflow and its notifications, the trial balance, users, settings and the audit log all run on new API routes, and setup builds a working ledger on an empty database.</p>
+      <ul class="fustats" aria-label="Findings at follow-up">
+        <li><b>25</b>fixed</li><li><b>6</b>partly fixed</li><li><b>4</b>still open</li>
+      </ul>
+      <p><span class="lbl">Verified</span>111 API checks on scratch databases, all passing. 98 take the demo company through every role and the whole life of an entry: draft, edit, submit, approve and post, reject with a reason, resubmit, cancel, reverse, and a month closed and reopened. They also cover the chart, users, settings and the next fiscal year. The other 13 run first-time setup on an empty schema as a co-operative with a July year. The demo seed still builds its 405 journals under the stricter engine, balanced at ₱13,222,240.22. PHP lint is clean, every browser module links, and the sign-in page renders.</p>
+      <p><span class="lbl">Then the reports</span>Later the same day the financial reports followed: the four statements in business and co-op wording, the general ledger, the books of accounts and the ratio analysis, all printable on A4 and all as CSV. 84 more API checks pass: 72 on the demo company, checking every report against the ledger's own identities, and 12 on an empty co-operative.</p>
+      <p><span class="lbl">Not yet seen</span>The signed-in screens were checked through the API they call and against its live responses, but nobody has clicked through them in a browser yet.</p>
+      <p><span class="lbl">Still to do</span>Opening balances, saved and recurring entries with the scheduled job behind them (<a href="#D2">D2</a>), attachments stored privately (<a href="#E3">E3</a>), and the email-change check (<a href="#E2">E2</a>), which must close before anyone outside the team signs in.</p>
+      <p><span class="lbl">RN-1</span>The new service worker (<code>v2.0.1</code>) installs over the old one, so a browser that still holds GenericPOS code updates itself. Reload twice. Unregistering it by hand is no longer needed.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="followup2" aria-labelledby="h-fu2">
+    <p class="eyebrow">Follow-up 2 · 17 Sep 2026</p>
+    <h2 id="h-fu2">It is built, and every finding is closed.</h2>
+    <div class="fuwrap">
+      <p class="lead">All nine phases of PLAN.md are in the code and committed to <code>build/accounting</code>. The ledger has the five subsidiary modules feeding it, a year-end close, opening balances, saved entries on a schedule, private attachments, imports, an integrity check, a sixteen-chapter user&rsquo;s guide inside the app, and the test suites that prove it.</p>
+      <ul class="fustats" aria-label="Findings at the second follow-up">
+        <li><b>35</b>fixed</li><li><b>0</b>partly fixed</li><li><b>0</b>still open</li>
+      </ul>
+      <p><span class="lbl">Built since</span>Customers and suppliers, invoices, bills, credit and debit notes, receipts and payments with withholding, aging, statements of account and the subsidiary ledgers; banking with CSV import, matching and a reconciliation that must reach zero; fixed assets with straight-line and declining-balance depreciation, disposals and the lapsing schedule; budgets and departments; opening balances; saved and recurring entries behind <code>tools cron</code>; year-end closing, reopening and the co-operative surplus allocation; attachments and vouchers; the ten-column worksheet, columnar books and the integrity check; CSV imports; editable co-op benchmarks; and both cash-flow methods.</p>
+      <p><span class="lbl">Verified</span>677 checks on throwaway databases, all passing, under strict SQL mode: the platform, the ledger API through every role, the four statements against the ledger&rsquo;s own identities, the worksheet and columnar books, the integrity check, receivables and payables end to end, fixed assets and the depreciation maths on their own, year-end for a company and for a co-operative, saved entries and the scheduled job, attachments and vouchers, the imports, the setup wizard, an empty co-operative, and installing a ledger from a shell. PHP lint is clean over 110 files, and a static pass confirms that all 746 imports, 67 routes, 56 pages and 222 icon uses resolve.</p>
+      <p><span class="lbl">The direct method</span>The statement of cash flows now offers both methods PAS 7 allows, and the direct one reads outward from the cash accounts: every entry that touched cash is taken apart and the cash attributed to the other accounts in the same entry. It also shows up a limit of the indirect one. Equipment the demo company bought on account appears there as &#8369;150,000.00 of investing outflow with an offsetting rise in payables, though no cash moved; the direct statement puts nothing in investing and names the difference on a line of its own.</p>
+      <p><span class="lbl">Still not seen</span>Three screens were looked at in a browser, through a read-only fixture harness that kept every credential out of it: year-end, aging and the worksheet. The rest were checked through the API they call and by the static pass over every module, but nobody has clicked through them.</p>
+      <p><span class="lbl">RN-1</span>Closed. The service worker is <code>v2.2.0</code>, and every one of the 124 files it precaches exists.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="schedule" aria-labelledby="h-sched">
+    <div class="sec-head">
+      <h2 id="h-sched">Schedule of findings</h2>
+      <p>By area and severity. Each area links to its findings, and the totals foot to the register below. The last column counts what is still open after the follow-ups.</p>
+    </div>
+    <div class="tablewrap">
+      <table class="sched">
+        <thead><tr><th scope="col">Area</th><th scope="col" class="num">Critical</th><th scope="col" class="num">High</th><th scope="col" class="num">Medium</th><th scope="col" class="num">Low</th><th scope="col" class="num">Total</th><th scope="col" class="num">Still open</th></tr></thead>
+        <tbody id="sched-body"></tbody>
+        <tfoot id="sched-foot"></tfoot>
+      </table>
+    </div>
+    <dl class="sevkey">
+      <div><dt><span class="sev crit">Critical</span></dt><dd>The app, or a flow the plan depends on, can’t be used.</dd></div>
+      <div><dt><span class="sev high">High</span></dt><dd>Breaks a ledger guarantee from PLAN.md §2, or a role’s access.</dd></div>
+      <div><dt><span class="sev med">Medium</span></dt><dd>Wrong behaviour with a workaround, a security exposure, or a trap for the next phase.</dd></div>
+      <div><dt><span class="sev low">Low</span></dt><dd>Clean-up, wording, documentation, minor exposure.</dd></div>
+    </dl>
+  </section>
+
+  <section class="sec" id="coverage" aria-labelledby="h-cov">
+    <div class="sec-head">
+      <h2 id="h-cov">Against the plan</h2>
+      <p>PLAN.md §9 lists nine phases and none is ticked. This is where each one stands in the code. These are the missing features you have been running into. Phases 0, A, B, C and H are brought up to the follow-up.</p>
+    </div>
+    <div class="hbkey" aria-label="Key">
+      <span><i class="hb" style="--p:0" aria-hidden="true"></i>not started</span>
+      <span><i class="hb" style="--p:25" aria-hidden="true"></i>a start</span>
+      <span><i class="hb" style="--p:50" aria-hidden="true"></i>about half</span>
+      <span><i class="hb" style="--p:75" aria-hidden="true"></i>most</span>
+      <span><i class="hb" style="--p:100" aria-hidden="true"></i>done</span>
+    </div>
+    <div class="tablewrap">
+      <table class="cov">
+        <thead><tr><th scope="col">Phase</th><th scope="col">State</th><th scope="col">What exists</th><th scope="col">What is missing</th></tr></thead>
+        <tbody>
+          <tr><td><span class="phase">0</span>Strip, rebrand, new roles</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">Shop, POS, USDT and Android code deleted; schema, roles, settings, routes and the whole client shell rebuilt for the ledger. At the second follow-up: README and HANDOVER rewritten (<a href="#D6">D6</a>), and the shop&rsquo;s leftover settings keys, token lifetimes and claims removed (<a href="#D5">D5</a>).</td>
+            <td class="prose">Nothing.</td></tr>
+          <tr><td><span class="phase">A</span>Core ledger</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">Setup with a chart template and the first year, or the same three steps from a shell; the chart of accounts; fiscal years and periods with close, reopen and lock; journal entry with the full approval workflow, reversal and copy. At the second follow-up: opening balances, saved and recurring entries with the scheduled job behind them, and attachments stored privately.</td>
+            <td class="prose">Nothing.</td></tr>
+          <tr><td><span class="phase">B</span>Ledger reports and printing</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">The trial balance, the general ledger, the books of accounts. At the second follow-up: the ten-column worksheet, journal and cash vouchers with the amount in words, columnar books with page totals and brought-forward, and the AR and AP subsidiary ledgers and statements of account. All on A4 with the letterhead and signatories, all as CSV.</td>
+            <td class="prose">Nothing.</td></tr>
+          <tr><td><span class="phase">C</span>Statements and year-end</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">The four statements in business and co-op wording, laid out from the chart, comparative, monthly and common-size, by department. At the second follow-up: the year-end checklist, the closing entry shown before it is made, reopening, the co-operative net-surplus allocation, and the direct cash-flow method beside the indirect one.</td>
+            <td class="prose">Nothing.</td></tr>
+          <tr><td><span class="phase">D</span>Receivables and payables</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">Customers and suppliers; invoices, bills, credit and debit notes; receipts and payments with withholding and partial settlement; aging, statements of account and the subsidiary ledgers, each tying to its control account. 151 checks.</td>
+            <td class="prose">Nothing.</td></tr>
+          <tr><td><span class="phase">E</span>Banking</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">Bank accounts, a statement imported from CSV with the columns named once, matching against the books, bank adjustments recorded straight from a statement line, and a reconciliation that prints and must reach zero before it can be marked reconciled.</td>
+            <td class="prose">Nothing.</td></tr>
+          <tr><td><span class="phase">F</span>Fixed assets</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">Categories with their own life and method, acquisition, straight-line and declining-balance depreciation by period, the lapsing schedule, and disposal with the gain or loss worked out. The register ties to accumulated depreciation in the ledger. 99 checks, and 41 on the maths alone.</td>
+            <td class="prose">Nothing.</td></tr>
+          <tr><td><span class="phase">G</span>Budgets and departments</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">Budgets by account and period against the actual figures, departments that carry their own income statement, and a department column in any range of the income statement — including what nobody charged to one.</td>
+            <td class="prose">Nothing.</td></tr>
+          <tr><td><span class="phase">H</span>Analysis and finish</td>
+            <td><span class="state"><i class="hb" style="--p:100" role="img" aria-label="Done"></i>Done</span></td>
+            <td class="prose">The ratios and the co-op indicators, now against benchmarks an accountant can edit when the CDA&rsquo;s guidance changes. At the second follow-up: CSV imports for the chart, contacts, opening balances and entries; the integrity report; <code>tools cron</code> (<a href="#D2">D2</a>); a dashboard that shows what is waiting; a sixteen-chapter user&rsquo;s guide read inside the app; and the test suites.</td>
+            <td class="prose">Nothing.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec" id="findings" aria-labelledby="h-find">
+    <div class="reghead">
+      <div class="sec-head">
+        <h2 id="h-find">Findings</h2>
+        <p>Each finding is written as observed, effect and fix, with its evidence, and ends with its follow-up. Filter by severity, or hide what is fixed.</p>
+      </div>
+      <fieldset class="filter">
+        <legend>Show severities</legend>
+        <label class="chip" data-sev="crit"><input type="checkbox" id="show-crit" checked>Critical <span class="n" data-count="crit"></span></label>
+        <label class="chip" data-sev="high"><input type="checkbox" id="show-high" checked>High <span class="n" data-count="high"></span></label>
+        <label class="chip" data-sev="med"><input type="checkbox" id="show-med" checked>Medium <span class="n" data-count="med"></span></label>
+        <label class="chip" data-sev="low"><input type="checkbox" id="show-low" checked>Low <span class="n" data-count="low"></span></label>
+        <label class="chip"><input type="checkbox" id="show-fixed" checked>Fixed <span class="n" data-count="fixed"></span></label>
+      </fieldset>
+    </div>
+
+    <!-- ═════════════════════════ A ═════════════════════════ -->
+    <section class="area" id="area-A" data-code="A" data-name="The app in the browser" aria-labelledby="h-A">
+      <h3 class="area-h" id="h-A"><span class="area-code">A</span>The app in the browser</h3>
+      <p class="area-empty">No findings here at the selected severities.</p>
+
+      <article class="f" data-sev="crit" id="A1" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A1">A1</a><span class="sev">Critical</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>The app never starts in a clean browser</h4>
+          <p><span class="lbl">Observed</span><code>js/app.js</code> and <code>js/chrome.js</code> import <code>./cart.js</code>, which was deleted with the shop. The server answers that path with the app shell (HTTP 200, <code>text/html</code>, <code>nosniff</code>), so the browser rejects the module and every script that depends on it.</p>
+          <p><span class="lbl">Effect</span>The loading spinner never clears. The fallback “could not start” message never shows either, because the code that would show it never runs.</p>
+          <p class="fix"><span class="lbl">Fix</span>Remove the cart imports and calls. Have <code>.htaccess</code> answer missing <code>.js</code>, <code>.css</code> and image files with a plain 404 instead of the shell, so the next missing file fails loudly.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>js/app.js:15, 24, 27</code> <code>js/chrome.js:26, 262</code> <code>GET js/cart.js → 200 text/html, X-GP-Shell: 1</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>No module imports <code>cart.js</code> any more, and <code>.htaccess</code> answers a missing script, stylesheet or image with a plain 404, so the next missing file fails loudly. A boot timer shows the “could not start” message if the app stalls. The sign-in page renders in a clean browser.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="crit" id="A2" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A2">A2</a><span class="sev">Critical</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>The service worker can’t update, and the old one serves shop code</h4>
+          <p><span class="lbl">Observed</span><code>sw.js</code> requires <code>js/cart.js</code> at install. That request returns the shell, so every new worker fails to install. The worker installed on 13 September kept its cached copies of the deleted shop pages and modules, and it never replaces a cached file with a shell response.</p>
+          <p><span class="lbl">Effect</span>No front-end change reaches a browser that has the old worker, and that browser shows storefront pages. They are the source of the <code>/api/v1/catalog</code> 404s in the server log. Bumping <code>CACHE_VERSION</code> alone won’t help.</p>
+          <p class="fix"><span class="lbl">Fix</span>Take <code>cart.js</code> and the 20 deleted files out of the precache lists, and remove the push handlers and the catalog and app-update rules. Then bump <code>CACHE_VERSION</code>. Locally, unregister the old worker (RN-1).</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>sw.js:45–51, 62–65, 105, 108, 154, 190–234</code> <code>access.log: /shop at 12:26 on 13 Sep</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>The precache lists only files that exist, checked one by one, the push and shop rules are gone, and <code>CACHE_VERSION</code> is <code>v2.0.1</code>, so the new worker installs over the old one.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="high" id="A3" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A3">A3</a><span class="sev">High</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Only administrators can reach the back office</h4>
+          <p><span class="lbl">Observed</span>The client ranks customer, cashier, manager and admin. The new roles aren’t in its table, so viewer, bookkeeper and accountant rank with customers. They land on <code>/account</code>, and every <code>/admin</code> route tells them “Not available”. The server ranks viewer 1 through admin 4, and its user payload still reports the three new roles as not staff.</p>
+          <p><span class="lbl">Effect</span>Three of the four roles in PLAN §8 see only their own profile, though all of them should see reports.</p>
+          <p class="fix"><span class="lbl">Fix</span>One rank table that matches the server’s, the dashboard as everyone’s landing page, and routes and navigation gated as in PLAN §8.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>js/router.js:35, 155–170</code> <code>api_helper.php:158–162</code> <code>User_model.php:185</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>One rank table, viewer 1 to admin 4, in the router and on the server. Every role lands on the dashboard, and routes and menu items are gated as in PLAN §8. The API checks confirm the limits of each role.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="high" id="A4" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A4">A4</a><span class="sev">High</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Navigation and routes are still the shop’s</h4>
+          <p><span class="lbl">Observed</span>37 of the router’s 48 routes point at deleted pages. The back-office sidebar has 16 links, 12 of them dead, plus Point of sale and View store. The header carries Shop, product search and a cart, and the account page offers orders, addresses and store credit. <code>/api/v1/store</code> reports the shop and the POS as switched on, because no setting turns them off.</p>
+          <p><span class="lbl">Effect</span>Most links end on “Not available yet”, and the app reads as a half-removed shop.</p>
+          <p class="fix"><span class="lbl">Fix</span>Rebuild the navigation around the ledger: dashboard, journals, approvals, chart of accounts, periods, reports, settings, users and audit log. Delete the storefront routes, chrome and feature flags. PLAN §3 already says the whole app uses the back-office chrome.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>js/router.js:41–94</code> <code>js/chrome.js:62–200</code> <code>pages/account.html:20–26</code> <code>Store_model.php:131, 137</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>The navigation is the ledger’s: dashboard, journal entries, approvals, chart of accounts, fiscal years and periods, trial balance and, for administrators, users, settings and the audit log. The storefront routes, chrome, account tiles and feature flags are gone.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="A5" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A5">A5</a><span class="sev">Medium</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Notifications fail on both ends</h4>
+          <p><span class="lbl">Observed</span><code>js/notifications.js</code> imports the deleted <code>push.js</code>, and <code>/api/v1/notifications</code> is routed to the deleted Support controller.</p>
+          <p><span class="lbl">Effect</span>The page shows “Something went wrong” and the API answers 404. The approval notifications that Settings already offers have nowhere to appear.</p>
+          <p class="fix"><span class="lbl">Fix</span>A Notifications controller over the existing <code>Notification_model</code>, and the page without push.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>js/notifications.js:14</code> <code>routes.php:113–114</code> <code>GET /api/v1/notifications → 404</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>A Notifications controller over <code>Notification_model</code>, and the page without push. Submitting, rejecting and posting an entry each notify the right person, and the bell and the menu badges follow.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="A6" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A6">A6</a><span class="sev">Medium</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Sign-ins can collide with GenericPOS</h4>
+          <p><span class="lbl">Observed</span>When IndexedDB is unavailable, <code>js/idb.js</code> falls back to localStorage under the prefix <code>gp:</code>. Those are the same <code>gp:session</code> and <code>gp:store_cfg</code> keys GenericPOS writes on this origin. PLAN §10 requires <code>acc_</code> keys.</p>
+          <p><span class="lbl">Effect</span>In a browser that blocks IndexedDB, signing into one app signs you out of the other.</p>
+          <p class="fix"><span class="lbl">Fix</span>Use the <code>acc_</code> prefix.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>js/idb.js:78</code> <code>PLAN.md §10</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Browser storage uses the <code>acc_</code> prefix throughout.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="A7" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A7">A7</a><span class="sev">Low</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Settings shows read-only choices as editable</h4>
+          <p><span class="lbl">Observed</span>The server marks the kind of organisation, the business form and the fiscal-year start as read-only and refuses to save them, but the screen still renders them as dropdowns. Account defaults are typed as bare codes, with no picker.</p>
+          <p><span class="lbl">Effect</span>An admin can pick a new value, and the save fails with “This was chosen at setup and cannot be changed.”</p>
+          <p class="fix"><span class="lbl">Fix</span>Show read-only settings as text, and add an account picker limited to the types each default allows.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>js/admin-settings.js:50–67</code> <code>Settings_model.php:75–77, 336</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Read-only settings are shown disabled and never sent. Account defaults are picked from the chart, which offers only active accounts of the types each default accepts.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="A8" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A8">A8</a><span class="sev">Low</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>The self sign-up screen still ships</h4>
+          <p><span class="lbl">Observed</span>The sign-up screen, its route and the “Create an account” links remain, hidden only by <code>feature_registration = FALSE</code> in a file. If that were switched on, anyone could sign up and become a viewer who can read every book.</p>
+          <p class="fix"><span class="lbl">Fix</span>Delete the screen, the route, the links and <code>auth/register</code>. SCHEMA.sql says an admin creates every account.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>js/auth-pages.js:113–157</code> <code>js/router.js:68</code> <code>pages/login.html:37</code> <code>Auth.php:99–167</code> <code>User_model.php:259</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>The screen, the route, the links, <code>Auth::register()</code> and <code>username_available()</code> are deleted.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="A9" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#A9">A9</a><span class="sev">Low</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Shop wording, filters and icons</h4>
+          <p><span class="lbl">Observed</span>The shell says “This store needs JavaScript” and “Install our app — Faster checkout and order updates”. Setup asks for a store name and Philippine discount and delivery presets. The audit-log filter lists orders, register, customers, products, stock and USDT, but not journals. Four settings-group icons don’t exist in <code>icons.js</code> and render blank.</p>
+          <p class="fix"><span class="lbl">Fix</span>A wording pass, journal, period and account filters on the audit log, and the missing icons.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>index.html:88</code> <code>js/app.js:154</code> <code>pages/setup.html:26–52</code> <code>pages/admin-audit.html:15–25</code> <code>Settings_model.php:193–201</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>The shell, setup and sign-in speak of the ledger and the company. The audit-log filter lists journal entries, months, fiscal years, the chart, users, settings, setup and server commands, and the missing icons were added.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ═════════════════════════ B ═════════════════════════ -->
+    <section class="area" id="area-B" data-code="B" data-name="Server endpoints and setup" aria-labelledby="h-B">
+      <h3 class="area-h" id="h-B"><span class="area-code">B</span>Server endpoints and setup</h3>
+      <p class="area-empty">No findings here at the selected severities.</p>
+
+      <article class="f" data-sev="crit" id="B1" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#B1">B1</a><span class="sev">Critical</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Every signed-in request fails</h4>
+          <p><span class="lbl">Observed</span>The check that every protected endpoint runs selects <code>pin_set_at</code> from <code>gp_users</code>. That is a POS column this schema dropped, and on PHP 8.2 the SQL error is thrown, not returned.</p>
+          <p><span class="lbl">Effect</span>Signing in works, but every request after it returns HTTP 500. Tested with a locally minted token: <code>auth/me</code>, <code>profile</code>, <code>admin/settings</code> and <code>admin/staff</code> all failed with “Unknown column 'pin_set_at'”.</p>
+          <p class="fix"><span class="lbl">Fix</span>Select only <code>role, password_changed_at</code> in <code>_account_is_active()</code>, and remove the PIN code from <code>User_model</code>. That one change unblocks every signed-in screen.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>api_helper.php:630, 640</code> <code>User_model.php:442–462</code> <code>log-2026-09-14.php: 4 × Unknown column 'pin_set_at'</code> <code>access.log 09:10:57: four 500s</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><code>_account_is_active()</code> selects <code>role, password_changed_at</code>, and the PIN code is gone from <code>User_model</code>. Every signed-in request answers.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="crit" id="B2" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#B2">B2</a><span class="sev">Critical</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>There is no accounting API</h4>
+          <p><span class="lbl">Observed</span>No route or controller serves the chart, periods, journals or reports. The four ledger models run only from the command line (<code>tools trial_balance</code>, <code>tools seed_demo</code>). <code>routes.php</code> is unchanged from the shop: 133 of its 170 route entries point at 23 deleted controllers.</p>
+          <p><span class="lbl">Effect</span>Nothing in PLAN phases A–H can be used from the browser.</p>
+          <p class="fix"><span class="lbl">Fix</span>Replace <code>routes.php</code> with an accounting route table. Start with controllers for the chart, periods, journals and the trial balance. The role guards they need already exist, <code>viewer_check()</code> through <code>admin_check()</code>, though nothing uses the middle two yet.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>application/config/routes.php</code> <code>api_helper.php:262–301</code> <code>GET /api/v1/orders → 404</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>A new <code>routes.php</code> for the ledger, with controllers for the chart, fiscal years and periods, journals and their workflow, the trial balance, the dashboard, notifications and the audit log. Phases B–H have no routes yet. <strong>17 Sep:</strong> they all do — each module owns a route file in <code>config/routes/</code>, and <code>routes.php</code> survives one that does not parse.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="crit" id="B3" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#B3">B3</a><span class="sev">Critical</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>The dashboard fails for everyone</h4>
+          <p><span class="lbl">Observed</span>The constructor of <code>admin/Dashboard.php</code> calls <code>manager_check()</code>, which no longer exists. Its queries read <code>gp_orders</code>, <code>gp_products</code>, <code>gp_shifts</code>, <code>gp_payments</code> and <code>gp_onchain_deposits</code>, none of which exist in this schema.</p>
+          <p><span class="lbl">Effect</span>The admin’s landing page returns HTTP 500 on every visit, signed in or not.</p>
+          <p class="fix"><span class="lbl">Fix</span>Rewrite it as the PLAN §7 dashboard: cash position, receivables, payables, revenue and net income to date, and queues for entries to approve, rejected entries, periods to close and banks to reconcile.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>admin/Dashboard.php:25, 37–94</code> <code>GET /api/v1/admin/dashboard → 500</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>A new dashboard as in PLAN §7: cash, receivables with what is overdue, payables, the year’s result and its twelve months, and queues for entries to approve, rejected and draft entries, and months to close. The banks-to-reconcile queue waits for phase E. <strong>17 Sep:</strong> it is there, beside depreciation due, unapplied receipts, the budget and four ratios read from the books.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="high" id="B4" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#B4">B4</a><span class="sev">High</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>The audit log can’t be read</h4>
+          <p><span class="lbl">Observed</span><code>/api/v1/admin/audit</code> is a method of the same Dashboard controller, so the broken constructor stops it too.</p>
+          <p><span class="lbl">Effect</span>The trail is being written (867 rows in the demo), but no one can read it in the app.</p>
+          <p class="fix"><span class="lbl">Fix</span>Give it its own controller behind <code>admin_check()</code>.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>routes.php:266</code> <code>GET /api/v1/admin/audit → 500</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>The audit log has its own controller behind <code>admin_check()</code>, with a search that escapes its wildcards.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="crit" id="B5" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#B5">B5</a><span class="sev">Critical</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Setup can’t set up a ledger</h4>
+          <p><span class="lbl">Observed</span><code>Setup.php</code> is still the shop’s. It creates the administrator and saves settings outside any transaction. Then it reads <code>gp_registers</code> and writes discount presets and shipping zones, tables this schema doesn’t have, so the request throws with no tokens returned and no audit row. It never asks for business or co-operative, never seeds a chart, never creates a fiscal year, and never sets the three settings “chosen at setup”. The settings screen then refuses to change them.</p>
+          <p><span class="lbl">Effect</span>A real install ends with an administrator but no chart and no periods, and setup then reports “already set up”. No command creates a chart or a year, so every entry is refused with “No fiscal period covers …”. The company is also fixed as a business corporation with a January year: a co-operative can’t be set up without editing <code>app.php</code>. Only <code>tools seed_demo</code> produces a working ledger.</p>
+          <p class="fix"><span class="lbl">Fix</span>Rebuild setup as the plan’s wizard, in one transaction: company, kind and chart template, fiscal-year start, first year, administrator. Add <code>tools seed_chart</code> and <code>tools create_year</code> for installs from a shell.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Setup.php:98–153</code> <code>Chart_templates used only by Demo_seed.php:150</code> <code>Settings_model.php:75–77, 336</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Setup asks for the company, its kind (and so its chart template) and the start of its first fiscal year, then writes the administrator, the chart, the settings chosen at setup and the first year’s twelve open months in one transaction. Tested on an empty schema as a co-operative with a July year. <strong>17 Sep:</strong> <code>tools seed_chart</code> and <code>tools create_year</code> were added, with a suite that installs a ledger from a shell end to end.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="high" id="B6" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#B6">B6</a><span class="sev">High</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>The users screen only knows the shop’s roles</h4>
+          <p><span class="lbl">Observed</span>The users controller and screen offer cashier, manager and admin, refuse viewer, bookkeeper and accountant, and list only the old roles. <code>User_model::create()</code> quietly turns an unknown role into viewer, and <code>set_role()</code> quietly ignores one. Saving a register PIN writes a <code>pin_hash</code> column the users table doesn’t have.</p>
+          <p><span class="lbl">Effect</span>Choosing “Cashier” or “Manager” creates a viewer, who can read every book. Changing someone to either role does nothing, while the API answers “Saved” and the audit log records the change. A PIN makes the request fail after the account already exists, with no audit row. Only administrators appear in the list, and bookkeepers, accountants and viewers can be created only from the command line.</p>
+          <p class="fix"><span class="lbl">Fix</span>Use <code>User_model::ROLES</code> in the controller and the screen, list every role, make <code>set_role()</code> report failure, and drop PINs.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>admin/Staff.php:23, 58–59, 74–83, 118, 160–163</code> <code>js/admin-staff.js:11, 49–53</code> <code>User_model.php:259, 443, 592</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Users uses <code>User_model::ROLES</code>, lists every account, requires an email and a password for a new user, reports a role change that fails, and has no PINs. The last active administrator can’t be demoted or suspended.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="B7" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#B7">B7</a><span class="sev">Low</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Public shop endpoints remain</h4>
+          <p><span class="lbl">Observed</span><code>/sitemap.xml</code> returns HTTP 500 because it loads the deleted <code>Category_model</code>. <code>robots.txt</code> lists the POS and shop paths, the web-app manifest’s shortcuts open Shop, Cart, My orders and Point of sale, and the content-page endpoints always answer 404.</p>
+          <p class="fix"><span class="lbl">Fix</span>A ledger has no public audience: serve <code>robots.txt</code> with <code>Disallow: /</code>, mark every page noindex, and drop the sitemap, the shortcuts and the content pages.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Store.php:51–72, 106–117, 138–159, 181</code> <code>GET /sitemap.xml → 500</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><code>robots.txt</code> says <code>Disallow: /</code>, every page is noindex, the sitemap and content pages are gone, and the manifest’s shortcuts open journal entries, a new entry and the trial balance.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ═════════════════════════ C ═════════════════════════ -->
+    <section class="area" id="area-C" data-code="C" data-name="The ledger engine" aria-labelledby="h-C">
+      <h3 class="area-h" id="h-C"><span class="area-code">C</span>The ledger engine</h3>
+      <p class="area-note">The four models keep the promises in PLAN.md §2 on every test under <a href="#holds">What holds</a>. These are the exceptions. Each <i class="tk">✓</i> was reproduced by <code>engine_probe.php</code> on a scratch copy of the demo books, and T1–T6 are its sections.</p>
+      <p class="area-empty">No findings here at the selected severities.</p>
+
+      <article class="f" data-sev="high" id="C1" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C1">C1</a><span class="sev">High</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Editing a draft lets its approver get past maker-checker</h4>
+          <p><span class="lbl">Observed</span><code>approve()</code> compares the approver only with <code>created_by</code>. <code>update_draft()</code> doesn’t record who edited, and <code>approve()</code> accepts a draft that was never submitted.</p>
+          <p><span class="lbl">Effect</span>Reproduced: the accountant rewrote the bookkeeper’s ₱1,000.00 office-supplies draft as a ₱99,000.00 representation entry and approved it. It posted as <code>GJ-2026-00051</code>: prepared by the bookkeeper on paper, written and approved by the accountant, never submitted.</p>
+          <p class="fix"><span class="lbl">Fix</span>Record who last edited and who submitted. Refuse approval from the creator or anyone who edited, and approve only from <em>submitted</em>.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Journal_model.php:224–249, 304–321</code> <code>probe T1</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Only its preparer edits a draft or a rejected entry, and approval takes only a <em>submitted</em> entry, never the approver’s own unless Settings allows self-approval. Tested: the accountant can’t edit the bookkeeper’s draft or approve their own entry.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="high" id="C2" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C2">C2</a><span class="sev">High</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Posting doesn’t re-check the line rules</h4>
+          <p><span class="lbl">Observed</span><code>_post_locked()</code> re-checks the balance, the period and header or inactive accounts. It doesn’t re-check the control-account, customer, supplier and department rules, and approval never re-runs <code>validate()</code>. The chart freezes an account’s control flag only after it has <em>posted</em> lines.</p>
+          <p><span class="lbl">Effect</span>Reproduced: a line on 1124 Other Receivables was submitted, then the account was made a receivables control account. That was allowed, because it had only a draft line. Approval posted it: a line on a control account with no customer. The receivables schedule no longer equals its control account (PLAN §2.8).</p>
+          <p class="fix"><span class="lbl">Fix</span>Re-run the full validation on the stored lines inside the posting transaction. Freeze the control and needs-a-department flags once an account has any line.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Journal_model.php:463–502</code> <code>Account_model.php:236–244</code> <code>probe T2</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Posting re-validates the stored lines inside the posting transaction, and an account’s control flag freezes once it has any line.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="high" id="C3" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C3">C3</a><span class="sev">High</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>A module’s journal can be reversed behind its document’s back</h4>
+          <p><span class="lbl">Observed</span><code>reverse()</code> refuses only closing and opening entries.</p>
+          <p><span class="lbl">Effect</span>Reproduced: reversing <code>SJ-2026-00052</code> (invoice INV-000051) was accepted. The invoice stayed posted with ₱193,380.00 open, while Camsur Food Distributors’ receivables in the ledger fell to ₱240,690.00 against ₱434,070.00 of open invoices. Bills, receipts, payments, credit notes and depreciation runs are exposed the same way.</p>
+          <p class="fix"><span class="lbl">Fix</span>Refuse the reversal when the source is a module document (“Cancel INV-000051 in Receivables instead”). Let each module cancel through its own model, reversing the journal and updating the document in one transaction.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Journal_model.php:354–393</code> <code>probe T4</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><code>reverse()</code> refuses an entry a module posted, and a reversal dated before the original.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="high" id="C4" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C4">C4</a><span class="sev">High</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>An account with a balance can be deactivated, and then the year can’t close</h4>
+          <p><span class="lbl">Observed</span>Deactivating an account doesn’t check its balance, and <code>validate()</code> refuses inactive accounts on every entry, closing and opening entries included.</p>
+          <p><span class="lbl">Effect</span>Reproduced: 6150 Communication Expense, carrying ₱36,000.00, was deactivated, and a closing entry to it was then refused (“6150 is inactive”). The year could not have been closed.</p>
+          <p class="fix"><span class="lbl">Fix</span>Refuse deactivation while the account has a balance: over all time for balance-sheet accounts, over the open year for income and expense. Alternatively, let closing and opening entries post to inactive accounts.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Account_model.php:270</code> <code>Journal_model.php:149</code> <code>probe T3</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Deactivation is refused while a balance-sheet account has a balance, while an income or expense account has activity in an open year, while entries on it wait for approval, while a setting names it as a default, and while a header has active accounts under it.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="C5" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C5">C5</a><span class="sev">Medium</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Deleting an account can crash, or orphan a default</h4>
+          <p><span class="lbl">Observed</span><code>delete()</code> checks contacts, bank accounts, document lines and budget lines. It doesn’t check asset categories, the cash account on receipts and payments, or the account defaults in Settings.</p>
+          <p><span class="lbl">Effect</span>Reproduced: deleting 1212 Building, which an asset category uses, threw an uncaught foreign-key exception (an HTML 500 through the API). Deleting 4920 succeeded while <code>acct_gain_on_disposal</code> still pointed to it.</p>
+          <p class="fix"><span class="lbl">Fix</span>Add those checks, and catch the foreign-key error as a last resort.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Account_model.php:295–305</code> <code>probe T5</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><code>delete()</code> also checks asset categories, receipts and payments and the account defaults, and a foreign-key error comes back as a message.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="C6" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C6">C6</a><span class="sev">Medium</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>A failed posting inside a module’s transaction isn’t rolled back</h4>
+          <p><span class="lbl">Observed</span>CodeIgniter 3 nests transactions by depth, and only the outermost commit or rollback reaches the database. So <code>_in_transaction()</code>’s rollback does nothing when a caller has already opened a transaction.</p>
+          <p><span class="lbl">Effect</span>Reproduced: a row written inside an inner transaction survived its rollback once the outer transaction committed. In phases D–G, if <code>post_system()</code> fails inside a module’s transaction and the module commits its other work, an unposted “submitted” journal is left in the approval queue.</p>
+          <p class="fix"><span class="lbl">Fix</span>When nested, have <code>_in_transaction()</code> throw instead of returning an error, and document that modules roll back on any posting error.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Journal_model.php:403–416</code> <code>probe T6</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Nested inside a caller’s transaction, a failed posting throws, so the caller rolls back. <code>Period_model</code> does the same.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="C7" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C7">C7</a><span class="sev">Medium</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Editing a draft can race an approval and un-post it</h4>
+          <p><span class="lbl">Observed</span><code>update_draft()</code> checks the status with a plain read. It then deletes the lines and updates the header by id alone, with no row lock and no status condition.</p>
+          <p><span class="lbl">Effect</span>If an accountant approves in between, the edit replaces the posted entry’s lines and sets it back to draft while it keeps its journal number. A posted entry leaves the ledger, and its book shows a gap.</p>
+          <p class="fix"><span class="lbl">Fix</span>Lock the row with <code>SELECT … FOR UPDATE</code> inside the edit’s transaction, and update <code>WHERE status IN ('draft','rejected')</code>, checking the affected rows.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Journal_model.php:224–249</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>An edit locks the entry’s row with <code>SELECT … FOR UPDATE</code> and re-checks its status inside the transaction.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="C8" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C8">C8</a><span class="sev">Medium</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>The audit trail can miss changes</h4>
+          <p><span class="lbl">Observed</span><code>Journal_model</code> writes its audit row after the posting commits, and <code>log_admin_action()</code> swallows a failed insert. Closing, reopening and locking a period, and creating a fiscal year, write no audit row at all. <code>tools create_user</code> records the new user as their own creator.</p>
+          <p><span class="lbl">Effect</span>A posting or a month-end close can stand with no record of who did it, against PLAN §2.7.</p>
+          <p class="fix"><span class="lbl">Fix</span>Write the audit row inside the same transaction and let its failure fail the action. Audit every period and year change, and record command-line actions under a dedicated system actor.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Journal_model.php:315–320, 339–343</code> <code>api_helper.php:563–568</code> <code>Period_model.php:97–159</code> <code>Tools.php:86</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>Journal audit rows are written inside the posting transaction, and a failed audit row fails the change. Closing, reopening and locking a month and opening a year are audited. <strong>17 Sep:</strong> every command-line action — creating a user, seeding a chart, creating a year, the scheduled job — is recorded against the system actor, and the audit log shows it as &ldquo;System&rdquo;.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="C9" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#C9">C9</a><span class="sev">Low</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Smaller engine gaps</h4>
+          <ul>
+            <li><code>ledger_require_approval</code> only relaxes the self-approval check. Its Settings hint promises more, and no path posts a bookkeeper’s entry without approval (<code>Journal_model.php:310</code>).</li>
+            <li><code>notify_approvals</code> is never read. Submitting, rejecting and posting notify no one, and the demo has 0 notifications.</li>
+            <li>Locking a period overwrites who closed the month (<code>Period_model.php:153–157</code>).</li>
+            <li>A blank book prefix falls back to two letters, so cash receipts and cash disbursements would both become “CA” and share a counter. Settings should refuse blank or duplicate prefixes (<code>Journal_model.php:507–508</code>).</li>
+            <li>Inactive customers and suppliers are accepted on lines (<code>Journal_model.php:155</code>).</li>
+            <li>The largest-remainder rounding that PLAN §2.10 relies on left with <code>Pricing_lib</code>. The demo’s depreciation rounds each month, so the laptops would reach 15,000,012 centavos over 36 months, 12 centavos past cost, and residual value is ignored (<code>Demo_seed.php:316</code>).</li>
+          </ul>
+          <p class="fu"><span class="lbl">Follow-up</span>Fixed: <code>notify_approvals</code> is read, locking keeps who closed the month, and inactive customers and suppliers are refused on lines. <strong>17 Sep:</strong> the approval settings now say plainly who may approve what, Settings refuses a blank or duplicated book prefix, and the depreciation engine carries its rounding into the last period so an asset lands exactly on its residual value, never a centavo past cost.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ═════════════════════════ D ═════════════════════════ -->
+    <section class="area" id="area-D" data-code="D" data-name="Platform and housekeeping" aria-labelledby="h-D">
+      <h3 class="area-h" id="h-D"><span class="area-code">D</span>Platform and housekeeping</h3>
+      <p class="area-empty">No findings here at the selected severities.</p>
+
+      <article class="f" data-sev="med" id="D1" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#D1">D1</a><span class="sev">Medium</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Server errors come back as HTML pages</h4>
+          <p><span class="lbl">Observed</span>Uncaught exceptions render CodeIgniter’s HTML error page, which in development includes the message and the file path, instead of the <code>{status, data, message}</code> envelope. On PHP 8.2 mysqli throws on every SQL error. The comment in <code>database.php</code> says failing queries return FALSE, which is no longer true, so code that waits on <code>trans_status()</code> or <code>db-&gt;error()</code> never sees the failure.</p>
+          <p><span class="lbl">Effect</span>The front end shows “Request failed (500)” with no reason. Seeding a chart, creating a year and editing a draft can fail mid-transaction with an exception instead of a message.</p>
+          <p class="fix"><span class="lbl">Fix</span>Add a JSON exception handler for <code>/api/</code> paths, and try/catch around the <code>trans_start()</code> blocks in <code>Account_model</code>, <code>Period_model</code> and <code>update_draft()</code>.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>GET /api/v1/admin/dashboard → HTML body</code> <code>database.php:106–120</code> <code>Account_model.php:136–158</code> <code>Period_model.php:113–126</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>The ledger models catch database errors and answer with a reason. <strong>17 Sep:</strong> <code>application/core/Api_errors.php</code> answers every <code>/api/</code> path in the JSON envelope — uncaught exceptions, fatals and <code>show_error()</code> alike — while ordinary pages still get the HTML page.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="D2" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#D2">D2</a><span class="sev">Medium</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Nothing runs on a schedule, and the old cron line still “succeeds”</h4>
+          <p><span class="lbl">Observed</span>The shop’s cron entry point was deleted, and nothing replaced it. Recurring journal templates (phase A) and the retention sweeps have no runner. Purge methods for rate limits and password resets exist, but nothing calls them, and the audit log and notifications have retention settings but no purge at all. <code>php index.php chaincli cron</code> now falls through to the 404 handler, which prints the app shell and exits 0.</p>
+          <p><span class="lbl">Effect</span>A cron line left over from the shop’s HANDOVER reports success every five minutes while doing nothing, and the tables it used to prune keep growing.</p>
+          <p class="fix"><span class="lbl">Fix</span>Add a <code>tools cron</code> command for recurring drafts and housekeeping, give the 404 handler a CLI exit code, and document both in the README.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>routes.php:275–276</code> <code>Notfound.php</code> <code>app.php:419–433</code> <code>PasswordReset_model.php:228–234</code> <code>User_model.php:815–833</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span>A command-line call to an unknown path now fails with a non-zero exit code instead of printing the shell. <strong>17 Sep:</strong> <code>tools cron</code> drafts the recurring entries that are due for their owners and clears out rate-limit rows, expired tokens, spent reset links and long-read notifications. One run at a time, and the audit log is never pruned.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="D3" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#D3">D3</a><span class="sev">Low</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>The SQL session is non-strict</h4>
+          <p><span class="lbl">Observed</span><code>database.php</code> sets <code>stricton</code> to FALSE, so CodeIgniter strips the strict modes from every session (this server’s global mode is non-strict anyway). Invalid ENUM values are stored as <code>''</code> (reproduced with an unknown role), and over-long text is cut silently.</p>
+          <p><span class="lbl">Effect</span>Only PHP validation stands between bad input and the tables. The ledger models validate thoroughly, but any gap stores a wrong value without an error.</p>
+          <p class="fix"><span class="lbl">Fix</span>Turn <code>stricton</code> on once D1’s exception handling is in place.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>database.php:129</code> <code>system/database/drivers/mysqli/mysqli_driver.php:143–156</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><strong>17 Sep:</strong> <code>stricton</code> is TRUE, and the whole regression was re-run under it. The database now refuses a value that does not fit instead of quietly changing it.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="D4" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#D4">D4</a><span class="sev">Low</span><i class="tk" title="Reproduced">✓</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>SCHEMA.sql claims MySQL 5.7 support</h4>
+          <p><span class="lbl">Observed</span>The one-side-per-line and allocation rules are CHECK constraints. MariaDB 10.4 enforces them (reproduced: error 4025), but MySQL 5.7, and MySQL 8.0 before 8.0.16, parse CHECK and ignore it.</p>
+          <p class="fix"><span class="lbl">Fix</span>State MariaDB 10.2.1+ or MySQL 8.0.16+ as the minimum.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>SCHEMA.sql:5, 426–427, 581–582</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><code>SCHEMA.sql</code> now states MariaDB 10.2.1+ or MySQL 8.0.16+.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="D5" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#D5">D5</a><span class="sev">Low</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Settings and keys left over from the shop</h4>
+          <ul>
+            <li>About a dozen <code>app.php</code> keys are never read, among them <code>feature_email_auth</code>, <code>email_verify_required</code>, <code>cache_ttl_*</code>, <code>cron_*</code>, <code>app_base_url</code> and <code>upload_image_max_bytes</code>. <code>jwt_expiry_customer_s</code> and <code>rate_register</code> serve roles and screens that no longer exist.</li>
+            <li><code>Store_model</code> reads 26 shop keys that no longer exist, which is why the shop and the POS default to on (<code>Store_model.php:131–166</code>).</li>
+            <li><code>secrets.example.php</code> still lists keys for features this system does not have.</li>
+            <li>Uploading the “hero” image writes the file, then fails to save a setting that no longer exists (<code>admin/Settings.php:22</code>).</li>
+            <li><code>support_email</code> is undefined, so password-reset and verification emails drop their contact line (<code>Mailer_lib.php:361, 418, 463, 514</code>).</li>
+          </ul>
+          <p class="fu"><span class="lbl">Follow-up</span><code>Store_model</code>’s public config no longer reads the shop’s keys, and the “hero” image upload is gone. <strong>17 Sep:</strong> the unused <code>app.php</code> keys are gone, <code>secrets.example.php</code> lists only what this application reads, <code>support_email</code> exists and the mailer falls back to the company&rsquo;s own address, and the last POS remnants — the register and customer token lifetimes, the <code>pos</code> claim on <code>auth/me</code> — went with them.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="D6" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#D6">D6</a><span class="sev">Low</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>README and HANDOVER still describe the shop</h4>
+          <p><span class="lbl">Observed</span>Both document the storefront, the POS, the USDT rail, the Android app, the <code>chaincli</code> cron and a <code>tests/api</code> suite of 509 checks. None of these exist on this branch.</p>
+          <p class="fix"><span class="lbl">Fix</span>Rewrite both for the ledger, and keep PLAN.md as the record of decisions.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>README.md</code> <code>HANDOVER.md</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><strong>17 Sep:</strong> both are rewritten for the ledger: installing it, the rule that only <code>post_system()</code> writes, where each module lives, the scheduled job, installing from a shell, and how to run the tests. PLAN.md stays the record of decisions.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ═════════════════════════ E ═════════════════════════ -->
+    <section class="area" id="area-E" data-code="E" data-name="Security" aria-labelledby="h-E">
+      <h3 class="area-h" id="h-E"><span class="area-code">E</span>Security</h3>
+      <p class="area-note">No bypass was found: the sign-in outage in <a href="#B1">B1</a> fails closed, tokens are HS256 with <code>none</code> rejected, and roles are re-read from the database on every request. These are exposures to close before real books go in.</p>
+      <p class="area-empty">No findings here at the selected severities.</p>
+
+      <article class="f" data-sev="med" id="E1" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#E1">E1</a><span class="sev">Medium</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Admin security settings don’t reach sign-in</h4>
+          <p><span class="lbl">Observed</span>Settings overrides are applied by a hook that runs after each controller’s constructor, and only if that constructor opened the database. The sign-in controller’s constructor doesn’t, so its endpoints read <code>app.php</code> alone.</p>
+          <p><span class="lbl">Effect</span>Raising the lockout limit, the lockout time or the minimum password length in Settings has no effect on sign-in or password reset, though the profile screen honours them. Reset emails name “My Company”.</p>
+          <p class="fix"><span class="lbl">Fix</span>Load the database in <code>Auth::__construct()</code>, or apply the overrides wherever <code>app.php</code> is loaded.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Auth.php:31–35</code> <code>hooks/SettingsOverride.php:25–45</code> <code>Settings_model.php:180–182</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><code>Auth::__construct()</code> opens the database before the settings hook runs, so sign-in and password reset obey the lockout and password rules set in Settings.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="E2" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#E2">E2</a><span class="sev">Medium</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Changing the account email needs no password</h4>
+          <p><span class="lbl">Observed</span><code>PUT /api/v1/profile</code> changes the email with only an access token. A password change asks for the current password; an email change doesn’t.</p>
+          <p><span class="lbl">Effect</span>Whoever holds a stolen 12-hour token can move the account to their own address, then reset the password and keep it. This is inherited from GenericPOS.</p>
+          <p class="fix"><span class="lbl">Fix</span>Require the current password for an email change, and tell the old address.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>Profile.php:51–73</code> <code>User_model.php:526–541</code> <code>User_model.php:344–347</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><strong>17 Sep:</strong> closed. Changing the address takes the current password, feeds the lockout counter and is audited, and the old address is told — with the new one masked, so the notice itself leaks nothing.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="med" id="E3" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#E3">E3</a><span class="sev">Medium</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Attachments would be public by URL</h4>
+          <p><span class="lbl">Observed</span><code>uploads/.htaccess</code> blocks only scripts and HTML, so PDFs and images under <code>uploads/</code> are served to anyone. SCHEMA.sql plans scanned receipts and invoices in <code>uploads/attachments/</code>.</p>
+          <p><span class="lbl">Effect</span>Once attachments ship, anyone with a link could open a company’s invoices without signing in.</p>
+          <p class="fix"><span class="lbl">Fix</span>Keep attachments outside the web root, or in a deny-all folder, and stream them through a guarded endpoint.</p>
+          <p class="ev"><span class="lbl">Evidence</span><code>uploads/.htaccess</code> <code>SCHEMA.sql:467–468</code></p>
+          <p class="fu"><span class="lbl">Follow-up</span><strong>17 Sep:</strong> built to the condition. <code>uploads/attachments/</code> carries a deny-all <code>.htaccess</code> written at runtime, the type is sniffed rather than trusted, and every file is streamed back through a guarded endpoint. A test asks Apache for one by its address and checks that it is refused.</p>
+        </div>
+      </article>
+
+      <article class="f" data-sev="low" id="E4" data-status="fixed">
+        <div class="f-side"><a class="ref" href="#E4">E4</a><span class="sev">Low</span><i class="tk" title="Traced in code">T</i><span class="st fixed">Fixed</span></div>
+        <div class="f-main">
+          <h4>Smaller exposures</h4>
+          <ul>
+            <li><code>GET /api/v1/auth/username-available</code> tells anyone which usernames exist, 60 checks an hour per IP, and with no sign-up nothing needs it (<code>Auth.php:170–187</code>).</li>
+            <li>Development mode is chosen by the <code>Host</code> header. A production server that answers any host would show error pages with file paths to a request sent as <code>Host: localhost</code> (<code>.htaccess:21</code>).</li>
+            <li><code>GET /api/v1/store</code> gives anyone the company’s TIN, address, phone, legal name and software version (<code>Store.php:33</code>).</li>
+            <li>Two refresh requests at once both succeed, and a reused refresh token isn’t detected (<code>Auth.php:263–286</code>).</li>
+            <li>Not verified: make sure <code>GP_JWT_SECRET</code> differs from GenericPOS’s. Both apps have a user #1 on this machine, so a shared secret would let a GenericPOS token work here as that user. The GenericPOS folder was not opened.</li>
+          </ul>
+          <p class="fu"><span class="lbl">Follow-up</span>Fixed: <code>username-available</code> is deleted, and <code>/api/v1/store</code> no longer gives the TIN, address or phone (it still gives the legal name and the software version). <strong>17 Sep:</strong> development mode now also needs the request to come from this machine, so a forged <code>Host</code> header cannot switch it on; a refresh token is spent once, and a reused one revokes its whole family; and every token carries an issuer claim that <code>validate()</code> checks, so one minted by another application on this machine is refused whatever it is signed with. The GenericPOS folder was still never opened.</p>
+        </div>
+      </article>
+    </section>
+  </section>
+
+  <section class="sec" id="order" aria-labelledby="h-order">
+    <div class="sec-head">
+      <h2 id="h-order">Order of work</h2>
+      <p>A sequence. Each step unblocks the next.</p>
+    </div>
+    <ol class="steps">
+      <li><h3>Make the shell start and tell the truth <span class="st fixed">Done</span></h3><p>First <a href="#B1">B1</a>, a one-line change that unblocks every signed-in screen. Then <a href="#A1">A1</a>–<a href="#A2">A2</a> so the app loads and updates, and <a href="#A3">A3</a>–<a href="#A4">A4</a> so every role lands on a back office built for the ledger. Then <a href="#B3">B3</a>, <a href="#B4">B4</a>, <a href="#B6">B6</a> and <a href="#A5">A5</a> so the screens that exist work, and replace <code>routes.php</code>. Most of this is deletion and small rewrites. It turns “nothing works” into “nothing is built yet”.</p></li>
+      <li><h3>Fix the engine before building on it <span class="st fixed">Done</span></h3><p><a href="#C1">C1</a>–<a href="#C8">C8</a>. Turn <code>engine_probe.php</code> into the first regression test, since every module in phases D–G posts through <code>Journal_model</code>. <em>Follow-up: C1–C9 are fixed. The probes became the suites in <code>tests/</code>, and every change since has been run against them.</em></p></li>
+      <li><h3>Setup that sets up a ledger <span class="st fixed">Done</span></h3><p><a href="#B5">B5</a>: the wizard, plus <code>tools seed_chart</code> and <code>tools create_year</code>, so a real company can be installed. Close <a href="#E1">E1</a> and <a href="#E2">E2</a> before anyone outside the team signs in. <em>Follow-up: the wizard, E1, E2 and both commands are done.</em></p></li>
+      <li><h3>Phase A in the browser <span class="st fixed">Done</span></h3><p>Chart of accounts, fiscal years and periods, journal entry, the approval queue with its notifications, opening balances, saved and recurring entries with the scheduled job behind them (<a href="#D2">D2</a>), and attachments stored privately (<a href="#E3">E3</a>). <em>Follow-up: all of it, attachments included.</em></p></li>
+      <li><h3>Phase B on one print framework <span class="st fixed">Done</span></h3><p>Trial balance, general ledger, the five books and vouchers, on A4 pages with letterhead, signatories, page totals and CSV.  <em>Follow-up: one letterhead, one CSV download and one print stylesheet, shared by every report.</em></p></li>
+      <li><h3>Year-end before 31 December <span class="st fixed">Done</span></h3><p>FY2026 closes at the end of the year. January entries can post as soon as FY2027 exists (probe T8), but the year’s statements need phase C’s closing, and a co-operative needs its surplus allocation too. <em>Follow-up: both are built, with a checklist that blocks on what must be fixed first, and the closing entry shown before it is made.</em></p></li>
+      <li><h3>Then D, E, F, G and H as planned <span class="st fixed">Done</span></h3><p>The demo books already hold invoices, bills, a bank statement, assets and a budget to build each module against. <em>Follow-up: all five phases are built, and each module was tested against those books on a throwaway copy.</em></p></li>
+    </ol>
+  </section>
+
+  <section class="sec" id="holds" aria-labelledby="h-holds">
+    <div class="sec-head">
+      <h2 id="h-holds">What holds</h2>
+      <p>Tests on the demo books in the <code>accounting</code> database (read-only), and on the scratch copy for the probes.</p>
+    </div>
+    <div class="tablewrap">
+      <table class="holds">
+        <thead><tr><th scope="col">Test</th><th scope="col">Result</th><th scope="col">Mark</th></tr></thead>
+        <tbody>
+          <tr><td>Debits equal credits across all posted lines</td><td class="res">1,277 lines · ₱40,775,500.87 each side</td><td class="mk">Σ</td></tr>
+          <tr><td>Each posted journal balances and equals its stored total</td><td class="res">401 journals · 0 exceptions</td><td class="mk">✓</td></tr>
+          <tr><td>Numbers are gap-free per book and year: count = last number = counter</td><td class="res">GJ 50 · CR 81 · CD 151 · SJ 52 · PJ 39 · AJ 27 · OB 1</td><td class="mk">Σ</td></tr>
+          <tr><td>No posted line on a header or inactive account, or outside its period</td><td class="res">0 · 0 · 0</td><td class="mk">✓</td></tr>
+          <tr><td>Every line on a control account names a customer or supplier</td><td class="res">1121: 96 lines · 2111: 73 lines · 0 missing</td><td class="mk">✓</td></tr>
+          <tr><td>Receivables and payables schedules equal their control accounts</td><td class="res">6 of 6 customers · 5 of 5 suppliers</td><td class="mk">Σ</td></tr>
+          <tr><td>Receipts and payments are fully allocated, and no document is over-applied</td><td class="res">71 settlements · 0 exceptions</td><td class="mk">Σ</td></tr>
+          <tr><td>The asset register agrees with accumulated depreciation in the ledger</td><td class="res">1215 ₱210,000.00 · 1217 ₱78,000.00<br>1219 ₱560,000.00 · 1222 ₱20,833.35</td><td class="mk">Σ</td></tr>
+          <tr><td>Each depreciation run equals its journal and its entries</td><td class="res">8 of 8 runs</td><td class="mk">Σ</td></tr>
+          <tr><td>The bank statement foots</td><td class="res">BDO, August: ₱199,892.24 + 29 lines = ₱961,895.71</td><td class="mk">Σ</td></tr>
+          <tr><td>Trial balance, 14 Sep 2026</td><td class="res">unadjusted ₱12,947,406.87<br>adjusted and post-closing ₱13,222,240.22 · balanced</td><td class="mk">Σ</td></tr>
+          <tr><td>Period controls (probe T7)</td><td class="res">month with waiting entries won’t close · open month can’t be locked · locked Feb refuses entries · date with no fiscal year refused</td><td class="mk">✓</td></tr>
+          <tr><td>A new year before the old one closes (probe T8)</td><td class="res">FY2027 created · GJ-2027-00001 posted · 2026’s unclosed income on its own line · balanced</td><td class="mk">✓</td></tr>
+          <tr><td>After every probe (T9)</td><td class="res">6 of 6 trial balances balanced (two dates × three kinds)</td><td class="mk">Σ</td></tr>
+          <tr><td>PHP syntax of every file under <code>application/</code></td><td class="res">57 files · no errors (php -l, PHP 8.2.12)</td><td class="mk">✓</td></tr>
+          <tr><td>Follow-up: the API for every role, on a scratch copy of the demo books</td><td class="res">98 of 98 checks · an entry’s whole life, month-end, the chart, users, settings, the next year · balanced after</td><td class="mk">✓</td></tr>
+          <tr><td>Follow-up: first-time setup on an empty schema</td><td class="res">13 of 13 checks · co-operative chart · FY2026-27 from 1 July in 12 open months · refused a second time</td><td class="mk">✓</td></tr>
+          <tr><td>Follow-up: the demo seed under the stricter engine</td><td class="res">405 journals · ₱13,222,240.22 each side · balanced</td><td class="mk">Σ</td></tr>
+          <tr><td>Follow-up: PHP syntax and browser modules</td><td class="res">53 PHP files · no errors · 24 modules link with no missing export</td><td class="mk">✓</td></tr>
+          <tr><td>Follow-up: every report against the ledger's own identities</td><td class="res">72 of 72 checks · the balance sheet equals the trial balance at every detail level · one net income in all four statements · the months add up to the year · cash flows reconcile to the cash accounts · every ledger ends at its trial balance · every book's debits equal its credits</td><td class="mk">Σ</td></tr>
+          <tr><td>Follow-up: the reports of an empty co-operative</td><td class="res">12 of 12 checks · CDA names · balanced at zero · every ratio empty, none infinite</td><td class="mk">✓</td></tr>
+                  <tr><td>17 Sep: every suite, on throwaway databases, under strict SQL mode</td><td class="res">677 of 677 checks · the platform · the ledger API through every role · the four statements · the worksheet, columnar books and integrity check · receivables and payables · fixed assets · the depreciation maths · year-end for a company and for a co-operative · saved entries and the scheduled job · attachments and vouchers · the imports · the setup wizard · an empty co-operative · a shell install</td><td class="mk">✓</td></tr>
+          <tr><td>17 Sep: both cash-flow methods on the same books</td><td class="res">each reconciles to the cash accounts · the same change in cash either way<br>the direct statement's note reaches its operating figure from net income</td><td class="mk">Σ</td></tr>
+          <tr><td>17 Sep: the live <code>accounting</code> database, read only</td><td class="res">trial balance ₱13,243,240.22 each side · balanced</td><td class="mk">Σ</td></tr>
+          <tr><td>17 Sep: the front end without a browser</td><td class="res">64 modules · 746 imports · 56 pages · 67 routes · 222 icon uses · all resolve<br>110 PHP files · no errors (php -l, PHP 8.2)</td><td class="mk">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec method" id="method" aria-labelledby="h-method">
+    <div class="sec-head"><h2 id="h-method">Method</h2></div>
+    <ul>
+      <li><span class="lbl">Read</span>PLAN.md, SCHEMA.sql and every server file on the branch, with the ledger models, chart templates and demo seed read line by line. Two further reviewers (sub-agents) swept the front end and the inherited server code. Their key claims were re-checked against the files, the live server and the logs before they were included.</li>
+      <li><span class="lbl">Ran</span>GET requests against <code>localhost/dashboard/accounting</code>, read-only SQL on the <code>accounting</code> database, <code>tools trial_balance</code>, and the application and Apache logs. The signed-in requests used a token minted locally from the app’s own secret, and wrote nothing to the database.</li>
+      <li><span class="lbl">Probed</span><code>engine_probe.php</code> (T0–T9) on <code>acc_audit_scratch</code>, a new database loaded from SCHEMA.sql and seeded with <code>tools seed_demo</code>, identical to the demo books. Direct SQL tests of the CHECK and ENUM behaviour ran there too.</li>
+      <li><span class="lbl">Changed</span>Nothing in the project and nothing in the <code>accounting</code> database. The seed rewrites <code>application/cache/store_public.json</code>; it was backed up and restored. The requests that hit the 500s added error lines to <code>application/logs/log-2026-09-14.php</code>. The scratch database was dropped afterwards.</li>
+      <li><span class="lbl">Followed up</span>The fixes were tested on two new scratch databases, <code>acc_audit_scratch</code> (the demo seed) and <code>acc_setup_scratch</code> (an empty schema). Each was served by PHP’s own web server, so the real site and the <code>accounting</code> database were not touched. Both were dropped afterwards. The setup test rewrote <code>application/cache/store_public.json</code>, which was then regenerated from the real database.</li>
+      <li><span class="lbl">Followed up again</span>17 Sep 2026: the rest of PLAN.md was built and committed in nine commits on <code>build/accounting</code>. Every suite ran against throwaway databases served by PHP&rsquo;s own web server, each dropped afterwards. The <code>accounting</code> database was read but never written — <code>tools trial_balance</code> and the branding cache, which was regenerated from it at the end. The screens that were looked at in a browser were served from recorded answers, so no session or password reached it. The GenericPOS folder and database were not opened.</li>
+    </ul>
+    <div class="end"><span>W/P AUD·1 · GenericPOS Accounting</span><span>Prepared 14 Sep 2026 · followed up 14 and 17 Sep 2026</span></div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const SEVS = ['crit', 'high', 'med', 'low'];
+  const areas = [...document.querySelectorAll('.area')];
+  const all = [...document.querySelectorAll('.f[data-sev]')];
+  const total = { crit: 0, high: 0, med: 0, low: 0 };
+  let openAll = 0;
+  const body = document.getElementById('sched-body');
+  const foot = document.getElementById('sched-foot');
+  const cell = (n) => '<td class="num' + (n ? '' : ' zero') + '">' + (n || '–') + '</td>';
+
+  areas.forEach((a) => {
+    const c = { crit: 0, high: 0, med: 0, low: 0 };
+    let open = 0;
+    a.querySelectorAll('.f[data-sev]').forEach((f) => { c[f.dataset.sev]++; total[f.dataset.sev]++; if (f.dataset.status !== 'fixed') open++; });
+    openAll += open;
+    const n = SEVS.reduce((s, k) => s + c[k], 0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><a href="#' + a.id + '"><span class="area-code">' + a.dataset.code + '</span>' + a.dataset.name + '</a></td>'
+      + SEVS.map((k) => cell(c[k])).join('') + '<td class="num"><strong>' + n + '</strong></td>' + cell(open);
+    body.appendChild(tr);
+  });
+  const grand = SEVS.reduce((s, k) => s + total[k], 0);
+  foot.innerHTML = '<tr><td>Total</td>' + SEVS.map((k) => '<td class="num"><span>' + total[k] + '</span></td>').join('')
+    + '<td class="num"><span>' + grand + '</span></td><td class="num"><span>' + openAll + '</span></td></tr>';
+  document.querySelectorAll('[data-count]').forEach((el) => { el.textContent = el.dataset.count === 'fixed' ? all.filter((f) => f.dataset.status === 'fixed').length : total[el.dataset.count]; });
+
+  const boxes = SEVS.map((k) => document.getElementById('show-' + k));
+  const fixedBox = document.getElementById('show-fixed');
+  const apply = () => {
+    const on = new Set(SEVS.filter((k, i) => boxes[i].checked));
+    all.forEach((f) => { f.hidden = !on.has(f.dataset.sev) || (!fixedBox.checked && f.dataset.status === 'fixed'); });
+    areas.forEach((a) => a.classList.toggle('is-empty', !a.querySelector('.f[data-sev]:not([hidden])')));
+  };
+  [...boxes, fixedBox].forEach((b) => b.addEventListener('change', apply));
+  apply();
+})();
+</script>
+
+</body></html>
+</body>
+</html>

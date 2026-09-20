@@ -205,7 +205,7 @@ The demo company's register ties to the ledger to the centavo.
 > **Tip:** Auditors usually ask for the lapsing schedule for the whole year. Choose the fiscal year's **whole year** option, print it, and file it with the year-end papers. The register itself also downloads as a spreadsheet from **Fixed assets › Download CSV**.
 
 ## Co-operatives
-Everything works the same way in a co-operative. The co-operative chart numbers its accounts differently: property accounts sit under **12200**, with their accumulated depreciation accounts (12225, 12235, 12245) next to them. Depreciation is an expense in the statement of operations, so it reduces the net surplus. See [Co-operatives](14-co-operatives.md).
+Everything works the same way in a co-operative. The co-operative chart numbers its accounts differently: property accounts sit under **12200**, with their accumulated depreciation accounts (12225, 12235, 12245) next to them. Depreciation is an expense in the statement of operations, so it reduces the net surplus. See [Co-operatives](14-cooperatives.md).
 
 ## Common problems
 **"Sep 2026 already has a depreciation run (AJ-2026-00028). Undo it first to run the month again."** Each month is run once. To run it again, undo the run first.

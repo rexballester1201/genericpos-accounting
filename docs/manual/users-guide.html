@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>User's Guide · GenericPOS Accounting</title>
+<meta name="description" content="Sixteen chapters, screen by screen, for the person keeping the books.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#EDF0EC; --sheet:#F9FBF7; --ink:#141E19; --ink-2:#44534B; --ink-3:#66756D;
+  --rule:#C8D3CC; --rule-2:#93A79A; --accent:#1B5940; --accent-soft:#DCE8E1;
+  --gold:#8A5A12; --gold-soft:#F5EBD8; --code:#E2E9E4; --sel:#CFE3D7;
+  --f-head:"Libre Franklin","Franklin Gothic Medium","Segoe UI",Arial,sans-serif;
+  --f-body:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+    --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+    --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+  --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+  --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel);color:var(--ink)}
+a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+code{font-family:var(--f-mono);font-size:.82em;background:var(--code);padding:.1em .36em;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3,h4{font-family:var(--f-head);color:var(--ink);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-weight:800;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.06;letter-spacing:-.018em}
+h2{font-weight:700;font-size:1.42rem;line-height:1.22}
+h3{font-weight:700;font-size:1.06rem;line-height:1.3}
+h4{font-weight:600;font-size:.95rem;line-height:1.35}
+p{margin:0}
+.lbl,.eyebrow,dt,th{font-family:var(--f-head);font-weight:600;font-size:.7rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3)}
+
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:var(--paper);
+  padding:10px 16px;font-family:var(--f-head);font-weight:600;z-index:99}
+.skip:focus{left:8px;top:8px}
+
+/* ── the binder ─────────────────────────────────────────────────────────── */
+.binder{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.rail{background:var(--sheet);border-bottom:1px solid var(--rule)}
+.rail-in{padding:14px 20px;display:grid;gap:12px;max-width:1180px;margin-inline:auto}
+.rail-brand{display:grid;gap:2px}
+.rail-brand b{font-family:var(--f-head);font-weight:800;font-size:.95rem;letter-spacing:-.01em}
+.rail-brand span{font-family:var(--f-head);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.rail a{display:flex;align-items:baseline;gap:8px;white-space:nowrap;text-decoration:none;
+  font-family:var(--f-head);font-size:.86rem;font-weight:600;color:var(--ink-2);
+  padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}
+.rail a:hover{color:var(--accent);border-color:var(--rule-2)}
+.rail a[aria-current="page"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.rail .r{font-family:var(--f-mono);font-size:.72rem;font-weight:500;color:var(--ink-3)}
+.rail a[aria-current="page"] .r{color:var(--accent)}
+
+.doc{padding:34px 20px 90px;max-width:none;margin:0;display:grid;gap:40px}
+.wrap{max-width:74ch;margin-inline:auto;width:100%;display:grid;gap:40px}
+
+@media (min-width:1040px){
+  .binder{grid-template-columns:270px minmax(0,1fr)}
+  .rail{border-bottom:0;border-right:1px solid var(--rule);position:sticky;top:0;align-self:start;
+    height:100vh;overflow-y:auto}
+  .rail-in{padding:30px 22px;gap:22px}
+  .rail ol{flex-direction:column;gap:3px;overflow:visible}
+  .rail a{border:0;border-radius:3px;padding:7px 10px;background:transparent;white-space:normal}
+  .rail a[aria-current="page"]{background:var(--accent-soft)}
+  .doc{padding:48px 40px 110px}
+}
+
+/* ── the document's own head ────────────────────────────────────────────── */
+.dochead{display:grid;gap:18px;border-bottom:1.5px solid var(--rule-2);padding-bottom:22px}
+.dochead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.dochead h1{max-width:18ch}
+.dochead .eyebrow{margin-bottom:8px;display:block}
+.docref{border:1.5px solid var(--accent);color:var(--accent);border-radius:4px;padding:8px 14px;
+  text-align:center;display:grid;gap:2px;flex:none}
+.docref span{font-family:var(--f-head);font-size:.64rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.docref strong{font-family:var(--f-mono);font-size:1.2rem;font-weight:600;letter-spacing:.03em}
+.lead{font-size:1.14rem;line-height:1.55;color:var(--ink-2);max-width:62ch}
+.control{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 26px;
+  border-top:1px solid var(--rule);padding-top:16px}
+.control div{display:grid;gap:3px;min-width:0}
+.control dd{margin:0;font-family:var(--f-head);font-size:.9rem;line-height:1.4;color:var(--ink)}
+
+/* ── contents ───────────────────────────────────────────────────────────── */
+.toc{display:grid;gap:8px}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.toc a{display:flex;gap:10px;text-decoration:none;font-family:var(--f-head);font-size:.92rem;
+  font-weight:600;color:var(--ink-2);padding:5px 0}
+.toc a:hover{color:var(--accent)}
+.toc .n{font-family:var(--f-mono);font-weight:500;color:var(--accent);font-size:.84rem;flex:none}
+
+/* ── sections ───────────────────────────────────────────────────────────── */
+.sec{display:grid;gap:16px;scroll-margin-top:20px}
+.sec>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--rule);padding-bottom:9px}
+.sec>h2 .n{font-family:var(--f-mono);font-weight:600;font-size:.98rem;color:var(--accent);flex:none}
+.sec h3{margin-top:10px}
+.sec ul,.sec ol{margin:0;padding-left:1.25em;display:grid;gap:8px}
+.sec li>ul,.sec li>ol{margin-top:8px}
+.sec p+p{margin-top:0}
+.note{background:var(--sheet);border-left:3px solid var(--accent);padding:14px 18px;display:grid;gap:8px}
+.note.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+.note .lbl{color:var(--accent)}
+.note.warn .lbl{color:var(--gold)}
+
+.rule-card{background:var(--sheet);border:1px solid var(--rule-2);border-radius:5px;
+  padding:18px 20px;display:grid;gap:10px}
+.rule-card h3{color:var(--accent)}
+
+dl.defs{margin:0;display:grid;gap:14px}
+dl.defs>div{display:grid;gap:4px}
+dl.defs dt{font-size:.74rem}
+dl.defs dd{margin:0}
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);
+  border-radius:5px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-head);font-size:.9rem}
+th,td{padding:9px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+thead th{border-bottom:1.5px solid var(--rule-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td code{font-size:.84em}
+.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{font-weight:700;white-space:nowrap}
+
+/* ── code ───────────────────────────────────────────────────────────────── */
+pre{margin:0;background:var(--code);border:1px solid var(--rule);border-radius:5px;
+  padding:14px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+pre code{background:none;padding:0;font-size:.82rem;line-height:1.6}
+
+blockquote{margin:0;border-left:3px solid var(--rule-2);padding-left:16px;color:var(--ink-2)}
+
+/* ── the guide's chapters ───────────────────────────────────────────────── */
+.chapter{display:grid;gap:16px;scroll-margin-top:20px;padding-top:12px}
+.chapter>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1.5px solid var(--rule-2);padding-bottom:10px}
+.chapter>h2 .n{font-family:var(--f-mono);font-weight:600;color:var(--accent);flex:none}
+.chapter .summary{color:var(--ink-2);font-size:1.02rem}
+
+/* ── the foot ───────────────────────────────────────────────────────────── */
+.docfoot{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-wrap:wrap;
+  justify-content:space-between;gap:10px 20px;font-family:var(--f-head);font-size:.82rem;color:var(--ink-3)}
+.docfoot a{font-weight:600;text-decoration:none}
+
+/* ── the contents page ──────────────────────────────────────────────────── */
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:18px 20px;
+  display:grid;gap:8px;align-content:start;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--rule-2)}
+.card .r{font-family:var(--f-mono);font-size:.78rem;font-weight:600;color:var(--accent)}
+.card h3{color:var(--ink)}
+.card p{font-size:.95rem;color:var(--ink-2);line-height:1.5}
+.card .who{font-family:var(--f-head);font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+
+@media print{
+  :root:root:root{--paper:#fff;--sheet:#fff;--ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#bbb;--rule-2:#888;--accent:#1B5940;--accent-soft:#fff;--gold:#7a4f10;
+    --gold-soft:#fff;--code:#eee;color-scheme:light}
+  @page{size:A4;margin:16mm 15mm}
+  body{font-size:10.5pt}
+  .rail,.skip,.toc{display:none}
+  .binder{display:block}
+  .doc{padding:0;gap:26px}
+  .wrap{max-width:none;gap:26px}
+  .sec,.chapter,tr,.note,.rule-card,pre{break-inside:avoid}
+  h2,h3{break-after:avoid}
+  .tablewrap{overflow:visible}
+  a{color:inherit;text-decoration:none}
+  .docfoot{margin-top:18px}
+}
+
+</style>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the document</a>
+<div class="binder">
+<nav class="rail" aria-label="The documentation set">
+  <div class="rail-in">
+    <div class="rail-brand"><b>GenericPOS Accounting</b><span>Documentation set · v1.0</span></div>
+    <ol>
+      <li><a href="index.html"><span class="r">—</span>Contents</a></li>
+      <li><a href="design-spec.html"><span class="r">DS·1</span>Design spec</a></li>
+      <li><a href="technical-spec.html"><span class="r">TS·1</span>Technical spec</a></li>
+      <li><a href="users-guide.html" aria-current="page"><span class="r">UG·1</span>User's guide</a></li>
+      <li><a href="admin-guide.html"><span class="r">AG·1</span>Admin guide</a></li>
+      <li><a href="deployment-guide.html"><span class="r">DG·1</span>Deployment guide</a></li>
+      <li><a href="troubleshooting-guide.html"><span class="r">TG·1</span>Troubleshooting</a></li>
+      <li><a href="marketing.html"><span class="r">MK·1</span>Product overview</a></li>
+      <li><a href="handover.html"><span class="r">HO·1</span>Handover</a></li>
+      <li><a href="audit.html"><span class="r">AUD·1</span>Build audit</a></li>
+    </ol>
+  </div>
+</nav>
+  <main class="doc" id="doc">
+    <div class="wrap">
+    <header class="dochead">
+      <div class="dochead-top">
+        <div>
+          <span class="eyebrow">GenericPOS Accounting · Documentation set</span>
+          <h1>User's Guide</h1>
+        </div>
+        <div class="docref" aria-label="Document reference UG·1"><span>Doc ref</span><strong>UG·1</strong></div>
+      </div>
+      <p class="lead">Sixteen chapters, screen by screen, for the person keeping the books.</p>
+      <dl class="control">
+        <div><dt>Version</dt><dd>1.0</dd></div>
+        <div><dt>Issued</dt><dd>20 September 2026</dd></div>
+        <div><dt>Written for</dt><dd>Bookkeeper, accountant, owner</dd></div>
+        <div><dt>Applies to</dt><dd>Branch <code>build/accounting</code></dd></div>
+      </dl>
+    </header>
+<nav class="toc" aria-label="Contents of this document">
+      <p class="lbl">In this document</p>
+      <ol>
+        <li><a href="#01-welcome"><span class="n">01</span>Welcome</a></li>
+        <li><a href="#02-first-time-setup"><span class="n">02</span>First-time setup</a></li>
+        <li><a href="#03-finding-your-way"><span class="n">03</span>Finding your way</a></li>
+        <li><a href="#04-chart-of-accounts"><span class="n">04</span>Chart of accounts</a></li>
+        <li><a href="#05-fiscal-years-and-periods"><span class="n">05</span>Fiscal years and periods</a></li>
+        <li><a href="#06-journal-entries"><span class="n">06</span>Journal entries</a></li>
+        <li><a href="#07-sales-and-receivables"><span class="n">07</span>Sales and receivables</a></li>
+        <li><a href="#08-purchases-and-payables"><span class="n">08</span>Purchases and payables</a></li>
+        <li><a href="#09-banking"><span class="n">09</span>Banking</a></li>
+        <li><a href="#10-fixed-assets"><span class="n">10</span>Fixed assets</a></li>
+        <li><a href="#11-budgets-and-departments"><span class="n">11</span>Budgets and departments</a></li>
+        <li><a href="#12-financial-reports"><span class="n">12</span>Financial reports</a></li>
+        <li><a href="#13-month-end-and-year-end"><span class="n">13</span>Month-end and year-end</a></li>
+        <li><a href="#14-cooperatives"><span class="n">14</span>Co-operatives</a></li>
+        <li><a href="#15-administration"><span class="n">15</span>Administration</a></li>
+        <li><a href="#16-troubleshooting-and-glossary"><span class="n">16</span>Troubleshooting and glossary</a></li>
+      </ol>
+    </nav>
+    <article class="chapter" id="01-welcome">
+      <h2><span class="n">01</span>Welcome</h2>
+      <p class="summary">What this system is, who does what in it, and how a figure travels from a document to the financial statements.</p>
+<p># Welcome</p>
+<p>GenericPOS Accounting keeps a double-entry set of books for a Philippine business or co-operative: the journals and ledgers, the subsidiary ledgers for customers and suppliers, the bank reconciliations, the fixed-asset register, the budgets, and the financial statements and BIR-style books that come out of them.</p>
+<p>Everything in it obeys one rule: <strong>nothing reaches the ledger except through a posted, balanced journal entry.</strong> An invoice, a receipt, a depreciation run and a year-end closing all write the same kind of entry, each one numbered, dated in an open month, and kept for good. Nothing is ever quietly deleted.</p>
+<h3 id="01-welcome-how-a-figure-travels">How a figure travels</h3>
+<ol><li>Somebody prepares a document — an invoice, a bill, a receipt, a payment, or a journal entry itself. At this point it is a <strong>draft</strong>: it has no number and is not in the books.</li><li>An accountant checks it and <strong>posts</strong> it. The entry takes its number, the ledger changes, and the audit log records who posted it and when.</li><li>Every report — the trial balance, the statements, the aging, the books of accounts — reads the posted entries. There is no second set of figures to reconcile.</li><li>At the end of the month the periods are closed; at the end of the year the income and expense accounts are closed into equity.</li></ol>
+<p>If something is wrong after it has posted, it is not erased: it is <strong>reversed</strong> by a second entry, and both stay on record. That is what makes the books defensible to an auditor or an examiner.</p>
+<h3 id="01-welcome-who-does-what">Who does what</h3>
+<div class="tablewrap"><table><thead><tr><th></th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>Read the reports, ledgers and analysis</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Prepare drafts: entries, invoices, bills, receipts, payments; match the bank</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Approve and post, reverse, close months, run depreciation, keep the budgets</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>The chart of accounts, departments, fiscal years, the year-end, users, settings, imports</td><td></td><td></td><td></td><td>Yes</td></tr></tbody></table></div>
+<p>One person can hold a higher role and do everything below it. In a one-person office an administrator can do the lot, though the system will still ask a second person to approve unless that is switched off in Settings.</p>
+<h3 id="01-welcome-how-to-read-this-guide">How to read this guide</h3>
+<ul><li><strong>Sales › Invoices</strong> means: the group <em>Sales</em> in the sidebar on the left, then <em>Invoices</em>.</li><li><strong>Post invoice</strong> in bold is a button or a field exactly as it appears on screen.</li><li>Every task says who may do it, what to type, and what it puts into the books, like this:</li></ul>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1121 Accounts Receivable - Trade (the customer)</td><td>11,200.00</td><td></td></tr><tr><td>4110 Sales</td><td></td><td>10,000.00</td></tr><tr><td>2121 Output VAT</td><td></td><td>1,200.00</td></tr></tbody></table></div>
+<ul><li>Co-operatives: the system uses the CDA's words where they differ — <em>net surplus</em> instead of net income, <em>statement of financial condition</em> instead of balance sheet, <em>members' equity</em> instead of equity. <a href="#14-cooperatives">Co-operatives</a> covers what is different.</li></ul>
+<h3 id="01-welcome-where-to-start">Where to start</h3>
+<ul><li>Nothing set up yet? <a href="#02-first-time-setup">First-time setup</a>.</li><li>New to the screens? <a href="#03-finding-your-way">Finding your way</a>.</li><li>Ready to keep books? <a href="#06-journal-entries">Journal entries</a>, then <a href="#07-sales-and-receivables">Sales and receivables</a> and <a href="#08-purchases-and-payables">Purchases and payables</a>.</li><li>Closing a month or a year? <a href="#13-month-end-and-year-end">Month-end and year-end</a>.</li></ul>
+    </article>
+    <article class="chapter" id="02-first-time-setup">
+      <h2><span class="n">02</span>First-time setup</h2>
+      <p class="summary">Set the company up, choose its chart of accounts, open the first fiscal year, add the people who will use it, and bring in the balances the books start from.</p>
+<p># First-time setup</p>
+<p>Setting up takes an hour, and once it is done the books are ready for the first entry. Do it in this order; each step depends on the one before it.</p>
+<h3 id="02-first-time-setup-before-you-start">Before you start</h3>
+<p>Have these at hand:</p>
+<ul><li>The company's registered name, address and TIN (a co-operative also needs its CDA registration number).</li><li>The month the fiscal year starts — January for most companies.</li><li>The trial balance on the day you begin here: the balances of every account, and the open invoices and bills, customer by customer and supplier by supplier.</li><li>The email addresses of the people who will use the system.</li></ul>
+<h3 id="02-first-time-setup-1-create-the-company">1. Create the company</h3>
+<p><strong>Who:</strong> whoever installs the system, once. After that the setup screen is closed for good.</p>
+<ol><li>Open the address of the system in a browser. Because nothing is set up yet, the setup screen appears.</li><li>Type the <strong>Setup key</strong> the installer put in <code>application/config/secrets.php</code>.</li><li>Fill in the <strong>Company name</strong>, and the <strong>Registered name</strong> if the papers say something longer.</li><li>Choose the <strong>Kind of organisation</strong>: <em>Business</em> or <em>Co-operative</em>. This decides the chart of accounts and the names of the statements, and it cannot be changed afterwards.</li><li>Choose the <strong>Business form</strong> for a business: <em>Corporation</em> or <em>Sole proprietorship</em>. A sole proprietorship closes the owner's drawings into capital at year end.</li><li>Choose the month the <strong>fiscal year starts</strong>, and the year of the first one.</li><li>Fill in the <strong>currency</strong> (PHP and ₱ in the Philippines).</li><li>Fill in the first administrator: <strong>full name</strong>, <strong>email</strong> and a <strong>password</strong> of at least ten characters.</li><li>Select <strong>Set up the company</strong>.</li></ol>
+<p><strong>Result:</strong> the company exists, the chart of accounts is installed, the first fiscal year is open with twelve months, and you are signed in as the administrator.</p>
+<blockquote><p><strong>Note:</strong> The setup screen answers only while there is no user in the system. Once the administrator exists it refuses everybody, so it cannot be used to take the company over later.</p></blockquote>
+<h3 id="02-first-time-setup-2-check-the-company-settings">2. Check the company settings</h3>
+<p><strong>Who:</strong> Administrator. <strong>Where:</strong> Administration › Settings.</p>
+<p>Go through the groups on the left:</p>
+<ul><li><strong>Company</strong> — name, registered name, business style, TIN, address, email, phone. These print at the top of every report.</li><li><strong>Branding</strong> — the logo, the brand colour, light or dark, the typeface.</li><li><strong>Currency</strong> — the code, the symbol, the separators, the locale and the time zone (Asia/Manila). Times are stored in UTC and shown in this zone.</li><li><strong>Tax</strong> — whether the company is <strong>VAT-registered</strong>, the <strong>VAT rate</strong> (12 in the Philippines), and whether typed amounts <strong>include VAT</strong> by default.</li><li><strong>The ledger</strong> — whether a second person approves every entry, the digits in journal numbers, and the prefix of each book.</li><li><strong>Account defaults</strong> — which account is the receivables control, the payables control, output and input VAT, withholding tax, the default sales and purchases accounts, bank charges, interest income, gain and loss on disposal, and the account the year-end closing posts to. The chart template fills these in; check them.</li><li><strong>Documents</strong> — the prefixes and digits of invoice, bill, receipt and payment numbers, the default terms, and the aging buckets.</li><li><strong>Banking and fixed assets</strong> — how many days apart a bank line and a book line may still be matched, when depreciation starts, and the asset number prefix.</li><li><strong>Printed reports</strong> — the note under report titles (&quot;Unaudited&quot;, for example) and the names and titles that print over the signature lines.</li></ul>
+<p>Each setting saves on its own as you change it, and the audit log records who changed what.</p>
+<h3 id="02-first-time-setup-3-add-the-people">3. Add the people</h3>
+<p><strong>Who:</strong> Administrator. <strong>Where:</strong> Administration › Users.</p>
+<ol><li>Select <strong>Add user</strong>.</li><li>Fill in the <strong>name</strong> and <strong>email</strong>, and choose the <strong>role</strong> — viewer, bookkeeper, accountant or administrator (<a href="#01-welcome">Welcome</a> has the table of what each may do).</li><li>Select <strong>Create</strong>. Their password is shown once; give it to them and have them change it on their account screen.</li></ol>
+<blockquote><p><strong>Tip:</strong> Give people the smallest role that lets them do their work. A bookkeeper who prepares invoices does not need to post them — that separation is what maker-checker means, and it is the point of the approval step.</p></blockquote>
+<h3 id="02-first-time-setup-4-check-the-chart-of-accounts">4. Check the chart of accounts</h3>
+<p><strong>Who:</strong> Administrator. <strong>Where:</strong> Ledger › Chart of accounts.</p>
+<p>The template you chose at setup installs a full chart. Go through it and:</p>
+<ul><li>add the accounts the company needs that are not there,</li><li>deactivate the ones it will never use,</li><li>set <strong>Needs a department</strong> on accounts you always want split by branch or cost centre.</li></ul>
+<p><a href="#04-chart-of-accounts">Chart of accounts</a> explains how. If the company already has a chart in a spreadsheet, <a href="#15-administration-imports">Imports</a> brings it in.</p>
+<h3 id="02-first-time-setup-5-add-customers-suppliers-and-departments">5. Add customers, suppliers and departments</h3>
+<p><strong>Who:</strong> Bookkeeper or above for contacts; an administrator for departments.</p>
+<ul><li><strong>Sales › Customers</strong> and <strong>Purchases › Suppliers</strong>: add the people you invoice and the ones who bill you, with their TIN, terms and (for suppliers) the withholding tax rate.</li><li><strong>Planning › Departments</strong>: add branches or cost centres if the company reports by them.</li></ul>
+<p>Both can be imported from a spreadsheet instead — see <a href="#15-administration-imports">Imports</a>.</p>
+<h3 id="02-first-time-setup-6-enter-the-opening-balances">6. Enter the opening balances</h3>
+<p><strong>Who:</strong> Administrator. <strong>Where:</strong> Ledger › Opening balances.</p>
+<p>This is the trial balance on the day the books start here — usually the first day of the fiscal year.</p>
+<ol><li>Open <strong>Ledger › Opening balances</strong>.</li><li>Set <strong>The books start on</strong> to the go-live date.</li><li>Add a line for every account with a balance: choose the account, then type the amount in <strong>Debit</strong> or <strong>Credit</strong>.</li><li>On the receivables and payables control accounts, add <strong>one line per customer or supplier</strong>, each with its own amount. That way the subsidiary ledgers start in step with the control accounts.</li><li>Watch the total at the foot: debits and credits must balance before it can be posted.</li><li>Select <strong>Save draft</strong> as often as you like — nothing is in the books yet.</li><li>When it balances, select <strong>Post opening balances</strong>.</li></ol>
+<p><strong>Result:</strong> one entry in the opening book, numbered OB-…, dated the go-live day.</p>
+<h4 id="02-first-time-setup-what-goes-into-the-books">What goes into the books</h4>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1111 Cash on Hand</td><td>25,000.00</td><td></td></tr><tr><td>1121 Accounts Receivable - Trade (each customer)</td><td>48,000.00</td><td></td></tr><tr><td>2111 Accounts Payable - Trade (each supplier)</td><td></td><td>30,000.00</td></tr><tr><td>3210 Retained Earnings</td><td></td><td>43,000.00</td></tr></tbody></table></div>
+<blockquote><p><strong>Tip:</strong> Have the list in a spreadsheet? Use <strong>Administration › Imports › Opening balances</strong>: it fills this draft in for you, and you still check and post it here.</p></blockquote>
+<blockquote><p><strong>Note:</strong> Got it wrong? Open <strong>Ledger › Opening balances</strong>, select <strong>Undo</strong>, give a reason, and the entry is reversed and its lines come back into the draft to correct and post again. The month it is dated in has to be open for that.</p></blockquote>
+<h3 id="02-first-time-setup-7-enter-the-fixed-assets">7. Enter the fixed assets</h3>
+<p><strong>Who:</strong> Bookkeeper or above. <strong>Where:</strong> Cash and assets › Fixed assets.</p>
+<p>Register each asset the company already owns, and put the depreciation charged before go-live in <strong>Accumulated depreciation brought in</strong>. The opening balances above already carry the totals of both the asset and accumulated-depreciation accounts, so the register only has to agree with them. See <a href="#10-fixed-assets">Fixed assets</a>.</p>
+<h3 id="02-first-time-setup-8-check-it-all-ties">8. Check it all ties</h3>
+<p><strong>Who:</strong> Accountant or administrator.</p>
+<ol><li>Open <strong>Reports › Trial balance</strong> — it must balance, and it must match the trial balance you came from.</li><li>Open <strong>Reports › Aging</strong> for receivables and again for payables — each total must equal its control account.</li><li>Open <strong>Reports › Integrity check</strong> — everything should pass.</li></ol>
+<p>Now the books are ready. Post the first entry: <a href="#06-journal-entries">Journal entries</a>.</p>
+<h3 id="02-first-time-setup-common-problems">Common problems</h3>
+<p><strong>&quot;No fiscal period covers 2026-01-01. Create the fiscal year first.&quot;</strong> The date is outside every fiscal year. Open <strong>Ledger › Fiscal years and periods</strong> and open the year that covers it.</p>
+<p><strong>&quot;Choose an active equity account as the closing account in Settings › Account defaults.&quot;</strong> The template did not fill in one of the account defaults. Set it in Settings.</p>
+<p><strong>The opening balances do not balance.</strong> The difference is shown at the foot of the draft. Usually an account was missed, or retained earnings has not been put in — it is the figure that makes the two sides equal.</p>
+    </article>
+    <article class="chapter" id="03-finding-your-way">
+      <h2><span class="n">03</span>Finding your way</h2>
+      <p class="summary">Signing in, the parts of the screen, the dashboard, printing, spreadsheets, and what to do when the connection drops.</p>
+<p># Finding your way</p>
+<h3 id="03-finding-your-way-signing-in">Signing in</h3>
+<p><strong>Who:</strong> everybody with an account.</p>
+<ol><li>Open the address of the system.</li><li>Type your <strong>email or username</strong> and your <strong>password</strong>.</li><li>Select <strong>Sign in</strong>.</li></ol>
+<p>Forgotten the password? Select <strong>Forgot your password?</strong> and follow the link that arrives by email. Too many wrong tries lock the account for a while; wait, or ask an administrator to reset it.</p>
+<blockquote><p><strong>Note:</strong> A session lasts as long as you keep using it and is refreshed quietly in the background. If you sign out on one device, that device alone is signed out.</p></blockquote>
+<h3 id="03-finding-your-way-the-parts-of-the-screen">The parts of the screen</h3>
+<ul><li><strong>The sidebar on the left</strong> holds the work, in groups: Ledger, Sales, Purchases, Cash and assets, Planning, Reports, Administration, Help. You see only what your role may open.</li><li><strong>The bar along the top</strong> shows where you are, the bell for notifications, and your own menu — your account, the light or dark theme, and signing out.</li><li><strong>A small number beside a sidebar item</strong> counts things waiting for you: entries to approve, your entries that were returned.</li><li><strong>On a phone</strong>, the sidebar hides behind the ☰ button at the top left.</li></ul>
+<h3 id="03-finding-your-way-the-dashboard">The dashboard</h3>
+<p><strong>Who:</strong> everybody. <strong>Where:</strong> the house at the top of the sidebar, or the company name.</p>
+<p>It answers &quot;where do we stand today?&quot; in one screen:</p>
+<ul><li><strong>Cash and banks, Receivables, Payables, Net income year to date</strong> — each is a link to the report behind it.</li><li><strong>What needs a person</strong> — entries waiting for approval, entries returned to you, months that have ended but are still open, bank statements not reconciled, depreciation not yet run.</li><li><strong>Revenue and expenses, month by month</strong> for the fiscal year.</li><li><strong>Your work</strong> — your drafts, what you submitted, what came back, and drafts of invoices, bills and receipts.</li><li><strong>How the books read today</strong> — the current ratio, the quick ratio, debt-to-equity and the net margin, each beside the same date a year earlier, and the year against the budget.</li><li><strong>Latest postings</strong> — the last entries that reached the ledger.</li></ul>
+<h3 id="03-finding-your-way-finding-things">Finding things</h3>
+<ul><li>Every list has a search box and filters across the top: status, dates, book, customer, and so on. The filters go into the address, so you can bookmark a view or send it to a colleague.</li><li>Numbers, names and codes are all searchable: type <em>INV-000041</em>, <em>Pili</em>, or <em>1121</em>.</li><li>A list you can act on has its buttons at the top right of each row or on the page header.</li></ul>
+<h3 id="03-finding-your-way-printing">Printing</h3>
+<p><strong>Who:</strong> everybody.</p>
+<p>Every report has a <strong>Print</strong> button. The printed sheet drops the sidebar and the buttons and prints as an A4 page with:</p>
+<ul><li>the company's name, registered name, address and TIN at the top (the letterhead),</li><li>the title of the report and the period it covers,</li><li><strong>Prepared by</strong> — you — and the <strong>Checked by</strong>, <strong>Approved by</strong> and <strong>Noted by</strong> lines from <strong>Settings › Printed reports</strong>,</li><li>&quot;Printed by … on …&quot; at the foot, and the page number.</li></ul>
+<p>Wide reports — the monthly income statement, the worksheet, the columnar books, income by department — print landscape by themselves.</p>
+<blockquote><p><strong>Tip:</strong> In the browser's print dialog, choose &quot;Save as PDF&quot; to file a report or email it.</p></blockquote>
+<h3 id="03-finding-your-way-spreadsheets">Spreadsheets</h3>
+<p>Every report has <strong>Download CSV</strong>. The file opens straight in Excel or LibreOffice: it carries the company name, the title, the period and the currency at the top, then the figures as plain numbers with no currency signs, so you can total them.</p>
+<h3 id="03-finding-your-way-attachments">Attachments</h3>
+<p>Journal entries, invoices, bills, receipts, payments and assets each have an <strong>Attachments</strong> panel: the scanned official receipt, the supplier's invoice, the contract. Select <strong>Attach a file</strong> (PDF, a picture, or a spreadsheet, up to 10 MB). Only people signed in can open them — the files are never served by a plain web address.</p>
+<h3 id="03-finding-your-way-your-account">Your account</h3>
+<p><strong>Where:</strong> your name at the top right › <strong>My account</strong>.</p>
+<p>Change your name, your username and your email, upload a picture, and change your password. Changing your email asks for your current password first, and the old address is told — that is deliberate: it stops somebody with a stolen session from taking the account over.</p>
+<h3 id="03-finding-your-way-when-the-connection-drops">When the connection drops</h3>
+<p>The screens you have already opened keep working, and the last figures you loaded stay on screen. Anything that writes — posting, saving, approving — waits for the connection and tells you plainly that it could not reach the server. Nothing is half-written: a change either reaches the books or does not.</p>
+<h3 id="03-finding-your-way-common-problems">Common problems</h3>
+<p><strong>&quot;Session expired. Please sign in again.&quot;</strong> You were away long enough for the session to end, or an administrator changed your account. Sign in again.</p>
+<p><strong>&quot;Too many incorrect password attempts.&quot;</strong> The account is locked briefly. Wait the minutes it names, or ask an administrator.</p>
+<p><strong>A screen says you do not have access.</strong> Your role does not cover it. The table in <a href="#01-welcome">Welcome</a> says which role does.</p>
+    </article>
+    <article class="chapter" id="04-chart-of-accounts">
+      <h2><span class="n">04</span>Chart of accounts</h2>
+      <p class="summary">The list of accounts everything is posted to — how it is arranged, how to add to it, and what can no longer be changed once an account has been used.</p>
+<p># Chart of accounts</p>
+<p>Every figure in the books sits in an account, and the chart of accounts is the list of them. It is arranged as a tree: <strong>headers</strong> group accounts and take no entries themselves; the accounts under them are the ones you post to.</p>
+<p>The chart the company started with came from the template chosen at setup — a business chart, or a co-operative one following the CDA's standard chart. Most companies add a few accounts in the first weeks and then leave it alone.</p>
+<h3 id="04-chart-of-accounts-before-you-start">Before you start</h3>
+<ul><li>Only an administrator can change the chart.</li><li>Think before adding: a new account is easy, but an account that has been posted to can never be deleted, and its type can never change.</li></ul>
+<h3 id="04-chart-of-accounts-who-can-do-what">Who can do what</h3>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>See the chart and each account's balance</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Add, change, deactivate or delete an account</td><td></td><td></td><td></td><td>Yes</td></tr></tbody></table></div>
+<h3 id="04-chart-of-accounts-what-an-account-carries">What an account carries</h3>
+<div class="tablewrap"><table><thead><tr><th>Field</th><th>What it means</th></tr></thead><tbody><tr><td><strong>Code</strong></td><td>Up to 20 letters, digits, dots or dashes. It orders the chart and prints on every report.</td></tr><tr><td><strong>Name</strong></td><td>What people call it.</td></tr><tr><td><strong>Type</strong></td><td>Asset, liability, equity, income or expense. It decides which statement the account appears in and which side is its normal balance.</td></tr><tr><td><strong>Header</strong></td><td>A heading that groups others and takes no entries.</td></tr><tr><td><strong>Parent</strong></td><td>The header it sits under.</td></tr><tr><td><strong>Subtype</strong></td><td>Current or non-current for assets and liabilities; capital, retained, reserve, drawing or other for equity; operating or other for income; cost of sales, operating, finance, other or income tax for expenses. It decides where the account appears in the classified statements.</td></tr><tr><td><strong>Cash flow</strong></td><td>Operating, investing, financing or cash. The cash-flow statement uses it; <em>cash</em> marks the accounts that are the cash the statement explains.</td></tr><tr><td><strong>Control</strong></td><td>Receivables (ar) or payables (ap). A line on a control account must name its customer or supplier — that is what keeps the subsidiary ledgers equal to the control accounts.</td></tr><tr><td><strong>Needs a department</strong></td><td>Every line on the account must name a department.</td></tr><tr><td><strong>Contra</strong></td><td>An account that sits against another, like accumulated depreciation against the asset it belongs to. Its normal balance is the opposite of its type's.</td></tr></tbody></table></div>
+<h3 id="04-chart-of-accounts-add-an-account">Add an account</h3>
+<p><strong>Who:</strong> Administrator.</p>
+<ol><li>Open <strong>Ledger › Chart of accounts</strong>.</li><li>Select <strong>New account</strong>.</li><li>Type the <strong>Code</strong> and <strong>Name</strong>.</li><li>Choose the <strong>Type</strong>, then the <strong>Parent</strong> header it belongs under.</li><li>Set the <strong>Subtype</strong> and the <strong>Cash flow</strong> if the statements should place it precisely.</li><li>Tick <strong>Header</strong> only if it takes no entries.</li><li>Tick <strong>Needs a department</strong> if every line on it must name one.</li><li>Select <strong>Add account</strong>.</li></ol>
+<p><strong>Result:</strong> the account appears in the tree under its parent and can be used at once.</p>
+<blockquote><p><strong>Tip:</strong> Keep the codes in the same shape as the rest of the chart — four digits for a business, five for a co-operative — so the account sorts where people expect it.</p></blockquote>
+<h3 id="04-chart-of-accounts-change-an-account">Change an account</h3>
+<p><strong>Who:</strong> Administrator.</p>
+<p>Open the account and change what you need. What can still be changed depends on what has happened to it:</p>
+<div class="tablewrap"><table><thead><tr><th>Once the account…</th><th>You can still change</th><th>You cannot change</th></tr></thead><tbody><tr><td>has no entries at all</td><td>everything</td><td>—</td></tr><tr><td>has draft entries only</td><td>everything</td><td>—</td></tr><tr><td>has posted entries</td><td>the name, the parent, the subtype, the cash-flow class, whether it needs a department</td><td>the code's meaning is kept, the <strong>type</strong>, the <strong>normal side</strong> and the <strong>control</strong> flag are frozen</td></tr></tbody></table></div>
+<blockquote><p><strong>Note:</strong> The reason is simple: a posted entry is part of the books. If an account could change from an expense to a liability afterwards, every statement printed before that would be wrong, with nothing to show why.</p></blockquote>
+<h3 id="04-chart-of-accounts-stop-using-an-account">Stop using an account</h3>
+<p><strong>Who:</strong> Administrator.</p>
+<p>An account that has been posted to is never deleted. Open it and clear <strong>Active</strong>. It stays in the reports where it has figures, but nobody can post to it again.</p>
+<p>The system refuses to deactivate an account that:</p>
+<ul><li>still has a balance (move it first to the account that replaces it),</li><li>has activity in a fiscal year that is still open (the year-end closing has to clear it first),</li><li>sits on an entry that is waiting to post,</li><li>is named in <strong>Settings › Account defaults</strong> (point that setting at another account first).</li></ul>
+<p>An account that was never used at all can be deleted outright.</p>
+<h3 id="04-chart-of-accounts-import-a-chart">Import a chart</h3>
+<p><strong>Who:</strong> Administrator. <strong>Where:</strong> Administration › Imports › Chart of accounts.</p>
+<p>A spreadsheet with <strong>code</strong>, <strong>name</strong>, <strong>type</strong>, and optionally <strong>parent code</strong>, <strong>header</strong>, <strong>subtype</strong>, <strong>cash flow</strong>, <strong>control</strong>, <strong>needs a department</strong> and a description. Download the template on that screen, fill it in, check it, and import. Codes already in the chart are left alone. See <a href="#15-administration-imports">Imports</a>.</p>
+<h3 id="04-chart-of-accounts-common-problems">Common problems</h3>
+<p><strong>&quot;Another account already uses that code.&quot;</strong> Codes are unique. Look the code up first; the account you want may already exist, deactivated.</p>
+<p><strong>&quot;1121 is a header account.&quot;</strong> Headers take no entries. Post to one of the accounts under it.</p>
+<p><strong>&quot;This account still has a balance of 12,500.00 (debit).&quot;</strong> Deactivating would leave the balance stranded. Post an entry that moves it to another account first.</p>
+<p><strong>&quot;This is the receivables control account in Settings → Account defaults.&quot;</strong> Point that setting at another account, then deactivate this one.</p>
+    </article>
+    <article class="chapter" id="05-fiscal-years-and-periods">
+      <h2><span class="n">05</span>Fiscal years and periods</h2>
+      <p class="summary">Open a fiscal year, close a month when it is finished, reopen one when something late arrives, and lock a month for good.</p>
+<p># Fiscal years and periods</p>
+<p>A <strong>fiscal year</strong> is twelve monthly <strong>periods</strong>. An entry can be dated only inside a period, and it can only post while that period and its year are open. That single rule is what stops last quarter's figures changing after the reports have gone out.</p>
+<p>The life of a month:</p>
+<p><strong>open</strong> → <strong>closed</strong> (month-end) ⇄ <strong>open</strong> again (an accountant reopens it) → <strong>locked</strong> (final, and never reopened)</p>
+<h3 id="05-fiscal-years-and-periods-before-you-start">Before you start</h3>
+<ul><li>An administrator opens fiscal years; an accountant closes and reopens months; only an administrator locks one.</li><li>Years follow on from each other: the first can start anywhere, and every year after it starts the day after the last one ends.</li></ul>
+<h3 id="05-fiscal-years-and-periods-who-can-do-what">Who can do what</h3>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>See the years and months and what is in them</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Close a month, reopen a closed month</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>Lock a month for good</td><td></td><td></td><td></td><td>Yes</td></tr><tr><td>Open a fiscal year</td><td></td><td></td><td></td><td>Yes</td></tr></tbody></table></div>
+<h3 id="05-fiscal-years-and-periods-open-the-first-fiscal-year">Open the first fiscal year</h3>
+<p><strong>Who:</strong> Administrator.</p>
+<ol><li>Open <strong>Ledger › Fiscal years and periods</strong>.</li><li>Choose the <strong>month</strong> the year starts and type the <strong>year</strong>.</li><li>Select <strong>Open it</strong>.</li></ol>
+<p><strong>Result:</strong> the year and its twelve months appear, all open, and entries can be dated in them.</p>
+<h3 id="05-fiscal-years-and-periods-open-the-next-fiscal-year">Open the next fiscal year</h3>
+<p><strong>Who:</strong> Administrator.</p>
+<ol><li>Open <strong>Ledger › Fiscal years and periods</strong>.</li><li>Select <strong>Open the year from …</strong> at the top right — the date is fixed: the day after the last year ends.</li><li>Confirm.</li></ol>
+<blockquote><p><strong>Tip:</strong> Open the next year before the current one ends, so entries dated in January can be prepared in December. Opening a year posts nothing.</p></blockquote>
+<h3 id="05-fiscal-years-and-periods-close-a-month">Close a month</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open <strong>Ledger › Fiscal years and periods</strong>.</li><li>Find the month and select <strong>Close</strong>.</li><li>Confirm.</li></ol>
+<p><strong>Result:</strong> nothing can be posted into that month until it is reopened. The month shows who closed it and when.</p>
+<p>A month refuses to close while entries in it are still waiting — drafts, or entries submitted but not approved. The tile says how many; post, reject or cancel them first.</p>
+<blockquote><p><strong>Tip:</strong> Work through <a href="#13-month-end-and-year-end">the month-end list</a> before closing: bank reconciliations, depreciation, accruals, then the reports.</p></blockquote>
+<h3 id="05-fiscal-years-and-periods-reopen-a-month">Reopen a month</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Find the closed month and select <strong>Reopen</strong>.</li><li>Confirm.</li></ol>
+<p><strong>Result:</strong> entries can be posted into it again. Reopening is recorded in the audit log, with who did it.</p>
+<blockquote><p><strong>Note:</strong> A month inside a <strong>closed fiscal year</strong> cannot be reopened on its own — reopen the year first (<a href="#13-month-end-and-year-end">Month-end and year-end</a>).</p></blockquote>
+<h3 id="05-fiscal-years-and-periods-lock-a-month-for-good">Lock a month for good</h3>
+<p><strong>Who:</strong> Administrator.</p>
+<ol><li>Find the closed month and select <strong>Lock</strong>.</li><li>Confirm — this cannot be undone.</li></ol>
+<p><strong>Result:</strong> the month can never be reopened, and nothing can ever be posted into it. Lock a month once its figures are final: after the audit, or once the returns for it have been filed.</p>
+<h3 id="05-fiscal-years-and-periods-what-each-month-shows">What each month shows</h3>
+<p>Each tile carries the month, its state, how many entries are posted in it, how many are still waiting, how many were rejected, and who closed it. Select the counts to see those entries.</p>
+<h3 id="05-fiscal-years-and-periods-common-problems">Common problems</h3>
+<p><strong>&quot;3 entries are still waiting in Aug 2026. Post, reject or cancel them first.&quot;</strong> Open the link on the tile, then deal with each entry.</p>
+<p><strong>&quot;Sep 2026 is closed. An accountant can reopen it.&quot;</strong> You are trying to post into a closed month. Either date the entry in an open month, or ask an accountant to reopen that one.</p>
+<p><strong>&quot;FY2026 is closed.&quot;</strong> The whole year is closed. Reopening is done from <strong>Ledger › Year-end closing</strong>, by an administrator.</p>
+<p><strong>&quot;The next fiscal year must start on 2027-01-01.&quot;</strong> Years follow on from each other; the date is not yours to choose.</p>
+    </article>
+    <article class="chapter" id="06-journal-entries">
+      <h2><span class="n">06</span>Journal entries</h2>
+      <p class="summary">Prepare an entry, submit it, approve and post it, reverse one that was wrong, and keep the ones you make every month as saved entries.</p>
+<p># Journal entries</p>
+<p>A journal entry is the only thing that ever reaches the ledger. Invoices, receipts, depreciation and the year-end closing all write one; this chapter is about the ones you write yourself — accruals, adjustments, corrections, payroll, and anything the modules do not cover.</p>
+<p>Its life:</p>
+<p><strong>draft</strong> → <strong>submitted</strong> → <strong>posted</strong>, or <strong>rejected</strong> (back to whoever prepared it), or <strong>cancelled</strong></p>
+<p>Only a posted entry is in the books. A posted entry is never edited: it is <strong>reversed</strong>, and both entries stay on record.</p>
+<h3 id="06-journal-entries-before-you-start">Before you start</h3>
+<ul><li>The date must fall in an open month of an open year (<a href="#05-fiscal-years-and-periods">Fiscal years and periods</a>).</li><li>Debits must equal credits, and an entry needs at least two lines.</li><li>A line on a receivables or payables control account must name its customer or supplier; an account marked &quot;needs a department&quot; must have one.</li></ul>
+<h3 id="06-journal-entries-who-can-do-what">Who can do what</h3>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>See entries and their history</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Prepare, change and submit a draft</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Approve and post, reject, reverse</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>Cancel a draft</td><td></td><td>its own preparer</td><td>Yes</td><td>Yes</td></tr></tbody></table></div>
+<h3 id="06-journal-entries-the-books-an-entry-can-go-in">The books an entry can go in</h3>
+<div class="tablewrap"><table><thead><tr><th>Book</th><th>Prefix</th><th>What goes in it</th></tr></thead><tbody><tr><td>General journal</td><td>GJ</td><td>anything that is not cash, sales or purchases</td></tr><tr><td>Cash receipts</td><td>CR</td><td>money in</td></tr><tr><td>Cash disbursements</td><td>CD</td><td>money out</td></tr><tr><td>Sales journal</td><td>SJ</td><td>posted invoices and credit notes</td></tr><tr><td>Purchase journal</td><td>PJ</td><td>posted bills and debit notes</td></tr><tr><td>Adjusting entries</td><td>AJ</td><td>month-end adjustments, depreciation</td></tr><tr><td>Closing entries</td><td>CJ</td><td>the year-end closing (written by the system)</td></tr><tr><td>Opening balances</td><td>OB</td><td>the balances at go-live (written by the system)</td></tr></tbody></table></div>
+<p>Numbers look like <strong>CD-2026-00042</strong>: the book's prefix, the fiscal year, then a number that never skips.</p>
+<h3 id="06-journal-entries-prepare-an-entry">Prepare an entry</h3>
+<p><strong>Who:</strong> Bookkeeper or above.</p>
+<ol><li>Open <strong>Ledger › Journal entries</strong> and select <strong>New entry</strong>.</li><li>Choose the <strong>Book</strong> and the <strong>Date</strong>. The hint under the date says which months are open.</li><li>Fill in the <strong>Reference</strong> (an OR or cheque number, say) and <strong>Paid to / received from</strong> if they apply.</li><li>Type the <strong>Description</strong> — what this entry is for, in a sentence someone will understand next year.</li><li>For each line: choose the <strong>Account</strong>, type a <strong>Memo</strong> if it helps, choose the <strong>Department</strong> or the <strong>Customer or supplier</strong> where the account asks for one, and type the amount under <strong>Debit</strong> or <strong>Credit</strong>.</li><li>Select <strong>Add a line</strong> for more lines. A new line is offered the amount that would balance the entry.</li><li>Watch the foot of the table: it says <strong>Balanced</strong> or how far apart the two sides are.</li><li>Select <strong>Save draft</strong> to keep working on it later, or <strong>Save and submit</strong> to send it for approval.</li></ol>
+<p><strong>Result:</strong> the entry is saved. A draft has no number yet — numbers are given when an entry posts, so an abandoned draft never leaves a hole in the books.</p>
+<h4 id="06-journal-entries-what-goes-into-the-books">What goes into the books</h4>
+<p>Nothing yet. A draft is not in the ledger.</p>
+<blockquote><p><strong>Tip:</strong> <strong>Save as a saved entry</strong> keeps the shape of the entry — accounts, memos, even the amounts — under a name, so next month you start from it instead of typing it again. See <em>Saved entries</em> below.</p></blockquote>
+<h3 id="06-journal-entries-submit-approve-and-post">Submit, approve and post</h3>
+<p><strong>Who:</strong> the preparer submits; an accountant or administrator approves.</p>
+<ol><li>The preparer opens the entry and selects <strong>Submit for approval</strong>.</li><li>The approver opens <strong>Ledger › Approvals</strong>, checks it, and selects <strong>Approve and post</strong>.</li></ol>
+<p><strong>Result:</strong> the entry takes its number, the ledger changes, and the audit log records who posted it and when.</p>
+<p>If something is wrong, the approver selects <strong>Reject</strong> and says what to fix. The entry goes back to its preparer, who corrects it and submits it again.</p>
+<blockquote><p><strong>Note:</strong> By default an approver may not post an entry they prepared themselves — that is maker-checker, and it is what an auditor expects. In a one-person office an administrator can switch it off under <strong>Settings › The ledger</strong>.</p></blockquote>
+<h3 id="06-journal-entries-reverse-a-posted-entry">Reverse a posted entry</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open the entry and select <strong>Reverse</strong>.</li><li>Choose the <strong>Date of the reversal</strong> — on or after the entry's own date, in an open month. Reversing in the same month leaves that month clean; reversing in a later month leaves both months as they were reported.</li><li>Say <strong>why</strong>.</li><li>Select <strong>Reverse it</strong>.</li></ol>
+<p><strong>Result:</strong> a new posted entry with every debit and credit swapped. The two are linked, and each says so on its page.</p>
+<h4 id="06-journal-entries-what-goes-into-the-books-2">What goes into the books</h4>
+<p>The mirror image of the original:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>6210 Utilities Expense</td><td></td><td>4,500.00</td></tr><tr><td>2130 Accrued Expenses</td><td>4,500.00</td><td></td></tr></tbody></table></div>
+<blockquote><p><strong>Note:</strong> Entries a module posted — invoices, receipts, depreciation, disposals, bank adjustments — are not reversed from here. Undo them where they were made, so the document and the ledger stay in step. The entry's page links to the document it came from.</p></blockquote>
+<h3 id="06-journal-entries-cancel-a-draft">Cancel a draft</h3>
+<p>A draft, a submitted entry or a rejected one can be <strong>cancelled</strong>: it stays on record as cancelled, with its history, and never reaches the ledger. Cancelling cannot be undone; prepare a new entry instead.</p>
+<h3 id="06-journal-entries-saved-entries">Saved entries</h3>
+<p><strong>Who:</strong> Bookkeeper or above. <strong>Where:</strong> Ledger › Saved entries.</p>
+<p>A saved entry is the shape of an entry the office makes again and again — the rent, the payroll, a monthly accrual.</p>
+<p><strong>To make one:</strong> fill in the entry form as usual and select <strong>Save as a saved entry</strong>, then give it a name. Lines whose amount changes every time can be left at zero.</p>
+<p><strong>To use one:</strong> open <strong>Ledger › Saved entries</strong> and select <strong>Use it</strong>, or choose it in <strong>Start from a saved entry</strong> at the top of a new entry. The form fills in; check the date and the amounts and save it as usual.</p>
+<p><strong>To have it made for you every month:</strong> open <strong>Ledger › Saved entries</strong>, select <strong>Schedule</strong>, choose the day of the month, the date of the next one, and leave it <strong>Active</strong>. On that day the scheduled job prepares it as a <strong>draft</strong> for you and tells you in your notifications. It never posts by itself — somebody still submits and approves it. A recurring saved entry needs all its amounts filled in.</p>
+<blockquote><p><strong>Tip:</strong> In the description, <code>{month}</code> becomes the month of each entry: &quot;Office rent for {month}&quot; comes out as &quot;Office rent for October 2026&quot;.</p></blockquote>
+<h3 id="06-journal-entries-the-voucher">The voucher</h3>
+<p>Every entry has a <strong>Voucher</strong> button: the printable sheet that gets signed and filed — a journal voucher, a cash receipt voucher or a disbursement voucher, depending on the book. It carries the letterhead, the particulars, the account distribution, the amount in words for cash entries, and the signature lines.</p>
+<h3 id="06-journal-entries-attachments">Attachments</h3>
+<p>Each entry has an <strong>Attachments</strong> panel for the supporting papers: the scanned receipt, the supplier's invoice, the computation behind an accrual. Files can be added at any time, before or after posting, and only people who are signed in can open them.</p>
+<h3 id="06-journal-entries-common-problems">Common problems</h3>
+<p><strong>&quot;Debits (11,200.00) and credits (10,000.00) do not balance.&quot;</strong> The two sides differ. The foot of the lines table shows by how much.</p>
+<p><strong>&quot;Line 2: 1121 needs a customer.&quot;</strong> A receivables or payables line must name the customer or supplier it belongs to.</p>
+<p><strong>&quot;Line 3: 6210 needs a department.&quot;</strong> That account is marked as needing one. Choose it on the line.</p>
+<p><strong>&quot;Sep 2026 is closed. An accountant can reopen it.&quot;</strong> Date the entry in an open month, or ask for that one to be reopened.</p>
+<p><strong>&quot;Only its preparer can change a draft or a rejected entry.&quot;</strong> Approvers do not rewrite other people's entries; they reject them with a reason.</p>
+<p><strong>&quot;This entry was posted from a customer invoice. Undo it there…&quot;</strong> Open the document the entry's page links to and cancel it there.</p>
+    </article>
+    <article class="chapter" id="07-sales-and-receivables">
+      <h2><span class="n">07</span>Sales and receivables</h2>
+      <p class="summary">Keep the customer list, raise and post invoices and credit notes, record receipts with creditable withholding tax, and print the aging and statements of account.</p>
+<p># Sales and receivables</p>
+<p>Everything owed to the company by its customers runs through here. An invoice posts to the sales journal and puts the amount on the receivables control account under that customer's name; a receipt posts to the cash receipts book and takes it off again. Because every line on the control account names its customer, the subsidiary ledger and the control account can never drift apart.</p>
+<h3 id="07-sales-and-receivables-before-you-start">Before you start</h3>
+<ul><li>The customer must exist (<a href="#07-sales-and-receivables-add-a-customer">Add a customer</a> below).</li><li><strong>Settings › Account defaults</strong> needs the <strong>Receivables control</strong>, the <strong>Output VAT</strong> account, the <strong>Creditable withholding tax</strong> account and a <strong>Default sales account</strong>. See <a href="#15-administration-settings">Administration</a>.</li><li><strong>Settings › Tax</strong> decides whether the company is VAT-registered, the rate, and whether typed amounts include VAT.</li><li>The date must fall in an open month (<a href="#05-fiscal-years-and-periods">Fiscal years and periods</a>).</li></ul>
+<h3 id="07-sales-and-receivables-who-can-do-what">Who can do what</h3>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>See customers, invoices, receipts and the reports</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Add or change a customer</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Prepare an invoice, a credit note or a receipt</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Post one, cancel a posted one, remove an allocation</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>Apply money to invoices</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr></tbody></table></div>
+<h3 id="07-sales-and-receivables-add-a-customer">Add a customer</h3>
+<p><strong>Who:</strong> Bookkeeper or above.</p>
+<ol><li>Open <strong>Sales › Customers</strong> and select <strong>New customer</strong>.</li><li>The <strong>Code</strong> is filled in for you (C007 next in the demo company); change it if you have your own scheme.</li><li>Type the <strong>Name</strong>, and the <strong>TIN</strong>, <strong>Address</strong> and <strong>Contact person</strong> if you have them.</li><li>Set the <strong>Terms</strong> in days — 30 means an invoice is due thirty days after its date.</li><li>Set a <strong>Credit limit</strong> if the company works with one. It never blocks an invoice; it warns before posting.</li><li>Choose a <strong>Default sales account</strong> if this customer's sales always go to one account.</li><li>Select <strong>Add customer</strong>.</li></ol>
+<p><strong>Result:</strong> the customer appears in the list with a zero balance, ready to invoice.</p>
+<blockquote><p><strong>Tip:</strong> A customer who is also a supplier is one contact with both boxes ticked — the same TIN and address, two balances.</p></blockquote>
+<blockquote><p><strong>Note:</strong> A customer who has never been used can be deleted. One with entries is made inactive instead: open them and clear <strong>Active</strong>. They stay in the ledgers and reports where they have figures.</p></blockquote>
+<h3 id="07-sales-and-receivables-raise-an-invoice">Raise an invoice</h3>
+<p><strong>Who:</strong> Bookkeeper or above prepares it; an accountant posts it.</p>
+<ol><li>Open <strong>Sales › Invoices</strong> and select <strong>New invoice</strong>.</li><li>Choose the <strong>Customer</strong>. The terms and the default sales account fill in.</li><li>Check the <strong>Date</strong> and the <strong>Due date</strong> (the date plus the customer's terms).</li><li>Type a <strong>Reference</strong> if the customer quotes a PO number, and a <strong>Description</strong> of the sale.</li><li>For each line: choose the <strong>Account</strong> the sale belongs to, type what it is for, the <strong>Quantity</strong> and the <strong>Unit price</strong>. The <strong>Amount</strong> works itself out, or type it directly.</li><li>Set each line's <strong>VAT</strong>: <em>VATable</em>, <em>VAT-exempt</em> or <em>Zero-rated</em>. The totals show the VATable sales, the exempt sales and the VAT.</li><li>Choose a <strong>Department</strong> on a line if the account asks for one.</li><li>Select <strong>Save draft</strong>, or <strong>Save and post</strong> if you may post.</li></ol>
+<p><strong>Result:</strong> a draft invoice with no number yet.</p>
+<h3 id="07-sales-and-receivables-post-an-invoice">Post an invoice</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open the draft invoice.</li><li>Check the customer, the date, the lines and the VAT.</li><li>Select <strong>Post invoice</strong> and confirm.</li></ol>
+<p><strong>Result:</strong> the invoice takes its number (INV-000052 in the demo company), the entry posts to the sales journal, and the amount appears on the customer's account and in the aging.</p>
+<h4 id="07-sales-and-receivables-what-goes-into-the-books">What goes into the books</h4>
+<p>A VAT-registered company invoicing 11,200.00 including 12 % VAT:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1121 Accounts Receivable - Trade (the customer)</td><td>11,200.00</td><td></td></tr><tr><td>4110 Sales</td><td></td><td>10,000.00</td></tr><tr><td>2121 Output VAT</td><td></td><td>1,200.00</td></tr></tbody></table></div>
+<blockquote><p><strong>Note:</strong> If the customer is over their credit limit, the screen says so before you post and you can still go ahead — it is a warning, not a wall.</p></blockquote>
+<h3 id="07-sales-and-receivables-record-a-receipt">Record a receipt</h3>
+<p><strong>Who:</strong> Bookkeeper or above prepares it; an accountant posts it.</p>
+<ol><li>Open <strong>Sales › Receipts</strong> and select <strong>Record a receipt</strong> (or use <strong>Record receipt</strong> on the customer's page or the invoice).</li><li>Choose the <strong>Customer</strong> and the <strong>Date received</strong>.</li><li>Choose <strong>Deposited to</strong> — the cash or bank account the money went into.</li><li>Type the <strong>OR number</strong> you issued, and the <strong>Amount received</strong>.</li><li>If the customer withheld tax, type it under <strong>Tax withheld</strong>. The invoice is settled by the cash plus the tax withheld.</li><li>Under <strong>What it pays</strong>, the open invoices are listed. Select <strong>Fill oldest first</strong> to apply the money from the oldest invoice down, or type the amounts yourself.</li><li>Select <strong>Save draft</strong>, or <strong>Save and post</strong> if you may post.</li><li>To post later: open it and select <strong>Post receipt</strong>.</li></ol>
+<p><strong>Result:</strong> the receipt takes its number, the cash goes in, and each invoice it paid shows less open.</p>
+<h4 id="07-sales-and-receivables-what-goes-into-the-books-2">What goes into the books</h4>
+<p>25,000.00 received, with 1 % (252.53) withheld by the customer against an invoice of 25,252.53:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1113 Cash in Bank - Current Account</td><td>25,000.00</td><td></td></tr><tr><td>1145 Creditable Withholding Tax</td><td>252.53</td><td></td></tr><tr><td>1121 Accounts Receivable - Trade (the customer)</td><td></td><td>25,252.53</td></tr></tbody></table></div>
+<blockquote><p><strong>Tip:</strong> Money received that does not settle anything yet — a deposit, an advance — is posted with nothing applied. It sits on the customer's account, and the invoice it belongs to can be applied later with <strong>Apply to invoices</strong>.</p></blockquote>
+<h3 id="07-sales-and-receivables-apply-money-to-invoices">Apply money to invoices</h3>
+<p><strong>Who:</strong> Bookkeeper or above.</p>
+<p>Open the receipt (or the credit note) and select <strong>Apply to invoices</strong>. The open invoices appear with the oldest filled first; change the amounts and select <strong>Apply</strong>.</p>
+<p>Applying moves nothing in the ledger — the control account already holds the money. It only says which invoice it belongs to, which is what the aging reads.</p>
+<p>To undo one, open the invoice or the receipt and select <strong>Remove</strong> beside the allocation, with a reason. The invoice opens again by that much.</p>
+<h3 id="07-sales-and-receivables-credit-notes">Credit notes</h3>
+<p><strong>Who:</strong> Bookkeeper or above prepares; an accountant posts.</p>
+<p>A credit note reduces what a customer owes — goods returned, an allowance, an invoice raised twice.</p>
+<ol><li>Open the invoice it corrects and select <strong>New credit note</strong> (or start one from <strong>Sales › Invoices › New credit note</strong>).</li><li>Check the customer and the <strong>Corrects invoice</strong> box.</li><li>Enter the lines the same way as an invoice — usually to a <em>Sales Returns and Allowances</em> account.</li><li>Save it, then <strong>Post credit note</strong>.</li></ol>
+<p><strong>Result:</strong> it takes its own number (CN-…), posts the reverse of an invoice, and is applied to the invoice it corrects, up to what is still open on it.</p>
+<h4 id="07-sales-and-receivables-what-goes-into-the-books-3">What goes into the books</h4>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>4120 Sales Returns and Allowances</td><td>10,000.00</td><td></td></tr><tr><td>2121 Output VAT</td><td>1,200.00</td><td></td></tr><tr><td>1121 Accounts Receivable - Trade (the customer)</td><td></td><td>11,200.00</td></tr></tbody></table></div>
+<h3 id="07-sales-and-receivables-cancel-a-posted-invoice-or-receipt">Cancel a posted invoice or receipt</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open it and select <strong>Cancel invoice</strong> (or <strong>Cancel receipt</strong>).</li><li>Choose the date of the reversal and say why.</li><li>Confirm.</li></ol>
+<p><strong>Result:</strong> its entry is reversed, it is marked cancelled, and anything it had settled is open again. It keeps its number, so the books show what happened.</p>
+<p>The system refuses to cancel:</p>
+<ul><li>an invoice that has money applied to it — remove the allocations first;</li><li>a receipt whose cash line is matched to a bank statement — unmatch it in <a href="#09-banking">Banking</a> first.</li></ul>
+<h3 id="07-sales-and-receivables-the-reports">The reports</h3>
+<p><strong>Aging</strong> (<strong>Reports › Aging</strong>) — every customer's open invoices at a date, in buckets by how far past due they are, with anything unapplied in its own column. The foot sets the total against the receivables control account in the ledger and lists any difference, line by line: that difference can only come from an entry posted straight to the control account by hand.</p>
+<p><strong>Statement of account</strong> (<strong>Reports › Statement of account</strong>) — one customer's charges and payments over a period, with the balance brought forward, the balance carried forward, and an aging summary. Print it and send it.</p>
+<p><strong>Subsidiary ledger</strong> (<strong>Reports › Subsidiary ledger</strong>) — every customer's balance on the control account at a date, adding up to the control account itself.</p>
+<p>All three download as CSV and print with the letterhead and signature lines.</p>
+<h3 id="07-sales-and-receivables-common-problems">Common problems</h3>
+<p><strong>&quot;Only a draft can be posted.&quot;</strong> Somebody posted it already — refresh the page.</p>
+<p><strong>&quot;1121 needs a customer.&quot;</strong> A line on the control account has no customer. It happens on hand-written entries; open the entry and set it.</p>
+<p><strong>&quot;Remove what is applied to it first.&quot;</strong> The invoice has receipts or credit notes against it. Open it, remove the allocations, then cancel.</p>
+<p><strong>&quot;Unmatch it in Banking first.&quot;</strong> The receipt's cash line is matched on a bank statement. Open the statement, unmatch it, then cancel the receipt.</p>
+<p><strong>The aging does not equal the control account.</strong> The foot of the report lists the entries that caused it — almost always a journal entry posted straight to 1121 without going through an invoice. Reverse it and raise the document instead.</p>
+    </article>
+    <article class="chapter" id="08-purchases-and-payables">
+      <h2><span class="n">08</span>Purchases and payables</h2>
+      <p class="summary">Keep the supplier list, enter and post bills and debit notes, pay suppliers with expanded withholding tax, and watch what is due.</p>
+<p># Purchases and payables</p>
+<p>Everything the company owes its suppliers runs through here, and it mirrors the sales side. A bill posts to the purchase journal and puts the amount on the payables control account under that supplier's name; a payment posts to the cash disbursements book and takes it off again.</p>
+<h3 id="08-purchases-and-payables-before-you-start">Before you start</h3>
+<ul><li>The supplier must exist (<a href="#08-purchases-and-payables-add-a-supplier">Add a supplier</a> below).</li><li><strong>Settings › Account defaults</strong> needs the <strong>Payables control</strong>, the <strong>Input VAT</strong> account, the <strong>Withholding tax payable (expanded)</strong> account and a <strong>Default purchases account</strong>.</li><li>The date must fall in an open month (<a href="#05-fiscal-years-and-periods">Fiscal years and periods</a>).</li></ul>
+<h3 id="08-purchases-and-payables-who-can-do-what">Who can do what</h3>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>See suppliers, bills, payments and the reports</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Add or change a supplier</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Prepare a bill, a debit note or a payment</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Post one, cancel a posted one, remove an allocation</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>Apply a payment to bills</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr></tbody></table></div>
+<h3 id="08-purchases-and-payables-add-a-supplier">Add a supplier</h3>
+<p><strong>Who:</strong> Bookkeeper or above.</p>
+<ol><li>Open <strong>Purchases › Suppliers</strong> and select <strong>New supplier</strong>.</li><li>The <strong>Code</strong> is filled in (S006 next in the demo company).</li><li>Type the <strong>Name</strong>, <strong>TIN</strong>, <strong>Address</strong> and <strong>Contact person</strong>.</li><li>Set the <strong>Terms</strong> in days.</li><li>Set the <strong>Withholding rate</strong> the company withholds on this supplier's bills: 1 % on goods, 2 % on services, 5 % on rentals, 10 % or 15 % on professional fees. Leave it at <em>None</em> if nothing is withheld.</li><li>Choose a <strong>Default purchases account</strong> — the expense or inventory account this supplier's bills usually go to.</li><li>Select <strong>Add supplier</strong>.</li></ol>
+<h3 id="08-purchases-and-payables-enter-a-bill">Enter a bill</h3>
+<p><strong>Who:</strong> Bookkeeper or above prepares; an accountant posts.</p>
+<ol><li>Open <strong>Purchases › Bills</strong> and select <strong>New bill</strong>.</li><li>Choose the <strong>Supplier</strong>; the terms and default account fill in.</li><li>Check the <strong>Date</strong> — use the date on the supplier's invoice — and the <strong>Due date</strong>.</li><li>Put the supplier's own invoice number in <strong>Reference</strong>. It prints on the voucher and shows in the books.</li><li>Enter the lines: the <strong>Account</strong> (an expense, or inventory), what it is for, the <strong>Quantity</strong>, the <strong>Unit price</strong>, and the <strong>VAT</strong> treatment.</li><li>Choose a <strong>Department</strong> where the account asks for one.</li><li>Select <strong>Save draft</strong>, then <strong>Post bill</strong> when it is checked.</li></ol>
+<h4 id="08-purchases-and-payables-what-goes-into-the-books">What goes into the books</h4>
+<p>A bill of 11,200.00 including 12 % VAT, for merchandise:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1131 Merchandise Inventory</td><td>10,000.00</td><td></td></tr><tr><td>1144 Input VAT</td><td>1,200.00</td><td></td></tr><tr><td>2111 Accounts Payable - Trade (the supplier)</td><td></td><td>11,200.00</td></tr></tbody></table></div>
+<blockquote><p><strong>Tip:</strong> Only claim input VAT where the supplier's invoice is a VAT invoice with their TIN on it. Where it is not, mark the line <em>VAT-exempt</em> and the whole amount goes to the expense.</p></blockquote>
+<h3 id="08-purchases-and-payables-pay-a-supplier">Pay a supplier</h3>
+<p><strong>Who:</strong> Bookkeeper or above prepares; an accountant posts.</p>
+<ol><li>Open <strong>Purchases › Payments</strong> and select <strong>Record a payment</strong> (or <strong>Record payment</strong> on the supplier's page or the bill).</li><li>Choose the <strong>Supplier</strong> and the <strong>Date paid</strong>.</li><li>Choose <strong>Paid from</strong> — the cash or bank account.</li><li>Type the <strong>Cheque number</strong> and the <strong>Amount paid</strong>.</li><li><strong>Tax withheld</strong> is worked out from the supplier's rate on the bills you are paying; change it if the case is different. The bills are settled by the cash plus the tax withheld.</li><li>Under <strong>What it pays</strong>, select <strong>Fill oldest first</strong> or type the amounts against each bill.</li><li>Save it, then <strong>Post payment</strong>.</li></ol>
+<h4 id="08-purchases-and-payables-what-goes-into-the-books-2">What goes into the books</h4>
+<p>14,866.07 paid on bills of 15,000.00, with 2 % (133.93) withheld:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>2111 Accounts Payable - Trade (the supplier)</td><td>15,000.00</td><td></td></tr><tr><td>1113 Cash in Bank - Current Account</td><td></td><td>14,866.07</td></tr><tr><td>2123 Withholding Tax Payable - Expanded</td><td></td><td>133.93</td></tr></tbody></table></div>
+<p>The balance on 2123 is what the company remits to the BIR with its return; the certificate (BIR Form 2307) comes from the same figures.</p>
+<h3 id="08-purchases-and-payables-debit-notes">Debit notes</h3>
+<p>A debit note reduces what the company owes — goods returned to the supplier, an overcharge. Raise it from the bill it corrects, enter the lines, and post it; it is applied to that bill.</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>2111 Accounts Payable - Trade (the supplier)</td><td>11,200.00</td><td></td></tr><tr><td>1131 Merchandise Inventory</td><td></td><td>10,000.00</td></tr><tr><td>1144 Input VAT</td><td></td><td>1,200.00</td></tr></tbody></table></div>
+<h3 id="08-purchases-and-payables-cancel-a-posted-bill-or-payment">Cancel a posted bill or payment</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<p>Open it, select <strong>Cancel bill</strong> (or <strong>Cancel payment</strong>), choose the date of the reversal and say why. Its entry is reversed, what it settled is open again, and it keeps its number.</p>
+<p>The system refuses while money is applied to a bill (remove the allocations first), or while a payment's cash line is matched on a bank statement (unmatch it in <a href="#09-banking">Banking</a> first).</p>
+<h3 id="08-purchases-and-payables-the-reports">The reports</h3>
+<p><strong>Aging</strong> (<strong>Reports › Aging</strong>, then <em>Payables</em>) — what is owed to each supplier, in buckets by how far past due it is, set against the payables control account.</p>
+<p><strong>Statement of account</strong> (<strong>Reports › Statement of account</strong>, then <em>Supplier</em>) — one supplier's bills and payments over a period. Useful when a supplier's statement disagrees with yours.</p>
+<p><strong>Subsidiary ledger</strong> (<strong>Reports › Subsidiary ledger</strong>, then <em>Payables</em>) — every supplier's balance, adding up to the control account.</p>
+<p><strong>The purchase book and the cash disbursements book</strong> (<strong>Reports › Books of accounts</strong>) — in columns, as the BIR expects them, with page totals and the amounts brought forward. See <a href="#12-financial-reports">Financial reports</a>.</p>
+<h3 id="08-purchases-and-payables-common-problems">Common problems</h3>
+<p><strong>&quot;2111 needs a supplier.&quot;</strong> A line on the payables control account has no supplier named. Open the entry and set it.</p>
+<p><strong>&quot;Applied more than the bill is open for.&quot;</strong> The amounts under <em>What it pays</em> add up to more than the bill still owes. Lower them, or leave the rest unapplied.</p>
+<p><strong>The supplier says we owe more than our books do.</strong> Print their statement of account and compare it line by line with theirs; the usual causes are a bill that was never entered, or one entered twice under different reference numbers.</p>
+    </article>
+    <article class="chapter" id="09-banking">
+      <h2><span class="n">09</span>Banking</h2>
+      <p class="summary">Keep the bank accounts, enter or import a statement, match it against the books, record the charges and interest the bank added, and reconcile.</p>
+<p># Banking</p>
+<p>Reconciling is checking that the bank and the books say the same thing, and explaining every difference. In this system a <strong>bank statement</strong> is entered (or imported) line by line, each line is <strong>matched</strong> to the entry in the books that caused it, and anything the bank did that the books do not know about — charges, interest, an automatic debit — is <strong>recorded</strong> as an entry from the statement itself. When nothing is left over, the statement is <strong>reconciled</strong> and locked.</p>
+<h3 id="09-banking-before-you-start">Before you start</h3>
+<ul><li>Each bank account must be linked to a cash account in the chart (<a href="#04-chart-of-accounts">Chart of accounts</a>); its cash-flow class must be <em>cash</em>.</li><li><strong>Settings › Account defaults</strong> needs a <strong>Bank charges</strong> account and an <strong>Interest income</strong> account for the entries recorded from the statement.</li><li><strong>Settings › Banking</strong> sets how many days apart a bank line and a book line may still be matched (7 in the demo company).</li></ul>
+<h3 id="09-banking-who-can-do-what">Who can do what</h3>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>See the bank accounts, statements and the reconciliation report</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Enter or import a statement, match, unmatch, set a line aside</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Add or change a bank account</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>Record an entry from a bank line, reconcile, reopen</td><td></td><td></td><td>Yes</td><td>Yes</td></tr></tbody></table></div>
+<h3 id="09-banking-add-a-bank-account">Add a bank account</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open <strong>Cash and assets › Banking</strong> and select <strong>New bank account</strong>.</li><li>Type the <strong>Bank</strong> and the <strong>Account name</strong>.</li><li>Type the <strong>last four digits</strong> of the account number — only those are kept.</li><li>Choose the <strong>Ledger account</strong> it belongs to, such as <em>1113 Cash in Bank - Current Account</em>. One ledger account, one bank account.</li><li>Select <strong>Create</strong>.</li></ol>
+<p><strong>Result:</strong> the account appears with its balance in the books and a place for its statements.</p>
+<h3 id="09-banking-enter-a-statement">Enter a statement</h3>
+<p><strong>Who:</strong> Bookkeeper or above.</p>
+<ol><li>Open <strong>Cash and assets › Banking</strong> and select <strong>New statement</strong> on the account.</li><li>Type the <strong>Statement date</strong> — the closing date the bank printed.</li><li>Type the <strong>Opening balance</strong> and the <strong>Closing balance</strong> exactly as the bank has them. The opening balance should equal the last statement's closing balance; the screen says so if it does not.</li><li>Select <strong>Create statement</strong>.</li><li>Add the lines, either by hand or by import (below). Each line is a <strong>date</strong>, a <strong>description</strong>, a <strong>reference</strong> and an <strong>amount</strong>: a deposit is positive, a withdrawal negative.</li></ol>
+<p>The screen keeps a running check: <em>opening + the lines = closing</em>. While they differ, it says by how much — usually a line was missed or keyed twice.</p>
+<h4 id="09-banking-import-the-lines-from-a-csv">Import the lines from a CSV</h4>
+<ol><li>On the statement, select <strong>Import</strong>.</li><li>Choose the file the bank gave you, or paste the rows.</li><li>Say which column holds the <strong>date</strong>, the <strong>description</strong>, the <strong>reference</strong> and the <strong>amount</strong>. Banks that use two columns are handled by <strong>Withdrawal and deposit columns</strong>; one signed column by <strong>One amount column (− for withdrawals)</strong>.</li><li>Choose the <strong>date format</strong> the bank uses.</li><li>Look at the preview, then select <strong>Import</strong>.</li></ol>
+<p>Rows already on the statement (same date, amount and reference) are skipped and reported, so importing the same file twice does no harm.</p>
+<h3 id="09-banking-match-the-statement-to-the-books">Match the statement to the books</h3>
+<p><strong>Who:</strong> Bookkeeper or above.</p>
+<p>The screen shows the statement's lines on one side and, on the other, the entries in the books on that bank account that nothing has cleared yet.</p>
+<ul><li><strong>Auto-match</strong> pairs every line that has exactly one candidate of the same amount within the matching window. It reports how many it matched.</li><li><strong>To match by hand:</strong> select a bank line, then select the book line or lines that make it up, and select <strong>Match</strong>. Several book lines may make up one bank line — a deposit that covers three receipts, for example. The amounts must add up exactly.</li><li><strong>Unmatch</strong> takes a pairing back while the statement is open.</li><li><strong>Set aside</strong> (ignore) is for a line that belongs to neither side: a bank error that the bank reverses on the same statement. Say why; it stays on the statement, marked.</li></ul>
+<h3 id="09-banking-record-what-the-books-do-not-have">Record what the books do not have</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<p>Bank charges, interest credited, an automatic debit: the bank knows, the books do not.</p>
+<ol><li>Select the bank line and choose <strong>Record an entry…</strong>.</li><li>The screen offers <strong>Record the bank charge</strong> (for a withdrawal) or <strong>Record the bank credit</strong> (for a deposit), with the account from Settings; change the account if this one is different.</li><li>Confirm.</li></ol>
+<p><strong>Result:</strong> the entry posts, dated on the bank line's own date, and the line is matched to it at once.</p>
+<h4 id="09-banking-what-goes-into-the-books">What goes into the books</h4>
+<p>A bank charge of 450.00:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>6270 Bank Charges</td><td>450.00</td><td></td></tr><tr><td>1113 Cash in Bank - Current Account</td><td></td><td>450.00</td></tr></tbody></table></div>
+<p>Interest credited of 150.00:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1113 Cash in Bank - Current Account</td><td>150.00</td><td></td></tr><tr><td>4910 Interest Income</td><td></td><td>150.00</td></tr></tbody></table></div>
+<blockquote><p><strong>Note:</strong> Got one wrong? <strong>Undo entry</strong> on the line reverses the entry and unmatches the line, as long as the statement is still open.</p></blockquote>
+<h3 id="09-banking-reconcile">Reconcile</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<p>When every line is matched or set aside and the difference is zero, select <strong>Reconcile</strong>.</p>
+<p><strong>Result:</strong> the statement is locked — no more matching, no changes to its lines — and it is stamped with who reconciled it and when. An accountant can <strong>Reopen</strong> it while it is the latest reconciled statement for that bank account.</p>
+<h3 id="09-banking-the-reconciliation-report">The reconciliation report</h3>
+<p><strong>Where:</strong> Reports › Bank reconciliation, or <strong>Open the statement</strong> from there.</p>
+<p>It is the statement an auditor asks for:</p>
+<ul><li><strong>Balance per bank statement</strong>, plus <strong>deposits in transit</strong> (money in the books the bank has not credited yet), less <strong>outstanding cheques</strong> (cheques written that have not cleared) = the <strong>adjusted bank balance</strong>;</li><li><strong>Balance per books</strong>, plus the credit memos and less the debit memos the books do not have yet = the <strong>adjusted book balance</strong>;</li><li>the two adjusted balances, and the difference between them, which must be zero.</li></ul>
+<p>It prints with the letterhead and the signature lines, and downloads as CSV.</p>
+<h3 id="09-banking-common-problems">Common problems</h3>
+<p><strong>&quot;The lines add up to 961,895.71, the statement says 961,745.71.&quot;</strong> A line is missing or keyed twice. Compare the count of lines with the bank's.</p>
+<p><strong>&quot;That book line is already matched.&quot;</strong> A book line clears once. If it was matched to the wrong bank line, unmatch it there first.</p>
+<p><strong>&quot;The amounts do not add up.&quot;</strong> The book lines you picked do not equal the bank line. Check for a charge the bank took out of a deposit — that part is recorded as an entry, not matched.</p>
+<p><strong>&quot;Every line must be matched or set aside first.&quot;</strong> Something is still unmatched. The count at the top says how many.</p>
+<p><strong>The difference will not go to zero.</strong> Look for: a deposit in transit recorded in the books after the statement date (that is fine — it shows in the report), a cheque written twice, or a bank charge not yet recorded.</p>
+    </article>
+    <article class="chapter" id="10-fixed-assets">
+      <h2><span class="n">10</span>Fixed assets</h2>
+      <p class="summary">Keep the register of property and equipment, run the monthly depreciation, dispose of assets, and print the lapsing schedule that ties the register to the ledger.</p>
+<p># Fixed assets</p>
+<p>The fixed-asset register lists everything the company owns and uses for more than a year: office equipment, furniture, vehicles, computers. For each asset it keeps the cost, the useful life and the depreciation charged so far. Once a month an accountant runs the depreciation, which posts one adjusting entry for every asset in use. When an asset is sold, scrapped or lost, its disposal posts the entry that takes it off the books and records any gain or loss.</p>
+<p>The <strong>lapsing schedule</strong> puts the whole register on one page and checks it against the ledger, account by account.</p>
+<h3 id="10-fixed-assets-before-you-start">Before you start</h3>
+<ul><li>The chart of accounts needs, for each kind of asset, an asset account (such as <strong>1218 Transportation Equipment</strong>), a contra-asset account for its accumulated depreciation (such as <strong>1219</strong>) and an expense account for the depreciation (such as <strong>6200 Depreciation Expense</strong>). See <a href="#04-chart-of-accounts">Chart of accounts</a>.</li><li>An administrator sets the <strong>Gain on disposal</strong> and <strong>Loss on disposal</strong> accounts, the rule for when depreciation starts, and the asset number prefix in <a href="#15-administration-settings">Settings</a>. The demo company uses 4920, 7200, &quot;the month after acquisition&quot; and the prefix FA.</li><li>The month you post into must be open. See <a href="#05-fiscal-years-and-periods">Fiscal years and periods</a>.</li><li>Book the purchase itself the usual way, through a supplier bill (<a href="#08-purchases-and-payables">Purchases and payables</a>) or a journal entry (<a href="#06-journal-entries">Journal entries</a>). Registering an asset does not post anything.</li></ul>
+<h3 id="10-fixed-assets-who-can-do-what">Who can do what</h3>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>See the register, the schedules and the lapsing schedule</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Register, change or delete an asset</td><td></td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Set up asset categories</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>Run or undo depreciation</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>Dispose of an asset, or take a disposal back</td><td></td><td></td><td>Yes</td><td>Yes</td></tr></tbody></table></div>
+<h3 id="10-fixed-assets-set-up-asset-categories">Set up asset categories</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<p>A category groups similar assets. It names the three accounts its assets post to and suggests a method, a useful life and a residual value for new assets. The demo company has four: Office Equipment, Furniture and Fixtures, Transportation Equipment (5 years each) and Computer Equipment (3 years).</p>
+<ol><li>Open <strong>Cash and assets › Fixed assets</strong> and select <strong>Categories</strong>.</li><li>Select <strong>New category</strong>.</li><li>Type the <strong>Name</strong>, for example <em>Leasehold Improvements</em>.</li><li>Choose the <strong>Asset account</strong> (where the cost is kept), the <strong>Accumulated depreciation account</strong> (a contra-asset account) and the <strong>Depreciation expense account</strong>.</li><li>Choose the <strong>Method</strong>: <em>Straight line</em> charges the same amount every month; <em>Declining balance (double)</em> charges more in the early years.</li><li>Enter the <strong>Useful life</strong> in years or months, and the <strong>Residual value</strong> as a percentage of cost (0 is common).</li><li>Select <strong>Add category</strong>.</li></ol>
+<p><strong>Result:</strong> the category appears in the list and can be chosen for new assets.</p>
+<blockquote><p><strong>Note:</strong> Changing a category's method, life or residual value affects only assets registered afterwards. Each asset keeps its own figures. Once a category has assets, its accounts are fixed; for different accounts, create a new category. To stop using a category, open it and clear <strong>Active — new assets can be registered in it</strong>. A category no asset has used can be deleted.</p></blockquote>
+<h3 id="10-fixed-assets-register-an-asset">Register an asset</h3>
+<p><strong>Who:</strong> Bookkeeper or above.</p>
+<ol><li>Open <strong>Cash and assets › Fixed assets</strong> and select <strong>New asset</strong>.</li><li>Type the <strong>Description</strong>, for example <em>Honda delivery motorcycle</em>.</li><li>Choose the <strong>Category</strong>. Its method, useful life and residual value fill in; you can change them.</li><li>Enter the <strong>Date acquired</strong>. <strong>Depreciation starts</strong> fills in by the company's rule: the 1st of the next month in the demo company.</li><li>Choose the <strong>Department</strong> the depreciation should be charged to, and fill in <strong>Location</strong>, <strong>Serial or plate no.</strong> and <strong>Supplier</strong> if you like.</li><li>Under <strong>Purchase entry</strong>, choose the posted bill or journal entry that recorded the purchase. The list shows only entries that debit the category's asset account.</li><li>Enter the <strong>Cost</strong>: the price and the costs of getting it ready for use, without the input VAT the company claims.</li><li>Check the <strong>Residual value</strong>, <strong>Useful life</strong> and <strong>Method</strong>. The box below them shows about how much will be charged each month.</li><li>Leave <strong>Accumulated depreciation brought in</strong> at 0 for a new purchase.</li><li>Select <strong>Register asset</strong>.</li></ol>
+<p><strong>Result:</strong> the asset gets the next number (the demo company's next one is FA-0005) and its page opens, with its depreciation schedule.</p>
+<blockquote><p><strong>Tip:</strong> Register an asset in the month you book its purchase. If you register it late, the next depreciation run catches up the months it missed, so nothing is lost.</p></blockquote>
+<h4 id="10-fixed-assets-what-goes-into-the-books">What goes into the books</h4>
+<p>Nothing. The purchase was already booked by the bill or journal entry, for example:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1218 Transportation Equipment</td><td>100,000.01</td><td></td></tr><tr><td>2111 Accounts Payable - Trade (the supplier), or 1113 Cash in Bank</td><td></td><td>100,000.01</td></tr></tbody></table></div>
+<h4 id="10-fixed-assets-assets-the-company-already-had-at-go-live">Assets the company already had at go-live</h4>
+<p>When the books start in this system, the opening balances already hold the cost of the old assets and the depreciation charged on them before. Register each of those assets with its original <strong>Date acquired</strong>, its original <strong>Depreciation starts</strong> month, its <strong>Cost</strong>, and in <strong>Accumulated depreciation brought in</strong> the depreciation charged before go-live. The demo company's truck, FA-0003, cost 1,200,000.00, started depreciating in May 2024, and brought in 400,000.00.</p>
+<blockquote><p><strong>Note:</strong> If the amount brought in is more than the straight line would have charged by then, the next months charge nothing until the line catches up. If it is less, the first run catches up the difference. The asset page shows the months ahead before anything is posted.</p></blockquote>
+<h3 id="10-fixed-assets-change-or-delete-an-asset">Change or delete an asset</h3>
+<p><strong>Who:</strong> Bookkeeper or above.</p>
+<ol><li>Open the asset from <strong>Fixed assets</strong> and select <strong>Edit</strong>.</li><li>Change what you need and select <strong>Save changes</strong>.</li></ol>
+<p>Once depreciation has been charged on an asset, its category, cost, residual value, useful life, method, depreciation start and accumulated depreciation brought in are fixed, because the posted entries were worked out from them. The form shows them locked and says why. The description, department, location, serial number, supplier, purchase entry and notes can still change. A disposed asset keeps its department too.</p>
+<p>An asset that has no depreciation and has not been disposed of can be removed with <strong>Delete</strong>, for example one registered twice by mistake. Its number is not used again.</p>
+<h3 id="10-fixed-assets-read-an-assets-page">Read an asset's page</h3>
+<p>The page shows the cost, the accumulated depreciation (including any brought in at go-live), the net book value and what is left to depreciate. Below are its details and its accounts, with a link to the purchase entry.</p>
+<p>The <strong>Depreciation schedule</strong> shows each year under <strong>By year</strong>, or each month under <strong>By month</strong>. Months already charged link to the depreciation entry that charged them. Months marked <strong>Projected</strong> are still to come, worked out exactly as the next run will work them out. <strong>History</strong> lists who registered and changed the asset, from the audit log.</p>
+<h3 id="10-fixed-assets-run-depreciation-each-month">Run depreciation each month</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open <strong>Cash and assets › Depreciation</strong>.</li><li>Under <strong>Run depreciation</strong>, choose the <strong>Month</strong>. The first month that can still be run is already chosen.</li><li>Select <strong>Preview</strong>.</li><li>Check each asset's charge for the month, the accumulated depreciation and book value after it, and the journal entry below.</li><li>Select <strong>Post depreciation for Sep 2026</strong> (the button names the month), then <strong>Post depreciation</strong> to confirm.</li></ol>
+<p><strong>Result:</strong> one adjusting entry is posted, dated the last day of the month, with the reference DEP-2026-09 and the description &quot;Depreciation for September 2026&quot;. The run appears at the top of <strong>Runs</strong>. Assets that reach the end of their depreciation show as <strong>Fully depreciated</strong>.</p>
+<h4 id="10-fixed-assets-what-goes-into-the-books-2">What goes into the books</h4>
+<p>The demo company's September run:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>6200 Depreciation Expense — Computer Equipment (ADM)</td><td>4,166.65</td><td></td></tr><tr><td>6200 Depreciation Expense — Furniture and Fixtures (ADM)</td><td>3,000.00</td><td></td></tr><tr><td>6200 Depreciation Expense — Office Equipment (ADM)</td><td>7,500.00</td><td></td></tr><tr><td>6200 Depreciation Expense — Transportation Equipment (WHS)</td><td>20,000.00</td><td></td></tr><tr><td>1222 Accumulated Depreciation - Computer Equipment</td><td></td><td>4,166.65</td></tr><tr><td>1217 Accumulated Depreciation - Furniture and Fixtures</td><td></td><td>3,000.00</td></tr><tr><td>1215 Accumulated Depreciation - Office Equipment</td><td></td><td>7,500.00</td></tr><tr><td>1219 Accumulated Depreciation - Transportation Equipment</td><td></td><td>20,000.00</td></tr></tbody></table></div>
+<p>There is one debit line for each category and department, and one credit line for each category. The memo on each line names the assets.</p>
+<h4 id="10-fixed-assets-which-assets-a-run-depreciates">Which assets a run depreciates</h4>
+<ul><li>Assets in use (not fully depreciated, not disposed of) whose depreciation has started by that month.</li><li>Depreciation starts in the month shown on the asset, the month after acquisition by the demo company's rule.</li><li><strong>Nothing is depreciated in the month an asset is disposed of, or after.</strong> A run made after a disposal leaves the asset out.</li><li>An asset is never depreciated below its residual value.</li></ul>
+<h4 id="10-fixed-assets-how-the-monthly-amount-is-worked-out">How the monthly amount is worked out</h4>
+<p><strong>Straight line.</strong> Each month brings the accumulated depreciation up to where a straight line from the start would be. The laptops (FA-0004) cost 150,000.00 over 36 months, so the line reaches 4,166.67 after one month, 8,333.33 after two, and exactly 150,000.00 after 36. Some months charge 4,166.67 and some 4,166.66, and the total is always exactly the cost less the residual value. A month that was never run is caught up by the next run. The demo company's earlier runs charged the laptops 4,166.67 every month, 2 centavos ahead of the line after August, so September charges 4,166.65.</p>
+<p><strong>Declining balance (double).</strong> Each month charges twice the straight-line rate on the book value left, for example 2 ÷ 60 of it for a five-year asset. When spreading what is left evenly over the remaining months gives more, it charges that instead. The last month of the life takes exactly what is left, so the asset ends on its residual value.</p>
+<blockquote><p><strong>Tip:</strong> Run depreciation every month before you close it; see <a href="#13-month-end-and-year-end">Month-end and year-end</a>. Runs go in order, so once October has been run, September can no longer be run.</p></blockquote>
+<h3 id="10-fixed-assets-undo-a-depreciation-run">Undo a depreciation run</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<p>Undo a run if it was posted too early or an asset's figures were wrong.</p>
+<ol><li>Open <strong>Cash and assets › Depreciation</strong>.</li><li>In <strong>Runs</strong>, select <strong>Undo</strong> on the latest run.</li><li>Say why and select <strong>Undo the run</strong>.</li></ol>
+<p><strong>Result:</strong> the run's entry is reversed by a mirror entry dated the same day, its charges come off every asset, and the month can be run again. Both entries stay in the ledger, linked to each other.</p>
+<p>Only the latest run can be undone, and only while its month is open. A run cannot be undone after an asset it depreciated has been disposed of; take that disposal back first.</p>
+<h3 id="10-fixed-assets-dispose-of-an-asset">Dispose of an asset</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open the asset from <strong>Fixed assets</strong> and select <strong>Dispose of</strong>.</li><li>Enter the <strong>Date of disposal</strong>. It cannot be in the future.</li><li>Enter the <strong>Proceeds</strong>, or 0 if the asset was scrapped, lost or given away.</li><li>If there are proceeds, choose where they went under <strong>Received into</strong>: a cash or bank account, or a receivable. If you choose <strong>1121 Accounts Receivable - Trade</strong>, also choose the <strong>Customer</strong>.</li><li>Type who bought it under <strong>Sold to</strong> (optional), and what happened under <strong>What happened</strong>.</li><li>Check the book value, the gain or loss, and the entry shown at the bottom.</li><li>Select <strong>Post the disposal</strong>.</li></ol>
+<p><strong>Result:</strong> the entry is posted in the general journal, the asset shows as <strong>Disposed</strong>, and its page shows the disposal with a link to the entry.</p>
+<h4 id="10-fixed-assets-what-goes-into-the-books-3">What goes into the books</h4>
+<p>The Isuzu truck (FA-0003) cost 1,200,000.00. Its depreciation was charged through August: 560,000.00. It is sold for 700,000.00 on 14 September, so its book value is 640,000.00 and the gain is 60,000.00:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1219 Accumulated Depreciation - Transportation Equipment</td><td>560,000.00</td><td></td></tr><tr><td>1113 Cash in Bank - Current Account</td><td>700,000.00</td><td></td></tr><tr><td>1218 Transportation Equipment</td><td></td><td>1,200,000.00</td></tr><tr><td>4920 Gain on Disposal of Property and Equipment</td><td></td><td>60,000.00</td></tr></tbody></table></div>
+<p>The office furniture (FA-0002) cost 180,000.00 and has 78,000.00 accumulated. It is sold for 50,000.00, below its book value of 102,000.00, so the loss is 52,000.00:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>1217 Accumulated Depreciation - Furniture and Fixtures</td><td>78,000.00</td><td></td></tr><tr><td>1113 Cash in Bank - Current Account</td><td>50,000.00</td><td></td></tr><tr><td>7200 Loss on Disposal of Property and Equipment</td><td>52,000.00</td><td></td></tr><tr><td>1216 Furniture and Fixtures</td><td></td><td>180,000.00</td></tr></tbody></table></div>
+<p>The accumulated depreciation removed includes what was brought in at go-live. A gain or loss is charged to the asset's department.</p>
+<blockquote><p><strong>Warning:</strong> Record the disposal before you run depreciation for that month. If the month's run already includes the asset, the disposal is refused: undo that run, dispose of the asset, then run the month again. To charge depreciation for the months before the disposal, run those months first.</p></blockquote>
+<h3 id="10-fixed-assets-take-a-disposal-back">Take a disposal back</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open the disposed asset and select <strong>Take the disposal back</strong>.</li><li>Say why and select <strong>Take it back</strong>.</li></ol>
+<p><strong>Result:</strong> the disposal entry is reversed on its own date (that month must still be open), and the asset is in use again. If runs were made while it was disposed of, the next run catches up its straight-line depreciation.</p>
+<h3 id="10-fixed-assets-the-lapsing-schedule">The lapsing schedule</h3>
+<p><strong>Who:</strong> Everyone.</p>
+<p>The lapsing schedule shows every asset held during a period, grouped by category, one row each: the number, name, date acquired and useful life; the cost at the beginning, additions, disposals and cost at the end; the accumulated depreciation at the beginning, the depreciation for the period, the accumulated depreciation on disposals and at the end; the book value at the end; and the months of life left. Each category has a subtotal, and there is a grand total.</p>
+<ol><li>Open <strong>Cash and assets › Fixed assets</strong> and select <strong>Lapsing schedule</strong>.</li><li>Choose the period: <strong>Year to date</strong> is shown first. Pick another from the list, or type the dates.</li><li>Read the <strong>Tie-out to the ledger</strong> below the schedule.</li><li>Select <strong>Print</strong> for a landscape copy with the letterhead and signature blocks, or <strong>Download CSV</strong> for a spreadsheet.</li></ol>
+<p><strong>Result:</strong> the tie-out compares, for each category account, the register's figure with the ledger balance on the end date. <strong>Ties</strong> means they agree. A difference, register less ledger, points to one of these:</p>
+<ul><li>an asset bought through a bill or journal entry but never registered;</li><li>an asset registered but its purchase never booked;</li><li>an entry posted to the asset or accumulated depreciation account by hand;</li><li>a balance on a property account no category uses, listed as <em>Not linked to any asset category</em>.</li></ul>
+<p>The demo company's register ties to the ledger to the centavo.</p>
+<blockquote><p><strong>Tip:</strong> Auditors usually ask for the lapsing schedule for the whole year. Choose the fiscal year's <strong>whole year</strong> option, print it, and file it with the year-end papers. The register itself also downloads as a spreadsheet from <strong>Fixed assets › Download CSV</strong>.</p></blockquote>
+<h3 id="10-fixed-assets-co-operatives">Co-operatives</h3>
+<p>Everything works the same way in a co-operative. The co-operative chart numbers its accounts differently: property accounts sit under <strong>12200</strong>, with their accumulated depreciation accounts (12225, 12235, 12245) next to them. Depreciation is an expense in the statement of operations, so it reduces the net surplus. See <a href="#14-cooperatives">Co-operatives</a>.</p>
+<h3 id="10-fixed-assets-common-problems">Common problems</h3>
+<p><strong>&quot;Sep 2026 already has a depreciation run (AJ-2026-00028). Undo it first to run the month again.&quot;</strong> Each month is run once. To run it again, undo the run first.</p>
+<p><strong>&quot;Depreciation has already been run for Oct 2026. Runs go month by month, so Sep 2026 can no longer be run.&quot;</strong> A later month has a run. For straight-line assets, that later run already caught up the month you skipped.</p>
+<p><strong>&quot;Nothing to depreciate in Sep 2026: no asset in use is due for depreciation that month.&quot;</strong> Every asset is fully depreciated, disposed of, or starts later. Nothing is posted.</p>
+<p><strong>&quot;Sep 2026 is closed. An accountant can reopen it on the Fiscal years screen.&quot;</strong> Runs, undos and disposals post into the month they are dated in, which must be open.</p>
+<p><strong>&quot;Only the latest run can be undone. Undo Oct 2026 first.&quot;</strong> Undo runs from the newest back.</p>
+<p><strong>&quot;FA-0003 was disposed of on 2026-09-14 with this run's depreciation counted. Undo that disposal first.&quot;</strong> Take the disposal back, undo the run, then dispose of the asset again.</p>
+<p><strong>&quot;The depreciation run for Sep 2026 includes FA-0002, and nothing is depreciated in the month of disposal or after.&quot;</strong> Undo September's run, post the disposal, then run September again.</p>
+<p><strong>&quot;Fixed: depreciation has already been charged on this asset.&quot;</strong> Its cost, life and the other figures depreciation used can no longer change. If a figure was wrong, undo the runs that charged it while their months are open, correct the asset, and run again.</p>
+<p><strong>&quot;PJ-2026-00012 does not debit 1218 Transportation Equipment. Link the bill or entry that recorded the purchase.&quot;</strong> The purchase entry must debit the category's asset account. Pick another entry, or check the asset's category.</p>
+<p><strong>&quot;Set the gain on disposal account in Settings → Account defaults first (an administrator can).&quot;</strong> An administrator sets the gain and loss on disposal accounts in <a href="#15-administration-settings">Settings</a>.</p>
+<p><strong>&quot;This category has assets, so its accounts are fixed. Create a new category for different accounts.&quot;</strong> Create a new category and register new assets in it.</p>
+<p><strong>&quot;The acquisition date cannot be in the future.&quot;</strong> or <strong>&quot;The disposal date cannot be in the future.&quot;</strong> Enter the date it actually happened.</p>
+<p><strong>The lapsing schedule shows a difference.</strong> Read the tie-out: register the asset that was bought but not registered, or book the purchase of an asset that was registered but not booked.</p>
+    </article>
+    <article class="chapter" id="11-budgets-and-departments">
+      <h2><span class="n">11</span>Budgets and departments</h2>
+      <p class="summary">Set up departments, build a budget month by month, approve it, and compare the year against it — for the whole company or department by department.</p>
+<p># Budgets and departments</p>
+<p><strong>Departments</strong> are the branches, divisions or cost centres the company reports by. They sit on journal lines, on invoice and bill lines, and on budgets. <strong>Budgets</strong> are what the company planned to earn and spend, month by month, account by account — the figure the actual results are measured against.</p>
+<p>Neither posts anything to the ledger. They shape how the ledger is read.</p>
+<h3 id="11-budgets-and-departments-before-you-start">Before you start</h3>
+<ul><li>An administrator adds departments; an accountant keeps the budgets.</li><li>A budget belongs to one fiscal year, so open the year first (<a href="#05-fiscal-years-and-periods">Fiscal years and periods</a>).</li><li>To report by department, the entries have to carry one. Mark the accounts that always need a department in the <a href="#04-chart-of-accounts">chart</a> — then the system refuses a line without one.</li></ul>
+<h3 id="11-budgets-and-departments-who-can-do-what">Who can do what</h3>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Viewer</th><th>Bookkeeper</th><th>Accountant</th><th>Administrator</th></tr></thead><tbody><tr><td>See departments, budgets and the reports</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>Add, change or deactivate a department</td><td></td><td></td><td></td><td>Yes</td></tr><tr><td>Create a budget, fill it in, import or export it</td><td></td><td></td><td>Yes</td><td>Yes</td></tr><tr><td>Approve a budget, return it to draft, make it the primary one</td><td></td><td></td><td>Yes</td><td>Yes</td></tr></tbody></table></div>
+<h3 id="11-budgets-and-departments-add-a-department">Add a department</h3>
+<p><strong>Who:</strong> Administrator.</p>
+<ol><li>Open <strong>Planning › Departments</strong> and select <strong>New department</strong>.</li><li>Type a short <strong>Code</strong> (ADM, SLS, WHS) and the <strong>Name</strong>.</li><li>Choose a <strong>Parent</strong> if it sits under another.</li><li>Select <strong>Add department</strong>.</li></ol>
+<p><strong>Result:</strong> it can be chosen on entry lines, invoice and bill lines, assets and budgets.</p>
+<p>Each department shows its income, expenses and result for the year so far, and links to the income-by-department report.</p>
+<blockquote><p><strong>Note:</strong> A department that has never been used can be deleted; one with entries is deactivated instead. Its figures stay in the reports.</p></blockquote>
+<h3 id="11-budgets-and-departments-create-a-budget">Create a budget</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open <strong>Planning › Budgets</strong> and select <strong>New budget</strong>.</li><li>Choose the <strong>Fiscal year</strong> and give it a <strong>Name</strong> — <em>Original budget</em>, <em>Revised August</em>, <em>Board approved</em>.</li><li>Choose how to start it:</li></ol>
+<ul><li><strong>Blank</strong> — every month at zero;</li><li><strong>A copy of another budget</strong> — start from last year's, or from a draft;</li><li><strong>Last year's actuals</strong> — what really happened last year, with a percentage uplift if you like.</li></ul>
+<ol><li>Select <strong>Create budget</strong>.</li></ol>
+<p><strong>Result:</strong> the budget opens as a <strong>draft</strong> you can fill in.</p>
+<h3 id="11-budgets-and-departments-fill-in-the-grid">Fill in the grid</h3>
+<p><strong>Who:</strong> Accountant or above, while the budget is a draft.</p>
+<p>The grid has one row per income and expense account and one column per month, plus a total.</p>
+<ol><li>Choose <strong>Company-wide</strong> or a single <strong>department</strong> at the top. Company-wide figures are the ones not attached to any department; a department's figures are budgeted separately.</li><li>Type the amounts. They are positive: a revenue account holds what you expect to earn, an expense account what you expect to spend.</li><li>The tools at the end of each row save typing:</li></ol>
+<ul><li><strong>Spread over 12 months</strong> — type the year's figure and it is divided evenly, with the odd centavos put in the first months so the twelve add up exactly;</li><li><strong>Copy the first month across</strong>;</li><li><strong>Clear the row</strong>.</li></ul>
+<ol><li>Select <strong>Save changes</strong>. <strong>Discard changes</strong> puts back what was last saved.</li></ol>
+<p><strong>Result:</strong> the section totals and the planned net income at the foot follow what you type.</p>
+<blockquote><p><strong>Tip:</strong> Budget only the accounts that matter. A row left at zero is simply not budgeted, and the report shows the actual figures against nothing.</p></blockquote>
+<h3 id="11-budgets-and-departments-import-and-export">Import and export</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<p><strong>Download CSV</strong> gives the grid with a column per month. Change it in a spreadsheet and bring it back with <strong>Import</strong> into a draft budget; rows it cannot match are skipped and listed, and nothing else is touched.</p>
+<h3 id="11-budgets-and-departments-approve-a-budget">Approve a budget</h3>
+<p><strong>Who:</strong> Accountant or above.</p>
+<ol><li>Open the budget and select <strong>Approve</strong>.</li><li>Confirm.</li></ol>
+<p><strong>Result:</strong> the budget is read-only. To change it again, select <strong>Return to draft</strong> and say why — both are in the audit log.</p>
+<p><strong>Set as primary</strong> marks the budget the reports use by default. One per fiscal year.</p>
+<h3 id="11-budgets-and-departments-budget-vs-actual">Budget vs actual</h3>
+<p><strong>Where:</strong> Reports › Budget vs actual.</p>
+<p>Choose the budget, the months (a month, a quarter, the year to date, the whole year) and a department, and the report puts the actual figures beside the budget, in the same shape as the income statement:</p>
+<ul><li><strong>Actual</strong>, <strong>Budget</strong>, <strong>Variance</strong> and <strong>Variance %</strong> for every line;</li><li>whether the variance is <strong>favourable</strong> — more income than planned, or less expense;</li><li>totals for income, expenses and the result.</li></ul>
+<p>Actual figures leave out the closing entries, so the comparison still works in a year that has been closed.</p>
+<h3 id="11-budgets-and-departments-income-by-department">Income by department</h3>
+<p><strong>Where:</strong> Reports › Income by department.</p>
+<p>Every department in its own column, plus one for what carries no department, and a total. The total column is the company's income statement for the same period, to the centavo — which is the check that nothing is filed against the wrong department.</p>
+<p>Both reports print (landscape) and download as CSV.</p>
+<h3 id="11-budgets-and-departments-common-problems">Common problems</h3>
+<p><strong>&quot;That department has entries and cannot be deleted.&quot;</strong> Deactivate it instead; the figures stay where they are.</p>
+<p><strong>&quot;An approved budget cannot be changed.&quot;</strong> Select <strong>Return to draft</strong> first.</p>
+<p><strong>&quot;Enter an amount of zero or more.&quot;</strong> Budgets are kept in the account's normal direction; a negative figure means the account is wrong for the line.</p>
+<p><strong>The department columns do not add up to the income statement.</strong> Some entries carry no department; they are in the <em>No department</em> column. If that column holds more than it should, the entries need the department set — reverse and repost, or post a correcting entry.</p>
+    </article>
+    <article class="chapter" id="12-financial-reports">
+      <h2><span class="n">12</span>Financial reports</h2>
+      <p class="summary">The four statements, the trial balance and the worksheet, the general ledger and the books of accounts, the analysis — how to read each one, compare it, print it and check that it ties.</p>
+<p># Financial reports</p>
+<p>Every report reads the same posted entries, so they always agree with one another. <strong>Reports › All reports</strong> lists them; the ones used every day are also in the sidebar.</p>
+<p>Each report has the same three buttons: the period or date it covers, <strong>Download CSV</strong>, and <strong>Print</strong> (A4 with the letterhead and the signature lines, landscape where it needs the width).</p>
+<h3 id="12-financial-reports-the-four-statements">The four statements</h3>
+<h4 id="12-financial-reports-balance-sheet">Balance sheet</h4>
+<p><em>(A co-operative's is the <strong>statement of financial condition</strong>.)</em></p>
+<p>What the company owns, owes and is worth on a date, classified: current and non-current assets, current and non-current liabilities, equity.</p>
+<ul><li><strong>As of</strong> any date.</li><li><strong>Compare with</strong> the end of last year, or the same date last year.</li><li><strong>Detail</strong>: the totals of each heading, or every account.</li><li>The result for the year that has not been closed yet shows in equity as its own line, so the statement balances before the year-end closing as well as after it.</li></ul>
+<p>The check at the foot — assets = liabilities + equity — must hold. It always does, because entries must balance to post.</p>
+<h4 id="12-financial-reports-income-statement">Income statement</h4>
+<p><em>(A co-operative's is the <strong>statement of operations</strong>.)</em></p>
+<p>Revenue, cost of sales, gross profit, operating expenses and the result for a period, in the multi-step shape.</p>
+<ul><li><strong>For a period</strong>: this month, last month, this quarter, the year to date, or a whole fiscal year.</li><li><strong>Compare with</strong> the period before, the same period last year, or <strong>month by month</strong> — each month of the year in its own column (printed landscape).</li><li><strong>A department</strong> on its own.</li><li><strong>As percentages</strong> — every line as a share of revenue (common-size).</li></ul>
+<p>Closing entries are left out, so a closed year still reports the income it earned.</p>
+<h4 id="12-financial-reports-changes-in-equity">Changes in equity</h4>
+<p>Each equity account from the balance at the start of the period, through the result for the period and everything else that moved it — contributions, withdrawals, dividends, transfers between funds, the year-end closing — to the balance at the end. The ending column equals the equity on the balance sheet.</p>
+<h4 id="12-financial-reports-cash-flows">Cash flows</h4>
+<p>Where the cash came from and where it went, split into operating, investing and financing. Both methods PAS 7 allows are here; pick one from the <strong>Method</strong> list.</p>
+<p><strong>Indirect</strong> (the usual one) starts from the result for the period and adjusts it: depreciation added back, then the movement in every other balance-sheet account.</p>
+<p><strong>Direct</strong> starts from the cash accounts themselves. Every entry that touched cash is taken apart, and the cash it moved is attributed to the other accounts in the same entry, so the statement reads as receipts and payments:</p>
+<ul><li><strong>Cash received from customers</strong> — the receivables and sales side of the entries that brought cash in.</li><li><strong>Cash paid to suppliers and employees</strong> — the payables, inventory and expense side of the entries that took it out.</li><li><strong>Cash generated from operations</strong>, then interest received, interest paid and income taxes paid on their own lines. Income tax settled through a payable account sits with the other operating amounts.</li><li>Underneath, a note reaches the same operating figure the other way, from the result for the period. Where the two methods differ, the note says why on a line called <strong>Investing and financing activities that moved no cash</strong> — equipment bought on account is the usual reason. The direct method is right there: no cash moved, so nothing is shown in investing.</li></ul>
+<p>Either way:</p>
+<ul><li>Selling an asset shows as one thing: the <strong>proceeds</strong> in investing, because the whole amount the buyer paid is an investing flow.</li><li>The foot reconciles: cash at the beginning, the change, cash at the end. Those figures are the cash accounts themselves.</li></ul>
+<h3 id="12-financial-reports-the-trial-balance">The trial balance</h3>
+<p><strong>Where:</strong> Reports › Trial balance.</p>
+<p>Every account's balance on a date, in two columns that must be equal.</p>
+<ul><li><strong>Unadjusted</strong> leaves out the adjusting and closing entries of the current year — the balances before the month-end work.</li><li><strong>Adjusted</strong> leaves out only the closing entries. This is the usual one.</li><li><strong>Post-closing</strong> counts everything, so after a year-end closing the income and expense accounts are zero.</li><li><strong>Zero balances</strong> shows accounts with no balance as well.</li></ul>
+<p>Select any account to open its general ledger.</p>
+<h3 id="12-financial-reports-the-worksheet">The worksheet</h3>
+<p><strong>Where:</strong> Reports › Worksheet.</p>
+<p>The ten-column worksheet, printed landscape: the unadjusted trial balance, the adjustments, the adjusted trial balance, and then each balance carried into either the income statement or the balance sheet, with the result balancing the last two pairs. It is the clearest single page for showing how the month-end adjustments turned into the statements.</p>
+<h3 id="12-financial-reports-the-general-ledger">The general ledger</h3>
+<p><strong>Where:</strong> Reports › General ledger.</p>
+<p>One account's entries over a period: the balance brought forward, each line with its date, entry number, particulars and the running balance, then the totals and the balance carried forward. Choosing a header account takes in everything under it.</p>
+<p>Every line links to the entry it came from, so a figure can always be traced back to the document behind it.</p>
+<h3 id="12-financial-reports-the-books-of-accounts">The books of accounts</h3>
+<p><strong>Where:</strong> Reports › Books of accounts.</p>
+<p>The books the BIR expects, kept in this system as posted entries:</p>
+<ul><li>the <strong>general journal</strong>, the <strong>cash receipts book</strong>, the <strong>cash disbursements book</strong>, the <strong>sales book</strong> and the <strong>purchase book</strong>;</li><li><strong>as journal entries</strong>, each entry with its lines, credits set in from the debits; or</li><li><strong>in columns, paged</strong> — the traditional layout for the four special books: a column for each account that recurs (cash, receivables, sales, output VAT…) and a <em>sundry</em> column for everything else. Each printed page carries its own <strong>page total</strong>, the <strong>total carried forward</strong> at its foot and the <strong>total brought forward</strong> at the top of the next one, and the last page carries the total for the period.</li></ul>
+<p>How many lines go on a printed page is set in <strong>Settings › Printed reports</strong>.</p>
+<h3 id="12-financial-reports-receivables-payables-banking-and-assets">Receivables, payables, banking and assets</h3>
+<p>These have their own chapters: <a href="#07-sales-and-receivables">Sales and receivables</a> for the aging, the statements of account and the subsidiary ledger, <a href="#09-banking">Banking</a> for the bank reconciliation, <a href="#10-fixed-assets">Fixed assets</a> for the lapsing schedule, <a href="#11-budgets-and-departments">Budgets and departments</a> for budget vs actual and income by department.</p>
+<h3 id="12-financial-reports-financial-analysis">Financial analysis</h3>
+<p><strong>Where:</strong> Reports › Financial analysis.</p>
+<p>Twenty-one ratios grouped as liquidity, solvency, profitability and efficiency, each with:</p>
+<ul><li>its value on the date, and the same ratio a year earlier, with an arrow saying whether the move was the good way;</li><li>a sentence saying what it means in plain words;</li><li>its formula, and the figures that went into it — which are the statements' own figures, so a ratio can always be traced.</li></ul>
+<p>A co-operative also gets its PESOS-style indicators — portfolio at risk, allowance cover, share capital and statutory funds against assets, the operating cost ratio — each marked against the benchmark set in <strong>Settings › Co-operative</strong>. See <a href="#14-cooperatives">Co-operatives</a>.</p>
+<h3 id="12-financial-reports-the-integrity-check">The integrity check</h3>
+<p><strong>Where:</strong> Reports › Integrity check. <strong>Who:</strong> Accountant or above.</p>
+<p>Sixteen checks over the stored records: that every posted entry balances and has at least two lines, that numbers run without gaps, that every receivable and payable names its customer or supplier, that documents agree with their entries and their payments, that bank matches add up, that depreciation stays inside cost, that reversals point both ways, that closed years are closed out. Each check passes, warns, or fails with up to twenty examples that link to the record concerned.</p>
+<p>Run it before a year-end, before an audit, and any time a total looks wrong.</p>
+<h3 id="12-financial-reports-common-problems">Common problems</h3>
+<p><strong>&quot;Choose an account.&quot;</strong> The general ledger needs one; pick it from the list or come from the trial balance.</p>
+<p><strong>A report says a difference.</strong> The aging, the subsidiary ledger and the lapsing schedule all set their totals against the ledger. A difference means something was posted straight to the control account by hand; the report lists the entries.</p>
+<p><strong>The printed report is cut off on the right.</strong> Wide reports print landscape by themselves. If a browser ignores that, set the orientation in the print dialog.</p>
+<p><strong>A CSV shows 45,000.00 as text.</strong> Some spreadsheets take the thousands separator that way. The files are written with plain numbers; check the locale set in the spreadsheet's import dialog.</p>
+    </article>
+    <article class="chapter" id="13-month-end-and-year-end">
+      <h2><span class="n">13</span>Month-end and year-end</h2>
+      <p class="summary">The checklist for closing a month, and the whole year-end: what the closing entry does, how to reopen a year, and a co-operative's net-surplus allocation.</p>
+<p># Month-end and year-end</p>
+<h3 id="13-month-end-and-year-end-closing-a-month">Closing a month</h3>
+<p>Work through this list in order. Everything in it has its own chapter; this is the order to do it in.</p>
+<ol><li><strong>Post what is still waiting.</strong> <strong>Ledger › Journal entries</strong>, filter by <em>waiting</em>: post, reject or cancel every draft and submitted entry dated in the month. A month will not close while any are left.</li><li><strong>Bill and invoice everything.</strong> No invoice or bill for the month should still be a draft. The dashboard counts them.</li><li><strong>Reconcile the banks.</strong> Enter or import each statement, match it, record the charges and interest, and reconcile. See <a href="#09-banking">Banking</a>.</li><li><strong>Run the depreciation.</strong> <strong>Cash and assets › Depreciation</strong>: preview, then run the month. See <a href="#10-fixed-assets">Fixed assets</a>.</li><li><strong>Post the accruals and prepayments.</strong> Utilities not yet billed, rent paid in advance, interest earned. Saved entries make this a two-minute job — see <a href="#06-journal-entries">Journal entries</a>.</li><li><strong>Check what ties.</strong> <strong>Reports › Aging</strong> for receivables and for payables (each against its control account), the lapsing schedule against the asset accounts, and <strong>Reports › Trial balance</strong>.</li><li><strong>Run the integrity check.</strong> <strong>Reports › Integrity check</strong> — nothing should fail.</li><li><strong>Print the month.</strong> The trial balance, the income statement for the month, the balance sheet at the month end. File them, or save them as PDFs.</li><li><strong>Close the month.</strong> <strong>Ledger › Fiscal years and periods</strong>, then <strong>Close</strong> on that month. See <a href="#05-fiscal-years-and-periods">Fiscal years and periods</a>.</li></ol>
+<blockquote><p><strong>Tip:</strong> Something late arrives after a month is closed? An accountant can reopen it, post, and close it again — every step is in the audit log. If the month has already been reported to a bank or the BIR, post the entry in the current month instead and explain it in the description.</p></blockquote>
+<h3 id="13-month-end-and-year-end-closing-a-year">Closing a year</h3>
+<p><strong>Who:</strong> Administrator. <strong>Where:</strong> Ledger › Year-end closing.</p>
+<p>Closing a year moves the income and expenses into equity and stops anything more being dated in that year.</p>
+<h4 id="13-month-end-and-year-end-1-check-the-list">1. Check the list</h4>
+<p>The screen shows a checklist. The red ones stop the closing:</p>
+<ul><li>an <strong>earlier year</strong> is still open — close the years in order;</li><li><strong>entries are still waiting</strong> in the year — post, reject or cancel them;</li><li>the <strong>last month is locked</strong> — the closing entry is dated in it;</li><li>the <strong>closing account</strong> in Settings is not set, or is not an active equity account;</li><li>an account or a department the closing entry needs is <strong>inactive</strong> — make it active again, close, then deactivate;</li><li>the <strong>trial balance does not balance</strong> — run the integrity check.</li></ul>
+<p>The amber ones are worth knowing but do not stop you: the year has not ended yet, rejected entries are dated in it, invoices or bills are still drafts, a bank statement is not reconciled, depreciation has not been run for some months, or the next fiscal year is not open yet.</p>
+<h4 id="13-month-end-and-year-end-2-look-at-the-entry-it-will-post">2. Look at the entry it will post</h4>
+<p>The screen shows the closing entry line by line: every income and expense account with a balance for the year, reversed, and the difference going to the closing account. A sole proprietorship also closes the owner's drawings into capital in the same entry.</p>
+<h4 id="13-month-end-and-year-end-3-close-it">3. Close it</h4>
+<ol><li>Select <strong>Close FY2026</strong>.</li><li>Type the year's name to confirm.</li><li>Confirm.</li></ol>
+<p><strong>Result:</strong> the closing entry posts in the closing book, dated the last day of the year; every open month of the year is closed; and the year is marked closed.</p>
+<h4 id="13-month-end-and-year-end-what-goes-into-the-books">What goes into the books</h4>
+<p>A year with 8,182,401.79 of revenue and 7,507,517.02 of expenses:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>4110 Sales (and every other income account)</td><td>8,182,401.79</td><td></td></tr><tr><td>5100 Cost of Goods Sold (and every other expense account)</td><td></td><td>7,507,517.02</td></tr><tr><td>3210 Retained Earnings</td><td></td><td>674,884.77</td></tr></tbody></table></div>
+<p>After it, the income statement for the year still shows what the year earned — it leaves the closing book out — while the balance sheet shows the result inside retained earnings, and the post-closing trial balance shows the income and expense accounts at zero.</p>
+<h3 id="13-month-end-and-year-end-reopening-a-year">Reopening a year</h3>
+<p><strong>Who:</strong> Administrator.</p>
+<p>Only the latest closed year can be reopened.</p>
+<ol><li>Open <strong>Ledger › Year-end closing</strong> and choose the year.</li><li>Select <strong>Reopen FY2026</strong>.</li><li>Say why, then type the year's name to confirm.</li></ol>
+<p><strong>Result:</strong> the closing entries are reversed, dated the year end; the year and its last month are open again. Post what was missing, then close the year again — the closing book simply gets the next number, with no gaps.</p>
+<blockquote><p><strong>Note:</strong> If a co-operative's net-surplus allocation was posted in a <strong>later</strong> year, undo that first; the screen says so.</p></blockquote>
+<h3 id="13-month-end-and-year-end-a-co-operatives-net-surplus">A co-operative's net surplus</h3>
+<p><strong>Who:</strong> Administrator. <strong>Where:</strong> Ledger › Year-end closing.</p>
+<p>A co-operative does not stop at moving the surplus into equity: the Cooperative Code sets out how it is divided. The screen shows the split before anything is posted:</p>
+<div class="tablewrap"><table><thead><tr><th>Fund or payable</th><th>Usual share</th></tr></thead><tbody><tr><td>Reserve fund</td><td>at least 10 % of the net surplus</td></tr><tr><td>Education and training fund</td><td>up to 10 %</td></tr><tr><td>Community development fund</td><td>at least 3 %</td></tr><tr><td>Optional fund</td><td>up to 7 %</td></tr><tr><td>Interest on share capital</td><td>a share of what is left</td></tr><tr><td>Patronage refund</td><td>the rest</td></tr></tbody></table></div>
+<p>The percentages come from <strong>Settings › Co-operative</strong> and can be changed for one allocation on this screen. Each fund is rounded to the centavo and the patronage refund takes the remainder, so the parts always add up to the surplus exactly.</p>
+<p><strong>Allocate with the closing:</strong> tick <em>Allocate it now</em> before closing the year. The allocation posts as a second closing-book entry dated the year end.</p>
+<p><strong>Allocate later:</strong> leave it unticked, close the year, and come back after the general assembly has approved the allocation. Set the <strong>date</strong> — in an open month after the year — and select <strong>Allocate the net surplus</strong>.</p>
+<h4 id="13-month-end-and-year-end-what-goes-into-the-books-2">What goes into the books</h4>
+<p>A net surplus of 200,000.00 at the usual percentages:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>32100 Undivided Net Surplus</td><td>200,000.00</td><td></td></tr><tr><td>34100 Reserve Fund</td><td></td><td>20,000.00</td></tr><tr><td>34200 Education and Training Fund</td><td></td><td>20,000.00</td></tr><tr><td>34300 Community Development Fund</td><td></td><td>6,000.00</td></tr><tr><td>34400 Optional Fund</td><td></td><td>14,000.00</td></tr><tr><td>21500 Interest on Share Capital Payable</td><td></td><td>42,000.00</td></tr><tr><td>21600 Patronage Refund Payable</td><td></td><td>98,000.00</td></tr></tbody></table></div>
+<p><strong>To undo an allocation</strong> posted after the year end: open the year and select <strong>Undo the allocation</strong>, with a reason. It is reversed and can be posted again with different percentages.</p>
+<h3 id="13-month-end-and-year-end-common-problems">Common problems</h3>
+<p><strong>&quot;FY2025 is still open. Close the years in order, oldest first.&quot;</strong> Close the earlier year first.</p>
+<p><strong>&quot;4 journal entries are still waiting in FY2026.&quot;</strong> The link on the item opens them.</p>
+<p><strong>&quot;Dec 2026 is locked for good, and the closing entry is dated in it.&quot;</strong> A locked month can never take an entry. This one cannot be worked around; it is what locking means.</p>
+<p><strong>&quot;The net-surplus allocation was posted on 2027-02-15, in a later year. Undo it first.&quot;</strong> Undo the allocation, then reopen the year.</p>
+<p><strong>&quot;Only the latest closed year can be reopened.&quot;</strong> Reopen the later year first.</p>
+    </article>
+    <article class="chapter" id="14-cooperatives">
+      <h2><span class="n">14</span>Co-operatives</h2>
+      <p class="summary">What is different for a co-operative — the chart, the words on the statements, the statutory funds, the net-surplus allocation and the PESOS-style indicators.</p>
+<p># Co-operatives</p>
+<p>A co-operative keeps the same double-entry books as any company. What differs is the vocabulary the CDA uses, the chart of accounts, the statutory funds, and how the surplus is divided at the end of the year. Choosing <em>Co-operative</em> at setup turns all of that on; it cannot be changed afterwards, because the chart and the statements depend on it.</p>
+<h3 id="14-cooperatives-the-words">The words</h3>
+<div class="tablewrap"><table><thead><tr><th>A business says</th><th>A co-operative says</th></tr></thead><tbody><tr><td>Balance sheet</td><td>Statement of Financial Condition</td></tr><tr><td>Income statement</td><td>Statement of Operations</td></tr><tr><td>Net income</td><td>Net surplus</td></tr><tr><td>Equity</td><td>Members' equity</td></tr><tr><td>Retained earnings</td><td>Undivided net surplus</td></tr><tr><td>Changes in equity</td><td>Statement of Changes in Members' Equity</td></tr></tbody></table></div>
+<p>The reports, the year-end screen and the analysis all follow this by themselves. Nothing has to be set.</p>
+<h3 id="14-cooperatives-the-chart-of-accounts">The chart of accounts</h3>
+<p>The co-operative template follows the CDA's standard chart: five-digit codes, loans receivable and their allowance under assets, deposit liabilities, share capital split between common and preferred, the four statutory funds in equity, and interest on share capital and patronage refund as payables.</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>What it is for</th></tr></thead><tbody><tr><td>11270 Accounts Receivable - Trade</td><td>what members and others owe on sales</td></tr><tr><td>11210 Loans Receivable</td><td>the loan portfolio, if the co-op lends</td></tr><tr><td>21500 Interest on Share Capital Payable</td><td>the members' share of the surplus, by share capital</td></tr><tr><td>21600 Patronage Refund Payable</td><td>the members' share of the surplus, by patronage</td></tr><tr><td>31100 Paid-up Share Capital - Common</td><td>members' shares</td></tr><tr><td>32100 Undivided Net Surplus</td><td>where the year's surplus lands at closing</td></tr><tr><td>34100 Reserve Fund</td><td>the statutory reserve</td></tr><tr><td>34200 Education and Training Fund</td><td>CETF</td></tr><tr><td>34300 Community Development Fund</td><td>CDF</td></tr><tr><td>34400 Optional Fund</td><td>the optional fund</td></tr></tbody></table></div>
+<p>Add to it as the co-operative needs; the rules in <a href="#04-chart-of-accounts">Chart of accounts</a> are the same.</p>
+<h3 id="14-cooperatives-the-cda-registration-number">The CDA registration number</h3>
+<p><strong>Who:</strong> Administrator. <strong>Where:</strong> Settings › Company.</p>
+<p>Fill in <strong>CDA registration number</strong>. It prints on the letterhead of every report, beside the TIN.</p>
+<h3 id="14-cooperatives-the-net-surplus-allocation">The net-surplus allocation</h3>
+<p>At the end of the year the surplus is moved out of undivided net surplus into the statutory funds and what is owed to members. The percentages live in <strong>Settings › Co-operative</strong>:</p>
+<div class="tablewrap"><table><thead><tr><th>Setting</th><th>The usual figure</th></tr></thead><tbody><tr><td>Reserve fund (%)</td><td>10 — at least, by the Code</td></tr><tr><td>Education and training fund (%)</td><td>10 — up to</td></tr><tr><td>Community development fund (%)</td><td>3 — at least</td></tr><tr><td>Optional fund (%)</td><td>7 — up to</td></tr><tr><td>Interest on share capital (% of the remainder)</td><td>30, with the patronage refund taking the rest</td></tr></tbody></table></div>
+<blockquote><p><strong>Warning:</strong> These are the figures in the Cooperative Code. <strong>Check them against the co-operative's own by-laws and the general assembly's resolution before the first allocation</strong> — a co-operative may set higher shares, and the board may allocate differently in a given year.</p></blockquote>
+<p>The allocation itself, with or without the closing, is in <a href="#13-month-end-and-year-end-a-co-operatives-net-surplus">Month-end and year-end</a>. Each fund is rounded to the centavo and the patronage refund takes what is left, so the parts always add up.</p>
+<h3 id="14-cooperatives-paying-members">Paying members</h3>
+<p>The allocation only records what is owed. Paying it out is an ordinary payment:</p>
+<div class="tablewrap"><table><thead><tr><th>Account</th><th>Debit</th><th>Credit</th></tr></thead><tbody><tr><td>21600 Patronage Refund Payable</td><td>98,000.00</td><td></td></tr><tr><td>11110 Cash on Hand</td><td></td><td>98,000.00</td></tr></tbody></table></div>
+<p>Do it as a journal entry in the cash disbursements book (<a href="#06-journal-entries">Journal entries</a>), or as a payment if the members are set up as contacts.</p>
+<h3 id="14-cooperatives-the-indicators">The indicators</h3>
+<p><strong>Where:</strong> Reports › Financial analysis.</p>
+<p>Besides the usual ratios, a co-operative gets five PESOS-style indicators:</p>
+<div class="tablewrap"><table><thead><tr><th>Indicator</th><th>What it says</th><th>The usual mark</th></tr></thead><tbody><tr><td>Portfolio at risk</td><td>loans past due ÷ loans receivable</td><td>5 % or less</td></tr><tr><td>Allowance cover</td><td>allowance for probable losses ÷ loans past due</td><td>at least 35 %</td></tr><tr><td>Share capital to total assets</td><td>how much of the co-op is its members' shares</td><td>at least 35 %</td></tr><tr><td>Statutory funds to total assets</td><td>the four funds together against assets</td><td>at least 10 %</td></tr><tr><td>Operating cost ratio</td><td>operating and financing costs ÷ revenue</td><td>30 % or less</td></tr></tbody></table></div>
+<p>Each one shows whether it meets its mark. <strong>The marks are yours to set</strong> — an administrator changes them in <strong>Settings › Co-operative</strong>, where they sit under the allocation percentages. Setting one to zero takes the mark off the report.</p>
+<p>For the portfolio indicators to mean anything, the loan accounts must be there and used: loans receivable, loans past due (or a separate account for them), and the allowance for probable losses.</p>
+<h3 id="14-cooperatives-what-is-the-same">What is the same</h3>
+<p>Everything else. Invoices, bills, receipts, payments, the bank reconciliations, the fixed assets, the budgets, the books of accounts, the audit trail, the month-end and the approval rules all work exactly as the rest of this guide describes.</p>
+<h3 id="14-cooperatives-common-problems">Common problems</h3>
+<p><strong>The statements still say &quot;balance sheet&quot;.</strong> The company was set up as a business. The kind of organisation is chosen at setup and cannot be changed; a co-operative needs a fresh company with the co-operative chart.</p>
+<p><strong>&quot;Choose the account for the reserve fund in Settings › Co-operative.&quot;</strong> The allocation needs an account for each fund it is about to post to. Set them in Settings.</p>
+<p><strong>The allocation percentages add up to more than 100 %.</strong> The four funds together cannot take more than the whole surplus. Check them against the by-laws.</p>
+<p><strong>Portfolio at risk shows nothing.</strong> There are no loans in the chart, or nothing has been posted to them. The indicator divides by the loan portfolio, and there is none.</p>
+    </article>
+    <article class="chapter" id="15-administration">
+      <h2><span class="n">15</span>Administration</h2>
+      <p class="summary">Users and roles, every setting and what it changes, importing from spreadsheets, the audit log, the scheduled job, and keeping the books safe.</p>
+<p># Administration</p>
+<p>Everything in this chapter is an administrator's work.</p>
+<h3 id="15-administration-users-and-roles">Users and roles</h3>
+<p><strong>Where:</strong> Administration › Users.</p>
+<div class="tablewrap"><table><thead><tr><th>Role</th><th>What it may do</th></tr></thead><tbody><tr><td><strong>Viewer</strong></td><td>read every report, ledger and analysis; change nothing</td></tr><tr><td><strong>Bookkeeper</strong></td><td>prepare drafts — entries, invoices, bills, receipts, payments — and match the bank</td></tr><tr><td><strong>Accountant</strong></td><td>everything a bookkeeper may, and approve and post, reverse, close and reopen months, run depreciation, keep the budgets</td></tr><tr><td><strong>Administrator</strong></td><td>everything, plus the chart of accounts, departments, fiscal years, the year-end, users, settings and imports</td></tr></tbody></table></div>
+<p><strong>To add someone:</strong> select <strong>Add user</strong>, fill in the name, email and role, and select <strong>Create</strong>. The password shows once — give it to them and have them change it under <strong>My account</strong>.</p>
+<p><strong>To change what someone may do:</strong> open them and change the role. It takes effect on their next request; they do not need to sign in again.</p>
+<p><strong>To stop someone using the system:</strong> open them and set the state to <em>Disabled</em>. Their sessions end at once. People are never deleted — the audit log points at them for years.</p>
+<blockquote><p><strong>Tip:</strong> Keep at least two administrators. If the only one loses their password and their email, there is no way back in except by the installer on the server.</p></blockquote>
+<h3 id="15-administration-settings">Settings</h3>
+<p><strong>Where:</strong> Administration › Settings.</p>
+<p>Each setting saves on its own, and every change is in the audit log with who made it.</p>
+<div class="tablewrap"><table><thead><tr><th>Group</th><th>What it holds</th></tr></thead><tbody><tr><td><strong>Company</strong></td><td>name, registered name, business style, TIN, CDA registration number, address, email, phone. These print on every report. The kind of organisation, the business form and the fiscal-year start month were chosen at setup and cannot be changed.</td></tr><tr><td><strong>Branding</strong></td><td>logo, brand and accent colour, light or dark, corner roundness, typeface.</td></tr><tr><td><strong>Currency</strong></td><td>code, symbol, where the symbol goes, the separators, the locale and the time zone. Decimals are fixed at installation.</td></tr><tr><td><strong>Tax</strong></td><td>whether the company is VAT-registered, the tax name and rate, whether typed amounts include VAT, and the label for the tax ID.</td></tr><tr><td><strong>The ledger</strong></td><td>whether a second person approves every entry, whether preparers may approve their own, the digits in journal numbers, the most lines an entry may have, and the prefix of each book.</td></tr><tr><td><strong>Account defaults</strong></td><td>which account is the closing account, the owner's drawings, the receivables and payables controls, output and input VAT, withholding tax, creditable withholding tax, the default sales and purchases accounts, bank charges, interest income, and gain and loss on disposal.</td></tr><tr><td><strong>Documents</strong></td><td>the prefixes and digits of invoice, credit note, bill, debit note, receipt and payment numbers, the default customer and supplier terms, and the aging buckets.</td></tr><tr><td><strong>Banking and fixed assets</strong></td><td>how many days apart a bank line and a book line may still be matched, when depreciation starts, and the asset number prefix.</td></tr><tr><td><strong>Co-operative</strong></td><td>the allocation percentages and the accounts for the statutory funds, and the marks the indicators are measured against.</td></tr><tr><td><strong>Printed reports</strong></td><td>how many lines go on a printed page of the books, whether &quot;printed by&quot; is shown, the note under report titles, and the names and titles over the signature lines.</td></tr><tr><td><strong>Notifications</strong></td><td>whether email copies of notifications are sent.</td></tr></tbody></table></div>
+<blockquote><p><strong>Note:</strong> A prefix can never be blank, and two books — or two kinds of document — can never share one. Numbers would run into each other.</p></blockquote>
+<h3 id="15-administration-imports">Imports</h3>
+<p><strong>Where:</strong> Administration › Imports.</p>
+<p>Four kinds of file can be brought in:</p>
+<div class="tablewrap"><table><thead><tr><th>Kind</th><th>What it does</th></tr></thead><tbody><tr><td><strong>Chart of accounts</strong></td><td>adds accounts; codes already there are left alone</td></tr><tr><td><strong>Customers and suppliers</strong></td><td>adds contacts; codes already there are left alone</td></tr><tr><td><strong>Opening balances</strong></td><td>fills the opening-balance draft, for you to check and post</td></tr><tr><td><strong>Journal entries</strong></td><td>creates draft entries, one per entry key, for someone to check and submit</td></tr></tbody></table></div>
+<p><strong>How to import:</strong></p>
+<ol><li>Choose what you are importing.</li><li>Select <strong>Download a template</strong> to get the columns, or use your own file with a heading row.</li><li>Select <strong>Choose a CSV file</strong>, or paste the rows.</li><li>Say which column holds what — the obvious ones match themselves.</li><li>Select <strong>Check the file</strong>. Every row comes back marked <em>Ready</em>, <em>already here</em>, or with what is wrong with it.</li><li>Fix anything red, check again, then select <strong>Import</strong>.</li></ol>
+<p><strong>Result:</strong> the whole file goes in as one change. If any row fails, nothing is written — there is no such thing as a half-imported chart.</p>
+<blockquote><p><strong>Note:</strong> Imports never post to the ledger. Opening balances land in the draft on the Opening balances screen; entries land as drafts in Journal entries. Somebody still checks and posts them.</p></blockquote>
+<h3 id="15-administration-the-audit-log">The audit log</h3>
+<p><strong>Where:</strong> Administration › Audit log.</p>
+<p>Every change is recorded: who, what, when, from which address, and the details. Entries posted, reversed, cancelled; months closed and reopened; years closed; settings changed; users added; files attached and removed; imports. It cannot be edited or deleted from anywhere in the system.</p>
+<p>Work the scheduled job did shows as <strong>System</strong>.</p>
+<p>Search by action, by person or by what was touched. Every record links to the entry or document it belongs to.</p>
+<h3 id="15-administration-the-scheduled-job">The scheduled job</h3>
+<p>Once installed, the server should run this every fifteen minutes:</p>
+<pre><code>php /path/to/accounting/index.php tools cron</code></pre>
+<p>It does two things: it turns recurring saved entries that are due into drafts for their owners (<a href="#06-journal-entries-saved-entries">Journal entries</a>), and it clears out old rate-limit rows, expired sign-in tokens, spent password-reset links and notifications that were read long ago. The audit log is never pruned.</p>
+<p>On Windows, a Task Scheduler task running the same command does the job.</p>
+<h3 id="15-administration-setting-up-from-a-command-line">Setting up from a command line</h3>
+<p>The setup screen is the ordinary way in (<a href="#02-first-time-setup">First-time setup</a>). A server with no browser to hand can do the same three things by command:</p>
+<pre><code>php index.php tools seed_chart business_corporation   # or business_sole_proprietorship, cooperative
+php index.php tools create_year 2026-01-01            # the first day of the first month of the books
+php index.php tools create_admin owner%40example.test # prints a password once</code></pre>
+<p>The chart is seeded only into an empty ledger, never merged into one that already has accounts. The first fiscal year fixes the month the books turn on, and Settings will not change that afterwards. Percent-encode the <code>@</code> in an address, as above.</p>
+<p>Later years need no date: <code>tools create_year</code> on its own takes the day after the last one ends.</p>
+<h3 id="15-administration-keeping-the-books-safe">Keeping the books safe</h3>
+<ul><li><strong>Back up the database every day</strong>, and keep a copy off the server. The books live there; everything else can be reinstalled.</li><li><strong>Back up <code>uploads/</code></strong> as well: the attachments are files, not database rows.</li><li><strong>Keep <code>application/config/secrets.php</code> out of version control.</strong> It holds the database password and the key that signs sessions.</li><li><strong>Lock months</strong> once their figures are final, so nothing can change under a filed return.</li><li><strong>Run the integrity check</strong> before an audit and after any unusual work.</li><li><strong>Keep the roles honest.</strong> The point of maker-checker is that the person who prepares an entry is not the one who approves it.</li></ul>
+<h3 id="15-administration-common-problems">Common problems</h3>
+<p><strong>&quot;Only an administrator can do that.&quot;</strong> The role is not high enough. The table above says which is.</p>
+<p><strong>A setting will not save.</strong> The message says why — a prefix that is already in use, an account of the wrong type, a percentage out of range.</p>
+<p><strong>An import says &quot;Fix the 3 rows marked below first.&quot;</strong> Nothing was written. Correct those rows in the file and check it again.</p>
+<p><strong>The scheduled job is not making the recurring drafts.</strong> Run <code>php index.php tools cron</code> by hand on the server and read what it prints. Usually the month the draft would be dated in is closed, and the owner has a notification saying so.</p>
+    </article>
+    <article class="chapter" id="16-troubleshooting-and-glossary">
+      <h2><span class="n">16</span>Troubleshooting and glossary</h2>
+      <p class="summary">The messages the system gives and what to do about them, the checks that must always tie, and what the words mean.</p>
+<p># Troubleshooting and glossary</p>
+<h3 id="16-troubleshooting-and-glossary-when-something-will-not-post">When something will not post</h3>
+<p><strong>&quot;No fiscal period covers 2027-01-05. Create the fiscal year first.&quot;</strong> The date is outside every fiscal year. An administrator opens the year under <strong>Ledger › Fiscal years and periods</strong>.</p>
+<p><strong>&quot;Sep 2026 is closed. An accountant can reopen it.&quot;</strong> Date the entry in an open month, or ask an accountant to reopen that one.</p>
+<p><strong>&quot;Aug 2026 is locked.&quot;</strong> A locked month never takes another entry. Post the correction in an open month.</p>
+<p><strong>&quot;FY2026 is closed.&quot;</strong> The whole year is closed. An administrator can reopen it from <strong>Ledger › Year-end closing</strong>, or the entry can be dated in the current year.</p>
+<p><strong>&quot;Debits (11,200.00) and credits (10,000.00) do not balance.&quot;</strong> The two sides differ; the foot of the lines shows by how much.</p>
+<p><strong>&quot;Line 2: 1121 needs a customer.&quot;</strong> Receivables and payables lines must name the customer or supplier, so the subsidiary ledgers always equal their control accounts.</p>
+<p><strong>&quot;Line 3: 6210 needs a department.&quot;</strong> The account is marked as needing one. Choose it on the line.</p>
+<p><strong>&quot;Only a posted entry can be reversed.&quot;</strong> A draft is cancelled, not reversed.</p>
+<p><strong>&quot;This entry was posted from a customer invoice. Undo it there, so the document and the ledger stay in step.&quot;</strong> Open the document the entry links to and cancel it there.</p>
+<p><strong>&quot;The audit trail could not be written, so nothing was saved.&quot;</strong> The system refuses to change the books without recording who did it. Tell the administrator — the database is probably refusing writes.</p>
+<h3 id="16-troubleshooting-and-glossary-when-a-total-does-not-tie">When a total does not tie</h3>
+<p>Everything in the books ties to something else. When two figures disagree, this is where to look.</p>
+<div class="tablewrap"><table><thead><tr><th>What disagrees</th><th>Where to look</th></tr></thead><tbody><tr><td>The aging against the receivables control account</td><td>The foot of the aging lists the entries posted straight to the control account. Reverse them and raise the document instead.</td></tr><tr><td>The subsidiary ledger against the control account</td><td>The same cause; the report shows what could not be attributed.</td></tr><tr><td>The lapsing schedule against the asset accounts</td><td>An asset was bought but never registered, or registered but never booked. The tie-out block on the report names the category.</td></tr><tr><td>The bank against the books</td><td>The reconciliation report explains it: deposits in transit, outstanding cheques, and what the books do not have yet (<a href="#09-banking">Banking</a>).</td></tr><tr><td>The income statement against the department columns</td><td>Entries that carry no department are in the <em>No department</em> column.</td></tr><tr><td>The trial balance itself</td><td>Run <strong>Reports › Integrity check</strong> — that is exactly what it is for.</td></tr></tbody></table></div>
+<h3 id="16-troubleshooting-and-glossary-when-the-screen-misbehaves">When the screen misbehaves</h3>
+<p><strong>A page says &quot;Could not load…&quot; with a message.</strong> The server refused or could not be reached. The message says which. If it says nothing useful, the browser was offline; the pages you already opened keep working.</p>
+<p><strong>The figures look stale after somebody else posted.</strong> Reload the page. Reports are read fresh every time; the browser may be showing what it had.</p>
+<p><strong>&quot;Request failed (500)&quot; or &quot;Something went wrong on the server.&quot;</strong> Something broke where the system could not explain it. Tell the administrator what you were doing and when — the server's log has the detail, and the audit log shows what did and did not happen.</p>
+<p><strong>The print comes out with the sidebar.</strong> Use the <strong>Print</strong> button on the report, not the browser's menu.</p>
+<h3 id="16-troubleshooting-and-glossary-the-words">The words</h3>
+<p><strong>Account</strong> — a line in the chart of accounts that figures are posted to.</p>
+<p><strong>Accrual</strong> — an expense incurred or income earned that has not been billed yet, recorded so the month carries its own costs.</p>
+<p><strong>Adjusting entry</strong> — a month-end entry that puts the books right before the statements: depreciation, accruals, prepayments.</p>
+<p><strong>Aging</strong> — a report that puts what is owed into buckets by how long it has been outstanding.</p>
+<p><strong>Allocation</strong> — saying which invoice a receipt (or credit note) pays. It moves nothing in the ledger.</p>
+<p><strong>Book</strong> — where an entry is filed: general journal, cash receipts, cash disbursements, sales, purchases, adjusting, closing, opening.</p>
+<p><strong>Brought forward / carried forward</strong> — the balance at the start of a page or period, and at its end.</p>
+<p><strong>Control account</strong> — the account in the general ledger that holds the total of a subsidiary ledger, such as receivables.</p>
+<p><strong>Credit note</strong> — a document that reduces what a customer owes.</p>
+<p><strong>CWT (creditable withholding tax)</strong> — tax a customer withholds from its payment to the company, which the company credits against its own income tax.</p>
+<p><strong>Debit note</strong> — a document that reduces what the company owes a supplier.</p>
+<p><strong>Draft</strong> — prepared but not posted. Not in the books, and it has no number.</p>
+<p><strong>EWT (expanded withholding tax)</strong> — tax the company withholds from a payment to a supplier and remits to the BIR.</p>
+<p><strong>Fiscal year</strong> — the twelve months the company reports on.</p>
+<p><strong>Journal entry</strong> — the record of one transaction, balanced, with at least two lines. The only thing that reaches the ledger.</p>
+<p><strong>Ledger</strong> — every posted line, which is what every report reads.</p>
+<p><strong>Maker-checker</strong> — one person prepares, another approves. It is the control that keeps a single person from writing the books alone.</p>
+<p><strong>Net surplus</strong> — a co-operative's result for the year, before it is allocated.</p>
+<p><strong>Opening balances</strong> — the balances the books start from at go-live.</p>
+<p><strong>Period</strong> — a month inside a fiscal year. Entries post only into an open one.</p>
+<p><strong>Posting</strong> — approving an entry so it reaches the ledger, takes its number, and becomes part of the books.</p>
+<p><strong>Reversal</strong> — a second entry with every debit and credit swapped, which cancels the first. Both stay on record.</p>
+<p><strong>Statutory funds</strong> — a co-operative's reserve, education and training, community development and optional funds.</p>
+<p><strong>Subsidiary ledger</strong> — the detail behind a control account: the balance of each customer, supplier or asset.</p>
+<p><strong>Trial balance</strong> — every account's balance on a date, in two columns that must be equal.</p>
+<p><strong>VAT-exempt, zero-rated, VATable</strong> — how a sale or purchase is treated for VAT. VATable carries the 12 %; zero-rated is taxable at 0 %; exempt carries none.</p>
+<p><strong>Voucher</strong> — the printed sheet that is signed and filed: journal voucher, cash receipt voucher, disbursement voucher.</p>
+<p><strong>Worksheet</strong> — the ten-column sheet that carries the trial balance through the adjustments into the statements.</p>
+    </article>
+    <footer class="docfoot">
+      <span>UG·1 · User's Guide · v1.0, 20 September 2026</span>
+      <span><a href="technical-spec.html">← Technical spec</a> &nbsp;·&nbsp; <a href="admin-guide.html">Admin guide →</a></span>
+    </footer>
+    </div>
+  </main>
+</div>
+</body>
+</html>

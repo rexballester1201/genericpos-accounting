@@ -48,8 +48,8 @@ schedule tied to the ledger.
 budget grid per department, approval, CSV in and out, budget vs actual, and
 income by department.
 
-**Reports.** Balance sheet, income statement, changes in equity and cash flows
-(indirect), with comparative and month-by-month columns, common-size
+**Reports.** Balance sheet, income statement, changes in equity and cash flows (by
+either method PAS 7 allows), with comparative and month-by-month columns, common-size
 percentages and a department filter; trial balance (unadjusted, adjusted,
 post-closing), the ten-column worksheet, the general ledger, the books of
 accounts (as entries, or columnar and paged with totals brought forward),
@@ -130,15 +130,25 @@ php index.php tools trial_balance [date] [kind]       print a trial balance
 php index.php maildiag <address>                      check the mail settings
 ```
 
-## The user's guide
+## The documentation
 
-Sixteen chapters, step by step, in [docs/guide/](docs/guide/). They are also
-the Help screen inside the app: after changing them, rebuild the file the app
-reads.
+Nine documents in [docs/manual/](docs/manual/), as standalone HTML that opens
+from disk and prints on A4 — design and technical specifications, the user's
+guide, guides for administrators, deployment and troubleshooting, a product
+overview, the handover note and the build audit. Start at
+[docs/manual/index.html](docs/manual/index.html).
+
+The user's guide is sixteen chapters in [docs/guide/](docs/guide/), and those
+chapters are also the Help screen inside the app. After changing them, rebuild
+both the file the app reads and the printed set.
 
 ```bash
 node docs/build-guide.mjs        # docs/guide/*.md → help/guide.json
+node docs/build-docs.mjs         # docs/manual-src + docs/guide → docs/manual/*.html
 ```
+
+> `docs/` is not served — `.htaccess` refuses it, so the source and the schema
+> stay private. Read the set from a checkout, not from the running site.
 
 ## The tests
 

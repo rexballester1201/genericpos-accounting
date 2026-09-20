@@ -29,7 +29,7 @@
  * URL, or pages/missing.html would be cached as a copy of the whole app.
  */
 
-const CACHE_VERSION = 'v2.2.0';
+const CACHE_VERSION = 'v2.3.0';
 
 /* acc- prefix: cache names are per ORIGIN, not per scope, so GenericPOS (gp-)
    on the same host shares them. Our own prefix keeps our caches, and our

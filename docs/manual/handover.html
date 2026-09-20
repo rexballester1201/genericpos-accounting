@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Handover Note · GenericPOS Accounting</title>
+<meta name="description" content="Where everything is, what runs unattended, and what is still open.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#EDF0EC; --sheet:#F9FBF7; --ink:#141E19; --ink-2:#44534B; --ink-3:#66756D;
+  --rule:#C8D3CC; --rule-2:#93A79A; --accent:#1B5940; --accent-soft:#DCE8E1;
+  --gold:#8A5A12; --gold-soft:#F5EBD8; --code:#E2E9E4; --sel:#CFE3D7;
+  --f-head:"Libre Franklin","Franklin Gothic Medium","Segoe UI",Arial,sans-serif;
+  --f-body:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+    --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+    --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+  --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+  --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel);color:var(--ink)}
+a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+code{font-family:var(--f-mono);font-size:.82em;background:var(--code);padding:.1em .36em;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3,h4{font-family:var(--f-head);color:var(--ink);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-weight:800;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.06;letter-spacing:-.018em}
+h2{font-weight:700;font-size:1.42rem;line-height:1.22}
+h3{font-weight:700;font-size:1.06rem;line-height:1.3}
+h4{font-weight:600;font-size:.95rem;line-height:1.35}
+p{margin:0}
+.lbl,.eyebrow,dt,th{font-family:var(--f-head);font-weight:600;font-size:.7rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3)}
+
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:var(--paper);
+  padding:10px 16px;font-family:var(--f-head);font-weight:600;z-index:99}
+.skip:focus{left:8px;top:8px}
+
+/* ── the binder ─────────────────────────────────────────────────────────── */
+.binder{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.rail{background:var(--sheet);border-bottom:1px solid var(--rule)}
+.rail-in{padding:14px 20px;display:grid;gap:12px;max-width:1180px;margin-inline:auto}
+.rail-brand{display:grid;gap:2px}
+.rail-brand b{font-family:var(--f-head);font-weight:800;font-size:.95rem;letter-spacing:-.01em}
+.rail-brand span{font-family:var(--f-head);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.rail a{display:flex;align-items:baseline;gap:8px;white-space:nowrap;text-decoration:none;
+  font-family:var(--f-head);font-size:.86rem;font-weight:600;color:var(--ink-2);
+  padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}
+.rail a:hover{color:var(--accent);border-color:var(--rule-2)}
+.rail a[aria-current="page"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.rail .r{font-family:var(--f-mono);font-size:.72rem;font-weight:500;color:var(--ink-3)}
+.rail a[aria-current="page"] .r{color:var(--accent)}
+
+.doc{padding:34px 20px 90px;max-width:none;margin:0;display:grid;gap:40px}
+.wrap{max-width:74ch;margin-inline:auto;width:100%;display:grid;gap:40px}
+
+@media (min-width:1040px){
+  .binder{grid-template-columns:270px minmax(0,1fr)}
+  .rail{border-bottom:0;border-right:1px solid var(--rule);position:sticky;top:0;align-self:start;
+    height:100vh;overflow-y:auto}
+  .rail-in{padding:30px 22px;gap:22px}
+  .rail ol{flex-direction:column;gap:3px;overflow:visible}
+  .rail a{border:0;border-radius:3px;padding:7px 10px;background:transparent;white-space:normal}
+  .rail a[aria-current="page"]{background:var(--accent-soft)}
+  .doc{padding:48px 40px 110px}
+}
+
+/* ── the document's own head ────────────────────────────────────────────── */
+.dochead{display:grid;gap:18px;border-bottom:1.5px solid var(--rule-2);padding-bottom:22px}
+.dochead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.dochead h1{max-width:18ch}
+.dochead .eyebrow{margin-bottom:8px;display:block}
+.docref{border:1.5px solid var(--accent);color:var(--accent);border-radius:4px;padding:8px 14px;
+  text-align:center;display:grid;gap:2px;flex:none}
+.docref span{font-family:var(--f-head);font-size:.64rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.docref strong{font-family:var(--f-mono);font-size:1.2rem;font-weight:600;letter-spacing:.03em}
+.lead{font-size:1.14rem;line-height:1.55;color:var(--ink-2);max-width:62ch}
+.control{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 26px;
+  border-top:1px solid var(--rule);padding-top:16px}
+.control div{display:grid;gap:3px;min-width:0}
+.control dd{margin:0;font-family:var(--f-head);font-size:.9rem;line-height:1.4;color:var(--ink)}
+
+/* ── contents ───────────────────────────────────────────────────────────── */
+.toc{display:grid;gap:8px}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.toc a{display:flex;gap:10px;text-decoration:none;font-family:var(--f-head);font-size:.92rem;
+  font-weight:600;color:var(--ink-2);padding:5px 0}
+.toc a:hover{color:var(--accent)}
+.toc .n{font-family:var(--f-mono);font-weight:500;color:var(--accent);font-size:.84rem;flex:none}
+
+/* ── sections ───────────────────────────────────────────────────────────── */
+.sec{display:grid;gap:16px;scroll-margin-top:20px}
+.sec>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--rule);padding-bottom:9px}
+.sec>h2 .n{font-family:var(--f-mono);font-weight:600;font-size:.98rem;color:var(--accent);flex:none}
+.sec h3{margin-top:10px}
+.sec ul,.sec ol{margin:0;padding-left:1.25em;display:grid;gap:8px}
+.sec li>ul,.sec li>ol{margin-top:8px}
+.sec p+p{margin-top:0}
+.note{background:var(--sheet);border-left:3px solid var(--accent);padding:14px 18px;display:grid;gap:8px}
+.note.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+.note .lbl{color:var(--accent)}
+.note.warn .lbl{color:var(--gold)}
+
+.rule-card{background:var(--sheet);border:1px solid var(--rule-2);border-radius:5px;
+  padding:18px 20px;display:grid;gap:10px}
+.rule-card h3{color:var(--accent)}
+
+dl.defs{margin:0;display:grid;gap:14px}
+dl.defs>div{display:grid;gap:4px}
+dl.defs dt{font-size:.74rem}
+dl.defs dd{margin:0}
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);
+  border-radius:5px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-head);font-size:.9rem}
+th,td{padding:9px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+thead th{border-bottom:1.5px solid var(--rule-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td code{font-size:.84em}
+.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{font-weight:700;white-space:nowrap}
+
+/* ── code ───────────────────────────────────────────────────────────────── */
+pre{margin:0;background:var(--code);border:1px solid var(--rule);border-radius:5px;
+  padding:14px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+pre code{background:none;padding:0;font-size:.82rem;line-height:1.6}
+
+blockquote{margin:0;border-left:3px solid var(--rule-2);padding-left:16px;color:var(--ink-2)}
+
+/* ── the guide's chapters ───────────────────────────────────────────────── */
+.chapter{display:grid;gap:16px;scroll-margin-top:20px;padding-top:12px}
+.chapter>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1.5px solid var(--rule-2);padding-bottom:10px}
+.chapter>h2 .n{font-family:var(--f-mono);font-weight:600;color:var(--accent);flex:none}
+.chapter .summary{color:var(--ink-2);font-size:1.02rem}
+
+/* ── the foot ───────────────────────────────────────────────────────────── */
+.docfoot{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-wrap:wrap;
+  justify-content:space-between;gap:10px 20px;font-family:var(--f-head);font-size:.82rem;color:var(--ink-3)}
+.docfoot a{font-weight:600;text-decoration:none}
+
+/* ── the contents page ──────────────────────────────────────────────────── */
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:18px 20px;
+  display:grid;gap:8px;align-content:start;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--rule-2)}
+.card .r{font-family:var(--f-mono);font-size:.78rem;font-weight:600;color:var(--accent)}
+.card h3{color:var(--ink)}
+.card p{font-size:.95rem;color:var(--ink-2);line-height:1.5}
+.card .who{font-family:var(--f-head);font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+
+@media print{
+  :root:root:root{--paper:#fff;--sheet:#fff;--ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#bbb;--rule-2:#888;--accent:#1B5940;--accent-soft:#fff;--gold:#7a4f10;
+    --gold-soft:#fff;--code:#eee;color-scheme:light}
+  @page{size:A4;margin:16mm 15mm}
+  body{font-size:10.5pt}
+  .rail,.skip,.toc{display:none}
+  .binder{display:block}
+  .doc{padding:0;gap:26px}
+  .wrap{max-width:none;gap:26px}
+  .sec,.chapter,tr,.note,.rule-card,pre{break-inside:avoid}
+  h2,h3{break-after:avoid}
+  .tablewrap{overflow:visible}
+  a{color:inherit;text-decoration:none}
+  .docfoot{margin-top:18px}
+}
+
+</style>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the document</a>
+<div class="binder">
+<nav class="rail" aria-label="The documentation set">
+  <div class="rail-in">
+    <div class="rail-brand"><b>GenericPOS Accounting</b><span>Documentation set · v1.0</span></div>
+    <ol>
+      <li><a href="index.html"><span class="r">—</span>Contents</a></li>
+      <li><a href="design-spec.html"><span class="r">DS·1</span>Design spec</a></li>
+      <li><a href="technical-spec.html"><span class="r">TS·1</span>Technical spec</a></li>
+      <li><a href="users-guide.html"><span class="r">UG·1</span>User's guide</a></li>
+      <li><a href="admin-guide.html"><span class="r">AG·1</span>Admin guide</a></li>
+      <li><a href="deployment-guide.html"><span class="r">DG·1</span>Deployment guide</a></li>
+      <li><a href="troubleshooting-guide.html"><span class="r">TG·1</span>Troubleshooting</a></li>
+      <li><a href="marketing.html"><span class="r">MK·1</span>Product overview</a></li>
+      <li><a href="handover.html" aria-current="page"><span class="r">HO·1</span>Handover</a></li>
+      <li><a href="audit.html"><span class="r">AUD·1</span>Build audit</a></li>
+    </ol>
+  </div>
+</nav>
+  <main class="doc" id="doc">
+    <div class="wrap">
+    <header class="dochead">
+      <div class="dochead-top">
+        <div>
+          <span class="eyebrow">GenericPOS Accounting · Documentation set</span>
+          <h1>Handover Note</h1>
+        </div>
+        <div class="docref" aria-label="Document reference HO·1"><span>Doc ref</span><strong>HO·1</strong></div>
+      </div>
+      <p class="lead">Where everything is, what runs unattended, and what is still open.</p>
+      <dl class="control">
+        <div><dt>Version</dt><dd>1.0</dd></div>
+        <div><dt>Issued</dt><dd>20 September 2026</dd></div>
+        <div><dt>Written for</dt><dd>The next maintainer</dd></div>
+        <div><dt>Applies to</dt><dd>Branch <code>build/accounting</code></dd></div>
+      </dl>
+    </header>
+<nav class="toc" aria-label="Contents of this document">
+      <p class="lbl">In this document</p>
+      <ol>
+        <li><a href="#first"><span class="n">1</span>Read these, in this order</a></li>
+        <li><a href="#map"><span class="n">2</span>The shape of it</a></li>
+        <li><a href="#rules"><span class="n">3</span>Four rules you should not break</a></li>
+        <li><a href="#unattended"><span class="n">4</span>What runs without anybody watching</a></li>
+        <li><a href="#week-one"><span class="n">5</span>Week one</a></li>
+        <li><a href="#change"><span class="n">6</span>Making a change safely</a></li>
+        <li><a href="#traps"><span class="n">7</span>Things that will surprise you</a></li>
+        <li><a href="#open"><span class="n">8</span>What is still open</a></li>
+        <li><a href="#history"><span class="n">9</span>Where it came from</a></li>
+        <li><a href="#checklist"><span class="n">10</span>Handover checklist</a></li>
+      </ol>
+    </nav>
+<section class="sec" id="first">
+      <h2><span class="n">1</span>Read these, in this order</h2>
+      <ol>
+        <li><strong>This note</strong>, to the end. It is short on purpose.</li>
+        <li><strong><a href="technical-spec.html">TS·1 Technical Specification</a></strong> — the architecture,
+        the data model and the rules the code enforces.</li>
+        <li><strong><code>PLAN.md</code></strong> in the repository — the record of what was decided and why.
+        It is not documentation of the code; it is the argument behind it.</li>
+        <li><strong><code>SCHEMA.sql</code></strong> — the whole database with the reasoning in its comments.
+        Read it before you read a model.</li>
+        <li><strong><code>application/models/Journal_model.php</code></strong> — the one file that writes the
+        ledger. Everything else is a consumer of it.</li>
+      </ol>
+      <p>Then install it locally, seed the demo company, and click through the screens for an hour. The system
+      is easier to hold in your head from the outside in.</p>
+    </section>
+
+    <section class="sec" id="map">
+      <h2><span class="n">2</span>The shape of it</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Part</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td class="k">API and business rules</td><td><code>application/</code> — CodeIgniter 3.1.9 on PHP 8.2</td></tr>
+          <tr><td class="k">The one way into the ledger</td><td><code>application/models/Journal_model.php</code></td></tr>
+          <tr><td class="k">Statements and analysis</td><td><code>application/libraries/Statement_lib.php</code>, <code>Analysis_lib.php</code>, <code>Books_lib.php</code>, <code>Integrity_lib.php</code></td></tr>
+          <tr><td class="k">Screens</td><td><code>js/&lt;page&gt;.js</code> + <code>pages/&lt;page&gt;.html</code>, one pair per screen</td></tr>
+          <tr><td class="k">Routing</td><td><code>application/config/routes.php</code>, plus one file per module in <code>application/config/routes/</code></td></tr>
+          <tr><td class="k">The database</td><td><code>SCHEMA.sql</code></td></tr>
+          <tr><td class="k">Decisions</td><td><code>PLAN.md</code></td></tr>
+          <tr><td class="k">The user's guide</td><td><code>docs/guide/*.md</code> → <code>help/guide.json</code> (<code>node docs/build-guide.mjs</code>)</td></tr>
+          <tr><td class="k">This documentation set</td><td><code>docs/manual-src/*.mjs</code> → <code>docs/manual/*.html</code> (<code>node docs/build-docs.mjs</code>)</td></tr>
+          <tr><td class="k">Tests</td><td><code>tests/</code> — see <code>tests/README.md</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="sec" id="rules">
+      <h2><span class="n">3</span>Four rules you should not break</h2>
+      <div class="rule-card">
+        <h3>1 · Nothing writes journal lines but Journal_model</h3>
+        <p>A new module that needs to post calls <code>post_system()</code> and defines a new source. Writing
+        <code>gp_journal_lines</code> directly skips the balance check, the period check, the control-account
+        check, the numbering and the audit row — all of which live in one place precisely so that no module has
+        to remember them.</p>
+      </div>
+      <div class="rule-card">
+        <h3>2 · The guard is the first line of every controller method</h3>
+        <p><code>viewer_check()</code>, <code>bookkeeper_check()</code>, <code>accountant_check()</code>,
+        <code>admin_check()</code>. There is no middleware to register and therefore none to forget. A method
+        without a guard is a public endpoint; treat one as a defect.</p>
+      </div>
+      <div class="rule-card">
+        <h3>3 · Money is an integer number of centavos</h3>
+        <p>Columns end in <code>_cents</code>, rates are basis points. Never introduce a float into a stored
+        figure, and never format money for storage. Where an amount must be shared out, use the
+        largest-remainder helper so the parts add back to the whole.</p>
+      </div>
+      <div class="rule-card">
+        <h3>4 · The audit row goes inside the transaction</h3>
+        <p><code>log_admin_action()</code> is called within the same transaction as the change, and a failure to
+        write it fails the change. Do not move it "for performance".</p>
+      </div>
+    </section>
+
+    <section class="sec" id="unattended">
+      <h2><span class="n">4</span>What runs without anybody watching</h2>
+      <ul>
+        <li><strong>The scheduled job</strong>, every fifteen minutes:
+        <code>php index.php tools cron</code>. It drafts recurring saved entries and prunes the auth tables,
+        spent password-reset links and long-read notifications. It takes a database lock and exits non-zero on
+        failure — something should be watching that exit code.</li>
+        <li><strong>The service worker</strong> in every browser that has opened the app. It serves the shell
+        from cache until <code>CACHE_VERSION</code> in <code>sw.js</code> changes. Forgetting to raise it is
+        the single most common way to ship a change nobody sees.</li>
+        <li><strong>Nothing else.</strong> No queue, no daemon, no background worker. Mail is sent
+        synchronously inside the request that causes it.</li>
+      </ul>
+    </section>
+
+    <section class="sec" id="week-one">
+      <h2><span class="n">5</span>Week one</h2>
+      <ol>
+        <li><strong>Get a local copy running</strong> against a scratch database with the demo seed, and run
+        the suites in <code>tests/</code> against it. If they pass, your environment is right.</li>
+        <li><strong>Find the production backup</strong> and restore it onto a scratch database. Run the
+        integrity check against the restore. Now you know the backups work — which is more important than
+        anything else on this list.</li>
+        <li><strong>Read the audit log</strong> on production for the last month. It tells you how the system is
+        actually used, which is never quite how it was designed to be used.</li>
+        <li><strong>Check the scheduled job</strong> is running and exiting zero.</li>
+        <li><strong>Make sure there are two administrators</strong>, and that you are one of them.</li>
+      </ol>
+    </section>
+
+    <section class="sec" id="change">
+      <h2><span class="n">6</span>Making a change safely</h2>
+      <ol>
+        <li>Branch. The current line of work is <code>build/accounting</code>.</li>
+        <li>Make the change. If it touches the ledger, add the case to a suite in <code>tests/</code>
+        first.</li>
+        <li><code>php -l</code> over what you touched, and <code>node tests/modcheck.mjs</code> — it checks
+        every import resolves, every route has a page, every page has its module and every icon used is
+        defined.</li>
+        <li>Seed a scratch database and run the suites against it. Re-seed between the ones that close a year
+        or register an asset; they are not idempotent, by nature rather than by accident.</li>
+        <li>If the front end changed: add new files to the precache list in <code>sw.js</code> and raise
+        <code>CACHE_VERSION</code>.</li>
+        <li>If the guide changed: <code>node docs/build-guide.mjs</code>. If this documentation changed:
+        <code>node docs/build-docs.mjs</code>.</li>
+        <li>Drop the scratch database and run <code>php index.php tools cache</code> against the real one —
+        seeding rewrites the branding cache.</li>
+        <li>Deploy per <a href="deployment-guide.html#upgrade">DG·1 §7</a>, and run the integrity check
+        afterwards.</li>
+      </ol>
+    </section>
+
+    <section class="sec" id="traps">
+      <h2><span class="n">7</span>Things that will surprise you</h2>
+      <ul>
+        <li><strong>Nested transactions throw.</strong> CodeIgniter counts depth and only the outermost
+        rollback reaches the database, so <code>post_system()</code> throws when it is called inside a caller's
+        transaction and fails. The caller must let the exception roll its own transaction back.</li>
+        <li><strong><code>mysqli_sql_exception</code> extends <code>RuntimeException</code>.</strong> Catch the
+        SQL one first, or a database fault will be reported to the user as a rule violation.</li>
+        <li><strong>An account's flags freeze</strong> once it has any line, draft included. This is why the
+        chart has to be right before the first entry.</li>
+        <li><strong>Strict SQL mode is on.</strong> A value that does not fit is refused rather than
+        truncated.</li>
+        <li><strong>Three settings are read-only after setup</strong> — the kind of organisation, the business
+        form and the fiscal-year start month. Everything since has been built on them.</li>
+        <li><strong>Saved entries are stored by account code, not id</strong>, so a renumbered chart cannot
+        silently point one somewhere else.</li>
+        <li><strong>Development mode needs a loopback address</strong> as well as the <code>Host</code> header.
+        A remote request never gets error pages.</li>
+        <li><strong>CLI arguments are parsed as a URI</strong>, so an email address needs its <code>@</code>
+        percent-encoded.</li>
+      </ul>
+    </section>
+
+    <section class="sec" id="open">
+      <h2><span class="n">8</span>What is still open</h2>
+      <p>None of these is a defect. They are known limits, listed so you do not discover them at a bad
+      moment.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Limit</th><th>What it means for you</th></tr></thead>
+        <tbody>
+          <tr><td class="k">No migration runner</td><td>Schema changes are applied by hand. Diff <code>SCHEMA.sql</code> before an upgrade.</td></tr>
+          <tr><td class="k">The audit trail is append-only in code, not in the database</td><td>Somebody with direct SQL access can still edit rows. Backups and database permissions are the control.</td></tr>
+          <tr><td class="k">No virus scanning on attachments</td><td>Only the accepted types get in and nothing is executed, but scan <code>uploads/</code> with whatever the estate uses.</td></tr>
+          <tr><td class="k">Mail is synchronous</td><td>A slow SMTP server slows the request that sends the mail.</td></tr>
+          <tr><td class="k">One currency, one company, no inventory costing, no payroll</td><td>Deliberate. See <a href="design-spec.html#scope">DS·1 §1</a>.</td></tr>
+          <tr><td class="k">Most screens have not been clicked through in a browser</td><td>They are covered by the API suites and a static pass over every module, but a visual sweep is still worth an afternoon.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="sec" id="history">
+      <h2><span class="n">9</span>Where it came from</h2>
+      <p>It grew out of the GenericPOS shop codebase (baseline commit <code>3ab52a9</code>). The shop, the point
+      of sale, the USDT rail and the Android build were removed; what remains of that lineage is the account
+      system, the mailer, the rate limiting and the offline shell. That is why some table names carry a
+      <code>gp_</code> prefix and why the project keeps the name.</p>
+      <p>The ledger and its modules were built on the branch <code>build/accounting</code> in nine commits, each
+      with its own theme — platform and security, the ledger foundations, the five modules, year-end and the
+      office tools, the reports and dashboard, the wiring, the tests, the guide, and the last of the audit.
+      <code>git log</code> reads as the order the system was built in, and the messages say why.</p>
+    </section>
+
+    <section class="sec" id="checklist">
+      <h2><span class="n">10</span>Handover checklist</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Item</th><th>Confirmed</th></tr></thead>
+        <tbody>
+          <tr><td>Repository access, and the branch it is deployed from</td><td></td></tr>
+          <tr><td>Server access: SSH, the web root, the database</td><td></td></tr>
+          <tr><td>A copy of <code>application/config/secrets.php</code>, held safely</td><td></td></tr>
+          <tr><td>Where the backups go, and who checks them</td><td></td></tr>
+          <tr><td>A restore tested onto a scratch database, with the integrity check run against it</td><td></td></tr>
+          <tr><td>The scheduled job, and what watches its exit code</td><td></td></tr>
+          <tr><td>The SMTP account, and <code>maildiag</code> proved to work</td><td></td></tr>
+          <tr><td>TLS certificate: who renews it, and when it expires</td><td></td></tr>
+          <tr><td>Two administrator accounts, one of them yours</td><td></td></tr>
+          <tr><td>Who to ask about the books themselves — the accountant, not the developer</td><td></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+    <footer class="docfoot">
+      <span>HO·1 · Handover Note · v1.0, 20 September 2026</span>
+      <span><a href="marketing.html">← Product overview</a> &nbsp;·&nbsp; <a href="audit.html">Build audit →</a></span>
+    </footer>
+    </div>
+  </main>
+</div>
+</body>
+</html>

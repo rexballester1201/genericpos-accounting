@@ -20,7 +20,7 @@ import { qs, esc, emptyState } from './ui.js';
 
 let GUIDE = null;      // kept for the life of the tab: it is one file, read once
 
-const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const slugify = (s) => s.toLowerCase().replace(/['‘’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
 /** An anchor's attributes for one of the three kinds of link a chapter uses. */
 function linkAttrs(href) {

@@ -19,7 +19,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = join(here, 'guide');
 const out = join(here, '..', 'help');
 
-const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const slugify = (s) => s.toLowerCase().replace(/['‘’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
 const files = readdirSync(src).filter((f) => /^\d\d-.*\.md$/.test(f)).sort();
 if (!files.length) {

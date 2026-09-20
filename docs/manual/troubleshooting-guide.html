@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Troubleshooting Guide · GenericPOS Accounting</title>
+<meta name="description" content="Symptoms, what they usually mean, and what to do about them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#EDF0EC; --sheet:#F9FBF7; --ink:#141E19; --ink-2:#44534B; --ink-3:#66756D;
+  --rule:#C8D3CC; --rule-2:#93A79A; --accent:#1B5940; --accent-soft:#DCE8E1;
+  --gold:#8A5A12; --gold-soft:#F5EBD8; --code:#E2E9E4; --sel:#CFE3D7;
+  --f-head:"Libre Franklin","Franklin Gothic Medium","Segoe UI",Arial,sans-serif;
+  --f-body:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+    --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+    --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+  --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+  --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel);color:var(--ink)}
+a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+code{font-family:var(--f-mono);font-size:.82em;background:var(--code);padding:.1em .36em;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3,h4{font-family:var(--f-head);color:var(--ink);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-weight:800;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.06;letter-spacing:-.018em}
+h2{font-weight:700;font-size:1.42rem;line-height:1.22}
+h3{font-weight:700;font-size:1.06rem;line-height:1.3}
+h4{font-weight:600;font-size:.95rem;line-height:1.35}
+p{margin:0}
+.lbl,.eyebrow,dt,th{font-family:var(--f-head);font-weight:600;font-size:.7rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3)}
+
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:var(--paper);
+  padding:10px 16px;font-family:var(--f-head);font-weight:600;z-index:99}
+.skip:focus{left:8px;top:8px}
+
+/* ── the binder ─────────────────────────────────────────────────────────── */
+.binder{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.rail{background:var(--sheet);border-bottom:1px solid var(--rule)}
+.rail-in{padding:14px 20px;display:grid;gap:12px;max-width:1180px;margin-inline:auto}
+.rail-brand{display:grid;gap:2px}
+.rail-brand b{font-family:var(--f-head);font-weight:800;font-size:.95rem;letter-spacing:-.01em}
+.rail-brand span{font-family:var(--f-head);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.rail a{display:flex;align-items:baseline;gap:8px;white-space:nowrap;text-decoration:none;
+  font-family:var(--f-head);font-size:.86rem;font-weight:600;color:var(--ink-2);
+  padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}
+.rail a:hover{color:var(--accent);border-color:var(--rule-2)}
+.rail a[aria-current="page"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.rail .r{font-family:var(--f-mono);font-size:.72rem;font-weight:500;color:var(--ink-3)}
+.rail a[aria-current="page"] .r{color:var(--accent)}
+
+.doc{padding:34px 20px 90px;max-width:none;margin:0;display:grid;gap:40px}
+.wrap{max-width:74ch;margin-inline:auto;width:100%;display:grid;gap:40px}
+
+@media (min-width:1040px){
+  .binder{grid-template-columns:270px minmax(0,1fr)}
+  .rail{border-bottom:0;border-right:1px solid var(--rule);position:sticky;top:0;align-self:start;
+    height:100vh;overflow-y:auto}
+  .rail-in{padding:30px 22px;gap:22px}
+  .rail ol{flex-direction:column;gap:3px;overflow:visible}
+  .rail a{border:0;border-radius:3px;padding:7px 10px;background:transparent;white-space:normal}
+  .rail a[aria-current="page"]{background:var(--accent-soft)}
+  .doc{padding:48px 40px 110px}
+}
+
+/* ── the document's own head ────────────────────────────────────────────── */
+.dochead{display:grid;gap:18px;border-bottom:1.5px solid var(--rule-2);padding-bottom:22px}
+.dochead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.dochead h1{max-width:18ch}
+.dochead .eyebrow{margin-bottom:8px;display:block}
+.docref{border:1.5px solid var(--accent);color:var(--accent);border-radius:4px;padding:8px 14px;
+  text-align:center;display:grid;gap:2px;flex:none}
+.docref span{font-family:var(--f-head);font-size:.64rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.docref strong{font-family:var(--f-mono);font-size:1.2rem;font-weight:600;letter-spacing:.03em}
+.lead{font-size:1.14rem;line-height:1.55;color:var(--ink-2);max-width:62ch}
+.control{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 26px;
+  border-top:1px solid var(--rule);padding-top:16px}
+.control div{display:grid;gap:3px;min-width:0}
+.control dd{margin:0;font-family:var(--f-head);font-size:.9rem;line-height:1.4;color:var(--ink)}
+
+/* ── contents ───────────────────────────────────────────────────────────── */
+.toc{display:grid;gap:8px}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.toc a{display:flex;gap:10px;text-decoration:none;font-family:var(--f-head);font-size:.92rem;
+  font-weight:600;color:var(--ink-2);padding:5px 0}
+.toc a:hover{color:var(--accent)}
+.toc .n{font-family:var(--f-mono);font-weight:500;color:var(--accent);font-size:.84rem;flex:none}
+
+/* ── sections ───────────────────────────────────────────────────────────── */
+.sec{display:grid;gap:16px;scroll-margin-top:20px}
+.sec>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--rule);padding-bottom:9px}
+.sec>h2 .n{font-family:var(--f-mono);font-weight:600;font-size:.98rem;color:var(--accent);flex:none}
+.sec h3{margin-top:10px}
+.sec ul,.sec ol{margin:0;padding-left:1.25em;display:grid;gap:8px}
+.sec li>ul,.sec li>ol{margin-top:8px}
+.sec p+p{margin-top:0}
+.note{background:var(--sheet);border-left:3px solid var(--accent);padding:14px 18px;display:grid;gap:8px}
+.note.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+.note .lbl{color:var(--accent)}
+.note.warn .lbl{color:var(--gold)}
+
+.rule-card{background:var(--sheet);border:1px solid var(--rule-2);border-radius:5px;
+  padding:18px 20px;display:grid;gap:10px}
+.rule-card h3{color:var(--accent)}
+
+dl.defs{margin:0;display:grid;gap:14px}
+dl.defs>div{display:grid;gap:4px}
+dl.defs dt{font-size:.74rem}
+dl.defs dd{margin:0}
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);
+  border-radius:5px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-head);font-size:.9rem}
+th,td{padding:9px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+thead th{border-bottom:1.5px solid var(--rule-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td code{font-size:.84em}
+.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{font-weight:700;white-space:nowrap}
+
+/* ── code ───────────────────────────────────────────────────────────────── */
+pre{margin:0;background:var(--code);border:1px solid var(--rule);border-radius:5px;
+  padding:14px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+pre code{background:none;padding:0;font-size:.82rem;line-height:1.6}
+
+blockquote{margin:0;border-left:3px solid var(--rule-2);padding-left:16px;color:var(--ink-2)}
+
+/* ── the guide's chapters ───────────────────────────────────────────────── */
+.chapter{display:grid;gap:16px;scroll-margin-top:20px;padding-top:12px}
+.chapter>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1.5px solid var(--rule-2);padding-bottom:10px}
+.chapter>h2 .n{font-family:var(--f-mono);font-weight:600;color:var(--accent);flex:none}
+.chapter .summary{color:var(--ink-2);font-size:1.02rem}
+
+/* ── the foot ───────────────────────────────────────────────────────────── */
+.docfoot{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-wrap:wrap;
+  justify-content:space-between;gap:10px 20px;font-family:var(--f-head);font-size:.82rem;color:var(--ink-3)}
+.docfoot a{font-weight:600;text-decoration:none}
+
+/* ── the contents page ──────────────────────────────────────────────────── */
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:18px 20px;
+  display:grid;gap:8px;align-content:start;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--rule-2)}
+.card .r{font-family:var(--f-mono);font-size:.78rem;font-weight:600;color:var(--accent)}
+.card h3{color:var(--ink)}
+.card p{font-size:.95rem;color:var(--ink-2);line-height:1.5}
+.card .who{font-family:var(--f-head);font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+
+@media print{
+  :root:root:root{--paper:#fff;--sheet:#fff;--ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#bbb;--rule-2:#888;--accent:#1B5940;--accent-soft:#fff;--gold:#7a4f10;
+    --gold-soft:#fff;--code:#eee;color-scheme:light}
+  @page{size:A4;margin:16mm 15mm}
+  body{font-size:10.5pt}
+  .rail,.skip,.toc{display:none}
+  .binder{display:block}
+  .doc{padding:0;gap:26px}
+  .wrap{max-width:none;gap:26px}
+  .sec,.chapter,tr,.note,.rule-card,pre{break-inside:avoid}
+  h2,h3{break-after:avoid}
+  .tablewrap{overflow:visible}
+  a{color:inherit;text-decoration:none}
+  .docfoot{margin-top:18px}
+}
+
+</style>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the document</a>
+<div class="binder">
+<nav class="rail" aria-label="The documentation set">
+  <div class="rail-in">
+    <div class="rail-brand"><b>GenericPOS Accounting</b><span>Documentation set · v1.0</span></div>
+    <ol>
+      <li><a href="index.html"><span class="r">—</span>Contents</a></li>
+      <li><a href="design-spec.html"><span class="r">DS·1</span>Design spec</a></li>
+      <li><a href="technical-spec.html"><span class="r">TS·1</span>Technical spec</a></li>
+      <li><a href="users-guide.html"><span class="r">UG·1</span>User's guide</a></li>
+      <li><a href="admin-guide.html"><span class="r">AG·1</span>Admin guide</a></li>
+      <li><a href="deployment-guide.html"><span class="r">DG·1</span>Deployment guide</a></li>
+      <li><a href="troubleshooting-guide.html" aria-current="page"><span class="r">TG·1</span>Troubleshooting</a></li>
+      <li><a href="marketing.html"><span class="r">MK·1</span>Product overview</a></li>
+      <li><a href="handover.html"><span class="r">HO·1</span>Handover</a></li>
+      <li><a href="audit.html"><span class="r">AUD·1</span>Build audit</a></li>
+    </ol>
+  </div>
+</nav>
+  <main class="doc" id="doc">
+    <div class="wrap">
+    <header class="dochead">
+      <div class="dochead-top">
+        <div>
+          <span class="eyebrow">GenericPOS Accounting · Documentation set</span>
+          <h1>Troubleshooting Guide</h1>
+        </div>
+        <div class="docref" aria-label="Document reference TG·1"><span>Doc ref</span><strong>TG·1</strong></div>
+      </div>
+      <p class="lead">Symptoms, what they usually mean, and what to do about them.</p>
+      <dl class="control">
+        <div><dt>Version</dt><dd>1.0</dd></div>
+        <div><dt>Issued</dt><dd>20 September 2026</dd></div>
+        <div><dt>Written for</dt><dd>Administrator, support</dd></div>
+        <div><dt>Applies to</dt><dd>Branch <code>build/accounting</code></dd></div>
+      </dl>
+    </header>
+<nav class="toc" aria-label="Contents of this document">
+      <p class="lbl">In this document</p>
+      <ol>
+        <li><a href="#triage"><span class="n">1</span>Start here</a></li>
+        <li><a href="#access"><span class="n">2</span>Signing in and getting around</a></li>
+        <li><a href="#entries"><span class="n">3</span>Entries and the workflow</a></li>
+        <li><a href="#figures"><span class="n">4</span>Figures that do not agree</a></li>
+        <li><a href="#screens"><span class="n">5</span>Screens and the browser</a></li>
+        <li><a href="#mail"><span class="n">6</span>Mail</a></li>
+        <li><a href="#server"><span class="n">7</span>The server</a></li>
+        <li><a href="#serious"><span class="n">8</span>When the data itself is wrong</a></li>
+        <li><a href="#lockedout"><span class="n">9</span>Getting back in</a></li>
+      </ol>
+    </nav>
+<section class="sec" id="triage">
+      <h2><span class="n">1</span>Start here</h2>
+      <p>Four places hold the answer to almost everything. Look in this order.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Where</th><th>What it tells you</th></tr></thead>
+        <tbody>
+          <tr><td class="k">The message on the screen</td><td>The system says what it refused and why. "That month is closed", "Only the person who prepared this may edit it". Read it before anything else — most of what looks like a fault is a rule.</td></tr>
+          <tr><td class="k">Administration › Audit log</td><td>What actually happened, who did it, when, from where. It also tells you what did <em>not</em> happen: no row means the change was rolled back.</td></tr>
+          <tr><td class="k"><code>application/logs/</code></td><td>One file a day. Anything beginning <code>[audit]</code>, <code>[Journal_model]</code> or <code>[cron]</code> is worth reading. Timestamps are UTC.</td></tr>
+          <tr><td class="k">Reports › Integrity check</td><td>Sixteen ties over the stored records. If it passes, the data is sound and the problem is elsewhere.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note">
+        <p class="lbl">Before you change anything</p>
+        <p>Take a database backup. Most of what follows is safe, but a wrong diagnosis acted on quickly is
+        worse than a right one acted on slowly.</p>
+      </div>
+    </section>
+
+    <section class="sec" id="access">
+      <h2><span class="n">2</span>Signing in and getting around</h2>
+      <dl class="defs">
+        <div><dt>Nobody can sign in</dt>
+        <dd>Check the database is up and reachable. Then <code>application/logs/</code>. A missing or short
+        <code>GP_JWT_SECRET</code> gives a clean "Sign-in is temporarily unavailable: the server is not
+        configured" and logs the reason — it has no fallback on purpose.</dd></div>
+
+        <div><dt>One person cannot sign in</dt>
+        <dd>Too many wrong passwords locks the account for a while; the screen says so. Otherwise the account
+        may be suspended — Administration › Users. Reset their password from there if needed; it is audited.</dd></div>
+
+        <div><dt>Everybody was signed out at once</dt>
+        <dd><code>GP_JWT_SECRET</code> changed, which invalidates every token. If that was not deliberate, the
+        secrets file was replaced — restore it from your safe copy. Signing back in is otherwise harmless.</dd></div>
+
+        <div><dt>"You do not have access to this"</dt>
+        <dd>The role, not a fault. A bookkeeper cannot approve; an accountant cannot reach Settings or the
+        audit log. Roles are read fresh on every request, so a change takes effect on the next click.</dd></div>
+
+        <div><dt>A menu item is missing</dt>
+        <dd>Same reason. The menu only shows what the role may open.</dd></div>
+      </dl>
+    </section>
+
+    <section class="sec" id="entries">
+      <h2><span class="n">3</span>Entries and the workflow</h2>
+      <dl class="defs">
+        <div><dt>"No fiscal period covers that date"</dt>
+        <dd>The date is outside every fiscal year. Create the year — Chart and periods › Fiscal years, or
+        <code>php index.php tools create_year</code>. Years cannot overlap or leave gaps, so the next one must
+        start the day after the last one ends.</dd></div>
+
+        <div><dt>"That month is closed"</dt>
+        <dd>Either date the entry in an open month, or ask an accountant to reopen that one. A
+        <strong>locked</strong> month never reopens — that is what locking is for.</dd></div>
+
+        <div><dt>A month will not close</dt>
+        <dd>Entries are still waiting for approval in it. The screen lists them and links to each. Post or
+        cancel them, then close.</dd></div>
+
+        <div><dt>"Only the person who prepared this may edit it"</dt>
+        <dd>Maker–checker. The preparer edits and resubmits; the approver approves or rejects with a reason.
+        A one-person office can turn self-approval on in Settings.</dd></div>
+
+        <div><dt>The approver cannot approve their own entry</dt>
+        <dd>By design, unless Settings allows it. Somebody else approves, or the setting changes — and the
+        setting says plainly that it switches maker–checker off.</dd></div>
+
+        <div><dt>A posted entry is wrong</dt>
+        <dd>Reverse it and enter it again. It cannot be edited. If it came from a module — an invoice, a
+        receipt, a depreciation run — the journal screen will refuse, because it must be undone from that
+        module so the document and its entry move together.</dd></div>
+
+        <div><dt>A journal number is missing from a book</dt>
+        <dd>It is not. Numbers are assigned inside the posting transaction, so a failed posting consumes none.
+        If a number really is absent, the integrity check's counter tie will say so.</dd></div>
+
+        <div><dt>A recurring entry did not appear</dt>
+        <dd>Run <code>php index.php tools cron</code> by hand and read what it prints. Usually the month the
+        draft would be dated in is closed, and the owner has a notification saying so. If it prints "Another
+        run is still going", a previous run is stuck — check the database.</dd></div>
+      </dl>
+    </section>
+
+    <section class="sec" id="figures">
+      <h2><span class="n">4</span>Figures that do not agree</h2>
+      <p>Every tie-out report names what caused the difference. Start with the report itself, not the
+      database.</p>
+      <dl class="defs">
+        <div><dt>A statement says it does not prove out</dt>
+        <dd>The red line on a statement means its own check failed. Posted entries always balance, so this is
+        damaged data, not arithmetic. Run the integrity check and do not rely on the figures until it
+        passes.</dd></div>
+
+        <div><dt>The aging does not equal the receivables control</dt>
+        <dd>Something was posted straight to the control account by journal entry instead of through an invoice
+        or receipt. The aging screen shows both totals and the difference; the general ledger of that account,
+        filtered to manual entries, finds it in a minute.</dd></div>
+
+        <div><dt>A bank reconciliation will not reach zero</dt>
+        <dd>Work the four lists on the screen: deposits in transit, outstanding cheques, bank charges and
+        credits not yet in the books, and errors. A statement cannot be marked reconciled until the difference
+        is zero — that is the point of it.</dd></div>
+
+        <div><dt>The asset register does not match accumulated depreciation</dt>
+        <dd>A depreciation entry was reversed from the journal screen rather than the run being undone, or an
+        accumulated depreciation account was posted to by hand. The lapsing schedule shows the register and the
+        ledger side by side.</dd></div>
+
+        <div><dt>The two cash-flow methods differ in operating activities</dt>
+        <dd>Not a fault. An asset bought on account moves no cash: the indirect method shows it as an investing
+        outflow with an offsetting rise in payables, the direct method shows nothing in investing, and the note
+        under the direct statement names the difference on its own line.</dd></div>
+
+        <div><dt>A report is empty</dt>
+        <dd>Check the dates on the toolbar. Reports default to the current fiscal year, and a period with no
+        entries is genuinely empty.</dd></div>
+      </dl>
+    </section>
+
+    <section class="sec" id="screens">
+      <h2><span class="n">5</span>Screens and the browser</h2>
+      <dl class="defs">
+        <div><dt>The app shows an old version after an upgrade</dt>
+        <dd>The service worker is serving its cache. <code>CACHE_VERSION</code> in <code>sw.js</code> was not
+        raised. Raise it and reload twice. To prove it locally: DevTools → Application → Service workers,
+        unregister the one scoped to this site, then delete its <code>acc-</code> caches. Avoid "Clear site
+        data" if another application shares the origin.</dd></div>
+
+        <div><dt>The loading spinner never clears</dt>
+        <dd>A module failed to load. The browser console names the file. After an upgrade the usual cause is a
+        new <code>js/</code> file that was not copied, or one missing from the service worker's list.
+        <code>node tests/modcheck.mjs</code> catches both without a browser.</dd></div>
+
+        <div><dt>"Unexpected token '&lt;'"</dt>
+        <dd>Something answered HTML where JSON was expected. On this system that means the request never
+        reached the API — a rewrite rule is missing, or the URL is wrong. Uncaught server faults answer as
+        JSON, so they do not cause this.</dd></div>
+
+        <div><dt>"Request failed" with no reason</dt>
+        <dd>The network, not the server. The screen says so when it can tell the difference; the app keeps
+        working for reading, because the shell is cached.</dd></div>
+
+        <div><dt>A print comes out wrong</dt>
+        <dd>Print from the report screen's own Print button, which uses the A4 stylesheet. Set the browser to
+        A4 with default margins and background graphics off; the letterhead is drawn, not an image.</dd></div>
+
+        <div><dt>The sign-in page greets the wrong company</dt>
+        <dd>Somebody seeded a demo database on this machine and the branding cache was rewritten.
+        <code>php index.php tools cache</code> against the real database.</dd></div>
+      </dl>
+    </section>
+
+    <section class="sec" id="mail">
+      <h2><span class="n">6</span>Mail</h2>
+      <dl class="defs">
+        <div><dt>No email arrives</dt>
+        <dd><code>php index.php maildiag you@example.com</code> says whether the message left the server. If it
+        did, the problem is at the receiving end — SPF, DKIM or a spam folder. If it did not, the SMTP settings
+        in <code>secrets.php</code> are wrong, or the port is blocked.</dd></div>
+
+        <div><dt>A page is slow when it sends mail</dt>
+        <dd>The mailer is synchronous, so a slow SMTP server slows the request that triggered it. Use a nearby
+        relay.</dd></div>
+
+        <div><dt>Password reset links do not work</dt>
+        <dd>They expire, and they are spent on first use. The scheduled job also prunes used ones. Issue a new
+        one, or set the password directly from Administration › Users.</dd></div>
+      </dl>
+    </section>
+
+    <section class="sec" id="server">
+      <h2><span class="n">7</span>The server</h2>
+      <dl class="defs">
+        <div><dt>"Something went wrong on the server"</dt>
+        <dd><code>application/logs/</code> has the reason with a timestamp. The audit log says what did and did
+        not complete. Every API fault answers as JSON, so the browser console usually has the message
+        too.</dd></div>
+
+        <div><dt>A query that used to work now fails</dt>
+        <dd>Strict SQL mode is on — a value that does not fit is refused rather than silently truncated. The
+        log names the column. That is the intended behaviour; fix the value, not the mode.</dd></div>
+
+        <div><dt>The source code is downloadable</dt>
+        <dd><code>.htaccess</code> is being ignored. Set <code>AllowOverride All</code> for the directory and
+        re-run the checks in <a href="deployment-guide.html#verify">DG·1 §3</a>. Treat any secret in the file as
+        compromised.</dd></div>
+
+        <div><dt>Attachments will not upload</dt>
+        <dd><code>uploads/</code> is not writable by the web server, or the file is larger than PHP's
+        <code>upload_max_filesize</code> and <code>post_max_size</code>. Only the accepted types get in; the
+        message names them.</dd></div>
+
+        <div><dt>An attachment opens as a download instead of in the browser</dt>
+        <dd>Intended. Files are streamed with <code>nosniff</code> and a sandbox, so nothing an attachment
+        contains can run in the page.</dd></div>
+      </dl>
+    </section>
+
+    <section class="sec" id="serious">
+      <h2><span class="n">8</span>When the data itself is wrong</h2>
+      <div class="note warn">
+        <p class="lbl">Stop</p>
+        <p>If the integrity check fails, or a statement says it does not prove out, <strong>do not carry on
+        working</strong>. Take a backup of the current state — damaged books are still evidence — and work out
+        what happened before posting anything else.</p>
+      </div>
+      <ol>
+        <li><strong>Take a backup now</strong>, labelled as the damaged state.</li>
+        <li><strong>Read the integrity check.</strong> It names the entries, documents or assets involved in
+        each failed tie.</li>
+        <li><strong>Read the audit log around that time.</strong> Every application change is there. If the
+        damage is not in the audit log, it was not made through the application — somebody has direct SQL
+        access, and that is the incident.</li>
+        <li><strong>Restore the last good backup onto a scratch database</strong> and run the integrity check
+        against it to find when it was last sound.</li>
+        <li><strong>Decide between restoring and correcting.</strong> A day of re-keying is often better than a
+        correction nobody can explain to an auditor. Whichever you choose, write down what you did and keep it
+        with the books.</li>
+      </ol>
+    </section>
+
+    <section class="sec" id="lockedout">
+      <h2><span class="n">9</span>Getting back in</h2>
+      <p>With a shell on the server, nothing is unrecoverable.</p>
+      <pre><code># the last administrator is gone
+php index.php tools create_admin you%40example.com
+
+# the branding is wrong
+php index.php tools cache
+
+# is the ledger sound?
+php index.php tools trial_balance
+
+# did the scheduled job run?
+php index.php tools cron</code></pre>
+      <p>Everything in that list is audited as System, so the recovery itself is on the record.</p>
+    </section>
+    <footer class="docfoot">
+      <span>TG·1 · Troubleshooting Guide · v1.0, 20 September 2026</span>
+      <span><a href="deployment-guide.html">← Deployment guide</a> &nbsp;·&nbsp; <a href="marketing.html">Product overview →</a></span>
+    </footer>
+    </div>
+  </main>
+</div>
+</body>
+</html>

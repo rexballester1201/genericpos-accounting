@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deployment Guide · GenericPOS Accounting</title>
+<meta name="description" content="Requirements, installation, hardening, upgrades and rollback.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#EDF0EC; --sheet:#F9FBF7; --ink:#141E19; --ink-2:#44534B; --ink-3:#66756D;
+  --rule:#C8D3CC; --rule-2:#93A79A; --accent:#1B5940; --accent-soft:#DCE8E1;
+  --gold:#8A5A12; --gold-soft:#F5EBD8; --code:#E2E9E4; --sel:#CFE3D7;
+  --f-head:"Libre Franklin","Franklin Gothic Medium","Segoe UI",Arial,sans-serif;
+  --f-body:"Source Serif 4","Source Serif Pro",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+    --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+    --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C120F; --sheet:#131A16; --ink:#DFE6E1; --ink-2:#A3B1A9; --ink-3:#81908A;
+  --rule:#25312B; --rule-2:#44564D; --accent:#84CCA6; --accent-soft:#16261E;
+  --gold:#E3AE61; --gold-soft:#2A2010; --code:#1A2420; --sel:#1E3A2B;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel);color:var(--ink)}
+a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+code{font-family:var(--f-mono);font-size:.82em;background:var(--code);padding:.1em .36em;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3,h4{font-family:var(--f-head);color:var(--ink);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-weight:800;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.06;letter-spacing:-.018em}
+h2{font-weight:700;font-size:1.42rem;line-height:1.22}
+h3{font-weight:700;font-size:1.06rem;line-height:1.3}
+h4{font-weight:600;font-size:.95rem;line-height:1.35}
+p{margin:0}
+.lbl,.eyebrow,dt,th{font-family:var(--f-head);font-weight:600;font-size:.7rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3)}
+
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:var(--paper);
+  padding:10px 16px;font-family:var(--f-head);font-weight:600;z-index:99}
+.skip:focus{left:8px;top:8px}
+
+/* ── the binder ─────────────────────────────────────────────────────────── */
+.binder{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.rail{background:var(--sheet);border-bottom:1px solid var(--rule)}
+.rail-in{padding:14px 20px;display:grid;gap:12px;max-width:1180px;margin-inline:auto}
+.rail-brand{display:grid;gap:2px}
+.rail-brand b{font-family:var(--f-head);font-weight:800;font-size:.95rem;letter-spacing:-.01em}
+.rail-brand span{font-family:var(--f-head);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.rail a{display:flex;align-items:baseline;gap:8px;white-space:nowrap;text-decoration:none;
+  font-family:var(--f-head);font-size:.86rem;font-weight:600;color:var(--ink-2);
+  padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper)}
+.rail a:hover{color:var(--accent);border-color:var(--rule-2)}
+.rail a[aria-current="page"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.rail .r{font-family:var(--f-mono);font-size:.72rem;font-weight:500;color:var(--ink-3)}
+.rail a[aria-current="page"] .r{color:var(--accent)}
+
+.doc{padding:34px 20px 90px;max-width:none;margin:0;display:grid;gap:40px}
+.wrap{max-width:74ch;margin-inline:auto;width:100%;display:grid;gap:40px}
+
+@media (min-width:1040px){
+  .binder{grid-template-columns:270px minmax(0,1fr)}
+  .rail{border-bottom:0;border-right:1px solid var(--rule);position:sticky;top:0;align-self:start;
+    height:100vh;overflow-y:auto}
+  .rail-in{padding:30px 22px;gap:22px}
+  .rail ol{flex-direction:column;gap:3px;overflow:visible}
+  .rail a{border:0;border-radius:3px;padding:7px 10px;background:transparent;white-space:normal}
+  .rail a[aria-current="page"]{background:var(--accent-soft)}
+  .doc{padding:48px 40px 110px}
+}
+
+/* ── the document's own head ────────────────────────────────────────────── */
+.dochead{display:grid;gap:18px;border-bottom:1.5px solid var(--rule-2);padding-bottom:22px}
+.dochead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.dochead h1{max-width:18ch}
+.dochead .eyebrow{margin-bottom:8px;display:block}
+.docref{border:1.5px solid var(--accent);color:var(--accent);border-radius:4px;padding:8px 14px;
+  text-align:center;display:grid;gap:2px;flex:none}
+.docref span{font-family:var(--f-head);font-size:.64rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.docref strong{font-family:var(--f-mono);font-size:1.2rem;font-weight:600;letter-spacing:.03em}
+.lead{font-size:1.14rem;line-height:1.55;color:var(--ink-2);max-width:62ch}
+.control{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 26px;
+  border-top:1px solid var(--rule);padding-top:16px}
+.control div{display:grid;gap:3px;min-width:0}
+.control dd{margin:0;font-family:var(--f-head);font-size:.9rem;line-height:1.4;color:var(--ink)}
+
+/* ── contents ───────────────────────────────────────────────────────────── */
+.toc{display:grid;gap:8px}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.toc a{display:flex;gap:10px;text-decoration:none;font-family:var(--f-head);font-size:.92rem;
+  font-weight:600;color:var(--ink-2);padding:5px 0}
+.toc a:hover{color:var(--accent)}
+.toc .n{font-family:var(--f-mono);font-weight:500;color:var(--accent);font-size:.84rem;flex:none}
+
+/* ── sections ───────────────────────────────────────────────────────────── */
+.sec{display:grid;gap:16px;scroll-margin-top:20px}
+.sec>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--rule);padding-bottom:9px}
+.sec>h2 .n{font-family:var(--f-mono);font-weight:600;font-size:.98rem;color:var(--accent);flex:none}
+.sec h3{margin-top:10px}
+.sec ul,.sec ol{margin:0;padding-left:1.25em;display:grid;gap:8px}
+.sec li>ul,.sec li>ol{margin-top:8px}
+.sec p+p{margin-top:0}
+.note{background:var(--sheet);border-left:3px solid var(--accent);padding:14px 18px;display:grid;gap:8px}
+.note.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+.note .lbl{color:var(--accent)}
+.note.warn .lbl{color:var(--gold)}
+
+.rule-card{background:var(--sheet);border:1px solid var(--rule-2);border-radius:5px;
+  padding:18px 20px;display:grid;gap:10px}
+.rule-card h3{color:var(--accent)}
+
+dl.defs{margin:0;display:grid;gap:14px}
+dl.defs>div{display:grid;gap:4px}
+dl.defs dt{font-size:.74rem}
+dl.defs dd{margin:0}
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);
+  border-radius:5px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-head);font-size:.9rem}
+th,td{padding:9px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+thead th{border-bottom:1.5px solid var(--rule-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td code{font-size:.84em}
+.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{font-weight:700;white-space:nowrap}
+
+/* ── code ───────────────────────────────────────────────────────────────── */
+pre{margin:0;background:var(--code);border:1px solid var(--rule);border-radius:5px;
+  padding:14px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+pre code{background:none;padding:0;font-size:.82rem;line-height:1.6}
+
+blockquote{margin:0;border-left:3px solid var(--rule-2);padding-left:16px;color:var(--ink-2)}
+
+/* ── the guide's chapters ───────────────────────────────────────────────── */
+.chapter{display:grid;gap:16px;scroll-margin-top:20px;padding-top:12px}
+.chapter>h2{display:flex;gap:12px;align-items:baseline;border-bottom:1.5px solid var(--rule-2);padding-bottom:10px}
+.chapter>h2 .n{font-family:var(--f-mono);font-weight:600;color:var(--accent);flex:none}
+.chapter .summary{color:var(--ink-2);font-size:1.02rem}
+
+/* ── the foot ───────────────────────────────────────────────────────────── */
+.docfoot{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-wrap:wrap;
+  justify-content:space-between;gap:10px 20px;font-family:var(--f-head);font-size:.82rem;color:var(--ink-3)}
+.docfoot a{font-weight:600;text-decoration:none}
+
+/* ── the contents page ──────────────────────────────────────────────────── */
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:5px;padding:18px 20px;
+  display:grid;gap:8px;align-content:start;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--rule-2)}
+.card .r{font-family:var(--f-mono);font-size:.78rem;font-weight:600;color:var(--accent)}
+.card h3{color:var(--ink)}
+.card p{font-size:.95rem;color:var(--ink-2);line-height:1.5}
+.card .who{font-family:var(--f-head);font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+
+@media print{
+  :root:root:root{--paper:#fff;--sheet:#fff;--ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#bbb;--rule-2:#888;--accent:#1B5940;--accent-soft:#fff;--gold:#7a4f10;
+    --gold-soft:#fff;--code:#eee;color-scheme:light}
+  @page{size:A4;margin:16mm 15mm}
+  body{font-size:10.5pt}
+  .rail,.skip,.toc{display:none}
+  .binder{display:block}
+  .doc{padding:0;gap:26px}
+  .wrap{max-width:none;gap:26px}
+  .sec,.chapter,tr,.note,.rule-card,pre{break-inside:avoid}
+  h2,h3{break-after:avoid}
+  .tablewrap{overflow:visible}
+  a{color:inherit;text-decoration:none}
+  .docfoot{margin-top:18px}
+}
+
+</style>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the document</a>
+<div class="binder">
+<nav class="rail" aria-label="The documentation set">
+  <div class="rail-in">
+    <div class="rail-brand"><b>GenericPOS Accounting</b><span>Documentation set · v1.0</span></div>
+    <ol>
+      <li><a href="index.html"><span class="r">—</span>Contents</a></li>
+      <li><a href="design-spec.html"><span class="r">DS·1</span>Design spec</a></li>
+      <li><a href="technical-spec.html"><span class="r">TS·1</span>Technical spec</a></li>
+      <li><a href="users-guide.html"><span class="r">UG·1</span>User's guide</a></li>
+      <li><a href="admin-guide.html"><span class="r">AG·1</span>Admin guide</a></li>
+      <li><a href="deployment-guide.html" aria-current="page"><span class="r">DG·1</span>Deployment guide</a></li>
+      <li><a href="troubleshooting-guide.html"><span class="r">TG·1</span>Troubleshooting</a></li>
+      <li><a href="marketing.html"><span class="r">MK·1</span>Product overview</a></li>
+      <li><a href="handover.html"><span class="r">HO·1</span>Handover</a></li>
+      <li><a href="audit.html"><span class="r">AUD·1</span>Build audit</a></li>
+    </ol>
+  </div>
+</nav>
+  <main class="doc" id="doc">
+    <div class="wrap">
+    <header class="dochead">
+      <div class="dochead-top">
+        <div>
+          <span class="eyebrow">GenericPOS Accounting · Documentation set</span>
+          <h1>Deployment Guide</h1>
+        </div>
+        <div class="docref" aria-label="Document reference DG·1"><span>Doc ref</span><strong>DG·1</strong></div>
+      </div>
+      <p class="lead">Requirements, installation, hardening, upgrades and rollback.</p>
+      <dl class="control">
+        <div><dt>Version</dt><dd>1.0</dd></div>
+        <div><dt>Issued</dt><dd>20 September 2026</dd></div>
+        <div><dt>Written for</dt><dd>Whoever installs it</dd></div>
+        <div><dt>Applies to</dt><dd>Branch <code>build/accounting</code></dd></div>
+      </dl>
+    </header>
+<nav class="toc" aria-label="Contents of this document">
+      <p class="lbl">In this document</p>
+      <ol>
+        <li><a href="#need"><span class="n">1</span>What you need</a></li>
+        <li><a href="#install"><span class="n">2</span>Installing</a></li>
+        <li><a href="#verify"><span class="n">3</span>Before you hand it over</a></li>
+        <li><a href="#scheduled"><span class="n">4</span>The scheduled job</a></li>
+        <li><a href="#server"><span class="n">5</span>Web server notes</a></li>
+        <li><a href="#harden"><span class="n">6</span>Hardening</a></li>
+        <li><a href="#upgrade"><span class="n">7</span>Upgrading</a></li>
+        <li><a href="#move"><span class="n">8</span>Moving it to another server</a></li>
+      </ol>
+    </nav>
+<section class="sec" id="need">
+      <h2><span class="n">1</span>What you need</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Part</th><th>Version</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td class="k">PHP</td><td>8.2</td><td>With <code>mysqli</code>, <code>mbstring</code>, <code>fileinfo</code> and <code>gd</code>. 8.1 works; 8.0 and below do not.</td></tr>
+          <tr><td class="k">Database</td><td>MariaDB 10.2.1+ or MySQL 8.0.16+</td><td>Older versions parse the schema's <code>CHECK</code> constraints and then ignore them, which silently removes a layer of protection.</td></tr>
+          <tr><td class="k">Web server</td><td>Apache 2.4</td><td><code>mod_rewrite</code> on and <code>AllowOverride All</code> for the directory. Nginx needs the <code>.htaccess</code> rules translated by hand — see §5.</td></tr>
+          <tr><td class="k">Node</td><td>18+</td><td>Only to rebuild the guide or run the tests. Not needed to run the system.</td></tr>
+          <tr><td class="k">TLS</td><td>any</td><td>Required in practice. Sessions and attachments travel over it.</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>Sizing.</strong> One company's books. A year of a small trading company is a few thousand
+      journal lines — tens of megabytes with attachments. Two shared cores and 2 GB of memory are ample; the
+      database is the only part that grows, and it grows slowly.</p>
+    </section>
+
+    <section class="sec" id="install">
+      <h2><span class="n">2</span>Installing</h2>
+      <h3>1 · The database</h3>
+      <pre><code>mysql -u root -e "CREATE DATABASE accounting CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root accounting &lt; SCHEMA.sql</code></pre>
+      <p>Create a database user for the application with <code>SELECT, INSERT, UPDATE, DELETE</code> on that
+      database and nothing else. It does not need <code>DROP</code>, and it should not have it.</p>
+
+      <h3>2 · The files</h3>
+      <div class="note warn">
+        <p class="lbl">The project root is the document root</p>
+        <p>Apache must serve the folder that contains <code>index.php</code>. What keeps
+        <code>application/</code>, <code>docs/</code>, <code>tests/</code>, <code>SCHEMA.sql</code> and every
+        <code>.md</code>, <code>.sql</code>, <code>.log</code> and <code>.env</code> from being downloaded is
+        the <code>.htaccess</code> in that folder. If <code>AllowOverride</code> is not <code>All</code>, the
+        file is ignored and your source and schema are public. Verify it — §4.</p>
+      </div>
+
+      <h3>3 · The secrets</h3>
+      <pre><code>cp application/config/secrets.example.php application/config/secrets.php</code></pre>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Key</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td class="k">GP_DB_HOST, GP_DB_NAME, GP_DB_USER, GP_DB_PASSWORD</td><td>The database above.</td></tr>
+          <tr><td class="k">GP_JWT_SECRET</td><td>At least 32 random characters. <strong>It must differ from every other application's on the same host</strong> — a token signed with a shared secret would otherwise be accepted here as whoever has that user id. (The issuer claim also blocks this, but do not rely on one lock.)</td></tr>
+          <tr><td class="k">GP_SETUP_KEY</td><td>Any long string. It is needed once, on the setup screen. Clear it afterwards.</td></tr>
+          <tr><td class="k">SMTP settings</td><td>Only if the system is to send mail. Leave blank and it will not try.</td></tr>
+        </tbody>
+      </table></div>
+      <pre><code>php -r "echo rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');"</code></pre>
+      <p>Keep <code>secrets.php</code> out of version control — it already is, in <code>.gitignore</code> — and
+      readable only by the web server user.</p>
+
+      <h3>4 · Permissions</h3>
+      <pre><code>chown -R www-data:www-data uploads application/logs application/cache
+chmod -R 750          uploads application/logs application/cache
+chmod 640             application/config/secrets.php</code></pre>
+      <p>Those three directories are the only ones the application writes to. Everything else can be read-only
+      to the web server. Attachments land in <code>uploads/attachments/</code>, behind a deny-all
+      <code>.htaccess</code> the application writes itself on first use.</p>
+
+      <h3>5 · The company</h3>
+      <p>Open the site and work through the setup screen: the company, whether it is a business or a
+      co-operative, the month its fiscal year starts, and the first administrator. It runs in one transaction
+      and answers only while there is no user — afterwards it refuses everybody.</p>
+      <p>A server with no browser to hand does the same three things by command:</p>
+      <pre><code>php index.php tools seed_chart business_corporation   # or business_sole_proprietorship, cooperative
+php index.php tools create_year 2026-01-01            # the first day of the first month of the books
+php index.php tools create_admin owner%40example.com  # prints a password once</code></pre>
+      <p>The first fiscal year fixes the month the books turn on, which Settings will not change afterwards.</p>
+    </section>
+
+    <section class="sec" id="verify">
+      <h2><span class="n">3</span>Before you hand it over</h2>
+      <p>Every one of these should be true. They take five minutes together.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Check</th><th>Expected</th></tr></thead>
+        <tbody>
+          <tr><td><code>curl -I https://site/SCHEMA.sql</code></td><td class="k">403</td></tr>
+          <tr><td><code>curl -I https://site/application/config/secrets.php</code></td><td class="k">403</td></tr>
+          <tr><td><code>curl -I https://site/docs/guide/01-welcome.md</code></td><td class="k">403</td></tr>
+          <tr><td><code>curl -I https://site/uploads/attachments/</code></td><td class="k">403</td></tr>
+          <tr><td><code>curl -s https://site/robots.txt</code></td><td class="k">Disallow: /</td></tr>
+          <tr><td><code>curl -s https://site/api/v1/store</code></td><td class="k">JSON, and no TIN, address or phone in it</td></tr>
+          <tr><td><code>curl -s https://site/api/v1/journals</code></td><td class="k">401 as JSON, not an HTML page</td></tr>
+          <tr><td>Sign in, then <code>php index.php tools trial_balance</code></td><td class="k">"Balanced."</td></tr>
+          <tr><td>Reports › Integrity check</td><td class="k">every tie passes</td></tr>
+          <tr><td><code>php index.php maildiag you@example.com</code></td><td class="k">the message arrives</td></tr>
+          <tr><td>Setup screen, signed out</td><td class="k">refuses — "already set up"</td></tr>
+        </tbody>
+      </table></div>
+      <p>Then clear <code>GP_SETUP_KEY</code> from <code>secrets.php</code>.</p>
+    </section>
+
+    <section class="sec" id="scheduled">
+      <h2><span class="n">4</span>The scheduled job</h2>
+      <pre><code>*/15 * * * * php /path/to/accounting/index.php tools cron &gt;&gt; /var/log/accounting-cron.log 2&gt;&amp;1</code></pre>
+      <p>On Windows, a Task Scheduler task running the same command every fifteen minutes. It takes a database
+      lock, so overlapping runs are harmless, and it exits non-zero when a part fails — point your monitoring
+      at the exit code, not the log size.</p>
+      <p>It drafts recurring saved entries and prunes the auth tables, spent password-reset links and long-read
+      notifications. The audit log is never pruned.</p>
+    </section>
+
+    <section class="sec" id="server">
+      <h2><span class="n">5</span>Web server notes</h2>
+      <h3>Apache</h3>
+      <pre><code>&lt;Directory /var/www/accounting&gt;
+    AllowOverride All
+    Require all granted
+&lt;/Directory&gt;</code></pre>
+      <p>Serve production from a virtual host bound to its real name. The application will not enter
+      development mode for a request that did not come from the machine itself, but a host that answers for any
+      name is a bad idea for other reasons.</p>
+      <h3>Nginx</h3>
+      <p>There is no <code>.htaccess</code>, so its rules have to be written into the site config: send
+      everything that is not a real file to <code>index.php</code>, and deny
+      <code>/application</code>, <code>/docs</code>, <code>/tests</code>, <code>/uploads</code> and the
+      <code>.md</code>, <code>.sql</code>, <code>.log</code>, <code>.env</code> extensions. Test all of §3
+      afterwards — on Nginx those refusals are entirely your configuration.</p>
+      <h3>Behind a proxy or load balancer</h3>
+      <p>One node only. The rate limiter, the counters and the cron lock all use the database, so they are safe
+      across processes, but the service worker and the branding cache assume one origin. Pass the real client
+      address through, or the audit log records the proxy.</p>
+    </section>
+
+    <section class="sec" id="harden">
+      <h2><span class="n">6</span>Hardening</h2>
+      <ul>
+        <li><strong>TLS everywhere</strong>, with HSTS. Sessions and attachments travel over it.</li>
+        <li><strong>The database user has no <code>DROP</code></strong> and no access to other databases.</li>
+        <li><strong>The database is not reachable from outside the host.</strong></li>
+        <li><strong><code>display_errors = Off</code></strong> in <code>php.ini</code>. The application also
+        refuses development mode for a remote request, but set both.</li>
+        <li><strong>Back up before you need to.</strong> See <a href="admin-guide.html#backups">AG·1 §10</a>.</li>
+        <li><strong>Two administrators</strong>, not one.</li>
+        <li><strong>Clear <code>GP_SETUP_KEY</code></strong> once setup is done.</li>
+        <li><strong>Attachments are not scanned.</strong> Only the accepted types get in and nothing is
+        executed, but a malicious PDF is still a malicious PDF when somebody opens it. Scan
+        <code>uploads/</code> with whatever the rest of the estate uses.</li>
+      </ul>
+    </section>
+
+    <section class="sec" id="upgrade">
+      <h2><span class="n">7</span>Upgrading</h2>
+      <ol>
+        <li><strong>Back up first</strong> — database and <code>uploads/</code>. Every step below assumes you
+        can go back.</li>
+        <li>Put the new files in place, keeping <code>application/config/secrets.php</code>,
+        <code>uploads/</code> and <code>application/logs/</code>.</li>
+        <li><strong>If <code>SCHEMA.sql</code> changed, apply the change by hand.</strong> There is no
+        migration runner; the schema's comments say what each table is for. Compare the old and new files
+        before you start.</li>
+        <li><code>php index.php tools cache</code> — the sign-in page's branding.</li>
+        <li><code>node docs/build-guide.mjs</code> if the guide changed, and
+        <code>node docs/build-docs.mjs</code> if this documentation did.</li>
+        <li><strong>Raise <code>CACHE_VERSION</code> in <code>sw.js</code></strong> whenever
+        <code>index.html</code>, <code>css/</code>, <code>js/</code> or <code>pages/</code> changed, and make
+        sure any new file is in its precache list. Without this, browsers keep serving the old app from
+        cache.</li>
+        <li>Run the suites in <code>tests/</code> against a <em>scratch copy</em> of the live database, never
+        the live one.</li>
+        <li>Run the integrity check on the live system and keep the result.</li>
+      </ol>
+      <h3>Rolling back</h3>
+      <p>Restore the files and, if the schema changed, the database. A rollback that keeps a migrated database
+      under old code is how books get damaged — if the schema moved, both move back.</p>
+    </section>
+
+    <section class="sec" id="move">
+      <h2><span class="n">8</span>Moving it to another server</h2>
+      <ol>
+        <li>Stop the scheduled job on the old server.</li>
+        <li><code>mysqldump</code> the database; copy <code>uploads/</code> and
+        <code>application/config/secrets.php</code>.</li>
+        <li>Install as in §2, but restore the dump instead of loading <code>SCHEMA.sql</code>, and put the old
+        <code>secrets.php</code> back — keeping <code>GP_JWT_SECRET</code> means nobody is signed out.</li>
+        <li><code>php index.php tools cache</code>.</li>
+        <li>Work through §3, then the integrity check.</li>
+        <li>Start the scheduled job on the new server, and only then point the name at it.</li>
+      </ol>
+      <p>Never run both servers against the same database with two scheduled jobs pointing at it. The lock
+      makes it safe, but two hosts writing the same books is a situation nobody should have to reason about.</p>
+    </section>
+    <footer class="docfoot">
+      <span>DG·1 · Deployment Guide · v1.0, 20 September 2026</span>
+      <span><a href="admin-guide.html">← Admin guide</a> &nbsp;·&nbsp; <a href="troubleshooting-guide.html">Troubleshooting →</a></span>
+    </footer>
+    </div>
+  </main>
+</div>
+</body>
+</html>
