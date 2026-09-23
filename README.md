@@ -9,10 +9,10 @@ The API is CodeIgniter 3 (PHP 8.2) and answers JSON. The front end is a
 dependency-free single-page app — no build step — that installs as a PWA and
 works from cache when the connection drops.
 
-It grew out of the GenericPOS shop codebase (baseline commit `3ab52a9`); the
-shop, the point of sale, the USDT rail and the Android build were removed, and
-what remains of that lineage is the account system, the mailer, the rate
-limiting and the offline shell.
+It grew out of the GenericPOS shop codebase (its baseline commit `3ab52a9`
+is not published here); the shop, the point of sale, the USDT rail and the
+Android build were removed, and what remains of that lineage is the account
+system, the mailer, the rate limiting and the offline shell.
 
 ## The one rule
 
@@ -186,3 +186,12 @@ PLAN.md             what was decided and why
   the person reading it.
 - **Every write is audited** in the same transaction as the change.
 - Work the scheduled job or the command line did is recorded as **System**.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE).
+
+Two parts of it are other people's work under the same licence: the
+CodeIgniter 3 framework in `system/` and `index.php`, and the Phosphor Icons
+shapes that most of `js/icons.js` follows. [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
+reproduces their notices.
